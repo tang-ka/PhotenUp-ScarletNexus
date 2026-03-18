@@ -17,8 +17,8 @@ class SCARLETNEXUS_API AKarenAIController : public AAIController
 	public:
 	AKarenAIController();
 	
-	protected:
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "AI")
-	class UStateTreeComponent* StateTreeComponent;
+	//protected:
+	//UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "AI")
+	//class UStateTreeComponent* StateTreeComponent;
 	
 };

@@ -2,10 +2,10 @@
 
 
 #include "KarenAIController.h"
-#include "Components/StateTreeComponent.h"
+//#include "Components/StateTreeComponent.h"
 
 AKarenAIController::AKarenAIController()
 {
-	StateTreeComponent = CreateDefaultSubobject<UStateTreeComponent>(TEXT("StateTreeComponent"));
+	//StateTreeComponent = CreateDefaultSubobject<UStateTreeComponent>(TEXT("StateTreeComponent"));
 	
 }
