@@ -76,3 +76,4 @@ DerivedDataCache/*
 
 # JetBrains IDE
 .idea/*
+.idea
