@@ -6,11 +6,16 @@
 #include "GameFramework/Character.h"
 #include "PlayerCharacterBase.generated.h"
 
+class UPsychokinesisComponent;
+class UPlayerPerceptionComponent;
+class UPlayerStateComponent;
+class UPlayerStatsComponent;
 class UCameraComponent;
 class USpringArmComponent;
-struct FInputActionValue;
 class UInputMappingContext;
 class UInputAction;
+
+struct FInputActionValue;
 
 /**
  * Basic Movement, Look, Jump, Psychokinesis, Dodge
@@ -34,13 +39,41 @@ public:
 	
 protected:
 #pragma region Input Action Functions
-	void Move(const FInputActionValue& Value);
-	void Look(const FInputActionValue& Value);
-	void Jump(const FInputActionValue& Value);
-	void StopJumpingAction(const FInputActionValue& Value);
-	void Dodge(const FInputActionValue& Value);
-	void BasicAttack(const FInputActionValue& Value);
-	void Psychokinesis(const FInputActionValue& Value);
+	void OnMoveInput(const FInputActionValue& Value);
+	void OnLookInput(const FInputActionValue& Value);
+	void OnJumpInput(const FInputActionValue& Value);
+	void OnCompleteJumpInput(const FInputActionValue& Value);
+	void OnDodgeInput(const FInputActionValue& Value);
+	void OnBasicAttackInput(const FInputActionValue& Value);
+	void OnPsychokinesisInput(const FInputActionValue& Value);
+#pragma endregion
+	
+private:
+	void Move(const FVector2D& Direction);
+	void Look(const FVector2D& LookVector);
+	void Dash();
+	void ResetDash();
+
+private:
+#pragma region Dash
+	bool bIsDashing{false}; // 상태 중심
+	bool bCanDash{true};	// 상태 및 쿨타임 중심
+	FVector DashDirection{};
+	FVector DashVelocity{};
+	float DashTimeRemaining{0.f};
+	FTimerHandle DashCooldownTimer;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Dash")
+	float DashDistance{600.f};
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Dash")
+	float DashDuration{0.2f};
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Dash")
+	float DashCooldown{0.2f};
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Dash")
+	float DashDampingFactor{0.5f};
 #pragma endregion
 	
 protected:
@@ -74,5 +107,17 @@ private:
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UCameraComponent> CameraComp;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UPlayerStatsComponent> StatsComp;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UPlayerStateComponent> StateComp;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UPlayerPerceptionComponent> PerceptionComp;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UPsychokinesisComponent> PsychokinesisComp;
 #pragma endregion
 };
