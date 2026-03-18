@@ -25,16 +25,20 @@ public:
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-	
-	// 메쉬
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
-	TObjectPtr<class USkeletalMeshComponent> SkeletalMeshComp;
 
 	// 스테이터스
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	int MaxHP = 250;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	int CurrHP = MaxHP;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	float DetectRange = 300.f;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	float AttackRange = 100.f;
+	
+	// 타겟
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TObjectPtr<AActor> TargetActor;
 	
 	// **행동 트리
 	// 공격
