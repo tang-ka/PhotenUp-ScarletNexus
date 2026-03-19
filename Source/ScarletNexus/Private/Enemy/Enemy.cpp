@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Enemy.h"
+#include "Enemy/Enemy.h"
 
 #include "Misc/MapErrors.h"
 

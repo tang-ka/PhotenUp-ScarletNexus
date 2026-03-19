@@ -3,8 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "PKInteractable.h"
 #include "GameFramework/Actor.h"
+#include "Interface/PKInteractable.h"
 #include "PKObject.generated.h"
 
 UENUM()

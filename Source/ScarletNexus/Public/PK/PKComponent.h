@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "PKInteractable.h"
 #include "Components/ActorComponent.h"
 #include "PKComponent.generated.h"
 

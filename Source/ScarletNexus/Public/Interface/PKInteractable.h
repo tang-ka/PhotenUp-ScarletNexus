@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "PKObject.h"
 #include "UObject/Interface.h"
 #include "PKInteractable.generated.h"
 
@@ -25,14 +24,14 @@ class SCARLETNEXUS_API IPKInteractable
 public:
 	// 집을 수 있는 상태
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category=PK)
-	virtual bool CanBePickeduped() const = 0;
+	bool CanBePickeduped() const;
 	// 집어 올려지기
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category=PK)
-	virtual void OnPKPickuped() = 0;
+	void OnPKPickuped();
 	// 다시 놓아지기 (집기 해제)
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category=PK)
-	virtual void OnPKReleased() = 0;
+	void OnPKReleased();
 	// 집혀졌을 때 던져지기
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category=PK)
-	virtual void OnPKThrown(const FVector& ThrowDir, float ThrowForce) = 0;
+	void OnPKThrown(const FVector& ThrowDir, float ThrowForce);
 };
