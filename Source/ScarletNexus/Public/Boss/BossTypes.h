@@ -6,9 +6,8 @@
 #include "GameplayTagContainer.h"
 #include "BossTypes.generated.h"
  
-// ============================================================
+
 // 보스 페이즈 정의
-// ============================================================
 UENUM(BlueprintType)
 enum class EBossPhase : uint8
 {
@@ -17,9 +16,7 @@ enum class EBossPhase : uint8
 	Phase3_Awakening	UMETA(DisplayName = "Phase 3: 각성"),
 };
  
-// ============================================================
 // 보스 전투 상태
-// ============================================================
 UENUM(BlueprintType)
 enum class EBossCombatState : uint8
 {
@@ -33,9 +30,9 @@ enum class EBossCombatState : uint8
 	Death,
 };
  
-// ============================================================
+
 // 공격 패턴 데이터
-// ============================================================
+
 USTRUCT(BlueprintType)
 struct FBossAttackPattern
 {
