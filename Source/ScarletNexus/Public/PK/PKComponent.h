@@ -25,18 +25,30 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType,
 	                           FActorComponentTickFunction* ThisTickFunction) override;
 	
+public:
+	// 속성
+	UPROPERTY(EditAnywhere)
+	float TraceDistance = 1000.f;
+	UPROPERTY(EditAnywhere)
+	float HoldDistance = 250.f;
+	UPROPERTY(EditAnywhere)
+	float HoldForce = 1500.f;
+	UPROPERTY(EditAnywhere)
+	float TraceRadius = 100.f;
 	
-private:
 	// 탐색 조준중인 타겟 PK오브젝트
 	UPROPERTY()
 	TObjectPtr<class APKObject> CurrentTarget;
 	// 실제로 타겟팅해서 잡은 PK오브젝트
 	UPROPERTY()
 	TObjectPtr<class APKObject> HeldObject;
+	// 잡은 오브젝트의 물리 컴포넌트
+	UPROPERTY()
+	TObjectPtr<class UPrimitiveComponent> HeldPrimitive = nullptr;
 	
 	// 타겟 탐색
 	UFUNCTION(BlueprintCallable)
-	void TraceTarget();
+	class APKObject* TraceTarget() const;
 	// 타겟 홀드
 	UFUNCTION(BlueprintCallable)
 	void HoldTarget();

@@ -3,6 +3,9 @@
 
 #include "PK/PKComponent.h"
 
+#include "Interface/PKInteractable.h"
+#include "PK/PKObject.h"
+
 
 // Sets default values for this component's properties
 UPKComponent::UPKComponent()
@@ -33,8 +36,49 @@ void UPKComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorCom
 	// ...
 }
 
-void UPKComponent::TraceTarget()
+APKObject* UPKComponent::TraceTarget() const
 {
+	// 주체
+	AActor* owner = GetOwner();
+	if (!owner)
+	{
+		UE_LOG(LogTemp, Error, TEXT("UPKComponent::TraceTarget: No owner"));
+		return nullptr;
+	}
+	
+	// 탐색 범위 : owner 기준 TraceDistance 까지
+	FVector start = owner->GetActorLocation();
+	FRotator rot = owner->GetActorRotation();
+	FVector end = start + rot.Vector() * TraceDistance;
+	
+	FCollisionQueryParams traceParams;
+	traceParams.AddIgnoredActor(owner);
+	
+	// 주위 PKObject 탐색
+	FHitResult Hit;
+	bool bHit = GetWorld()->SweepSingleByChannel(
+		Hit, 
+		start, 
+		end,
+		FQuat::Identity,
+		ECC_Visibility,
+		FCollisionShape::MakeSphere(TraceRadius),
+		traceParams
+		);
+	
+	if (!bHit) return nullptr;
+	
+	AActor* hitActor = Hit.GetActor();
+	if (!hitActor) return nullptr;
+	if (!hitActor->GetClass()->ImplementsInterface(UPKInteractable::StaticClass())) return nullptr;
+	
+	APKObject* hitPKObject = Cast<APKObject>(hitActor);
+	if (!hitPKObject)
+	{
+		UE_LOG(LogTemp, Error, TEXT("UPKComponent::TraceTarget: HitActor의 PKObject 캐스팅에 실패했다."))
+		return nullptr;
+	}
+	return hitPKObject;
 }
 
 void UPKComponent::HoldTarget()

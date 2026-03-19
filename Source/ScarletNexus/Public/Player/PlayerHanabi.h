@@ -15,6 +15,15 @@ class SCARLETNEXUS_API APlayerHanabi : public APlayerCharacterBase
 	GENERATED_BODY()
 	
 public:
+	APlayerHanabi();
+	
+	virtual void BeginPlay() override;
+	virtual void Tick( float DeltaTime ) override;
+	
+	// PK 컴포넌트
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	class UPKComponent* PKComponent;
+	
 	// 물리
 	// 염력
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
