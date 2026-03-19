@@ -144,6 +144,20 @@ void APlayerCharacterBase::Tick(float DeltaTime)
 			GetCharacterMovement()->Velocity = DashVelocity;
 		}
 	}
+	
+	// 입력 없이 앞으로 대쉬 할 떄 Actor 방향 조정
+	if (bNeedAdjustActorForward)
+	{
+		const FQuat CurQuat = GetActorQuat();
+		const FQuat TargetQuat = DashDirection.ToOrientationQuat();
+		const FQuat NewQuat = FQuat::Slerp(CurQuat, TargetQuat, 0.5f);
+		SetActorRotation(NewQuat);
+		if (FQuat::ErrorAutoNormalize(CurQuat, TargetQuat) < 0.01f)
+		{
+			SetActorRotation(TargetQuat);
+			bNeedAdjustActorForward = false;
+		}
+	}
 }
 
 void APlayerCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -246,6 +260,8 @@ void APlayerCharacterBase::Dash()
 		// DodgeDirection = GetMesh()->GetRightVector();
 		// Camera 방향으로 대쉬하도록 변경
 		DashDirection = CameraComp->GetForwardVector();
+		
+		bNeedAdjustActorForward = true;
 	}
 
 	DashDirection.Normalize();
