@@ -1,12 +1,12 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "STEval_BossPhase.h"
+#include "Boss/STEval_BossPhase.h"
 #include "StateTreeExecutionContext.h"
 #include "GameFramework/Character.h"
 #include "Kismet/GameplayStatics.h"
  
-#include "IBossCharacterInterface.h"
+#include "Boss/IBossCharacterInterface.h"
  
 void FSTEval_BossPhase::TreeStart(FStateTreeExecutionContext& Context) const
 {

@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "BossGameplayTags.h"
+#include "Boss/BossGameplayTags.h"
  
 namespace BossTags
 {

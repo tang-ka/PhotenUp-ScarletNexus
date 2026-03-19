@@ -1,8 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "BossCharacterBase.h"
-#include "BossAIController.h"
+#include "Boss/BossCharacterBase.h"
+#include "Boss/BossAIController.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Components/CapsuleComponent.h"
  
