@@ -31,17 +31,37 @@ void APKObject::BeginPlay()
 void APKObject::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 
-void APKObject::OnPKPickUped()
+bool APKObject::CanBePickeduped_Implementation() const
 {
+	return ObjectState == EPKObjectState::CanBePickedUp;
 }
 
-void APKObject::OnPKReleased()
+void APKObject::OnPKPickuped_Implementation()
 {
+	if (StaticMeshComp)
+	{
+		// 물리, 중력 off
+		StaticMeshComp->SetSimulatePhysics(false);
+		StaticMeshComp->SetEnableGravity(false);
+	}
 }
 
-void APKObject::OnPKThrown(const FVector& ThrowDir, float ThrowForce)
+void APKObject::OnPKReleased_Implementation()
 {
+	if (StaticMeshComp)
+	{
+		// 물리, 중력 on
+		StaticMeshComp->SetSimulatePhysics(true);
+		StaticMeshComp->SetEnableGravity(true);
+	}
+}
+
+void APKObject::OnPKThrown_Implementation(const FVector& ThrowDir, float ThrowForce)
+{
+	// 물리, 중력 on
+	StaticMeshComp->SetSimulatePhysics(true);
+	StaticMeshComp->SetEnableGravity(true);
+	
 }
