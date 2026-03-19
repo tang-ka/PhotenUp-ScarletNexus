@@ -2,7 +2,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Damageable.h" // UDamageable, FDamageInfo, IDamageable
+#include "Damageable.h"
 
 namespace DamageableHelpers
 {
