@@ -42,7 +42,6 @@ public:
  
 	
 	// IBossCharacterInterface 구현
-	
 	virtual float GetHPRatio_Implementation() const override;
 	virtual float GetCurrentHP_Implementation() const override;
 	virtual void ApplyDamage_Implementation(float DamageAmount, AActor* DamageCauser) override;
@@ -56,7 +55,6 @@ public:
  
 	
 	// Delegates (이벤트)
-	
 	UPROPERTY(BlueprintAssignable, Category = "Boss|Events")
 	FOnBossPhaseChanged OnPhaseChanged;
  
@@ -69,13 +67,11 @@ public:
 protected:
 	
 	// Config
-	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Boss|Config")
 	TObjectPtr<UBossConfigDataAsset> BossConfig;
  
 	
 	// Stats (런타임)
-	
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Boss|Stats")
 	float MaxHP = 10000.f;
  
@@ -98,9 +94,8 @@ protected:
  
 	
 	// State
-	
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Boss|State")
-	EBossPhase CurrentPhase = EBossPhase::Phase1_Probe;
+	EBossPhase CurrentPhase = EBossPhase::Phase1;
  
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Boss|State")
 	EBossCombatState CurrentCombatState = EBossCombatState::Idle;
@@ -113,7 +108,6 @@ protected:
  
 	
 	// 내부 메서드
-	
  
 	// HP 변화에 따른 페이즈 전환 체크
 	void CheckPhaseTransition();

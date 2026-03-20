@@ -10,7 +10,6 @@
 
 // Evaluator Instance Data
 // StateTree가 관리하는 런타임 데이터
-
 USTRUCT()
 struct FSTEval_BossPhaseInstanceData
 {
@@ -18,7 +17,7 @@ struct FSTEval_BossPhaseInstanceData
  
 	// 현재 페이즈
 	UPROPERTY(EditAnywhere, Category = "Output")
-	EBossPhase CurrentPhase = EBossPhase::Phase1_Probe;
+	EBossPhase CurrentPhase = EBossPhase::Phase1;
  
 	// 현재 HP 비율 (0.0 ~ 1.0)
 	UPROPERTY(EditAnywhere, Category = "Output")
@@ -53,8 +52,9 @@ struct FSTEval_BossPhaseInstanceData
 	TObjectPtr<AActor> ContextActor = nullptr;
 };
  
-
+// ============================================================
 // Boss Phase Evaluator
+// ============================================================
 USTRUCT(DisplayName = "Boss phase evaluator")
 struct SCARLETNEXUS_API FSTEval_BossPhase : public FStateTreeEvaluatorCommonBase
 {

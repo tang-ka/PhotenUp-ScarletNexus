@@ -45,9 +45,8 @@ void ABossCharacterBase::Tick(float DeltaTime)
 	UpdateStaggerDecay(DeltaTime);
 }
  
-// ============================================================
+
 // IBossCharacterInterface 구현
-// ============================================================
  
 float ABossCharacterBase::GetHPRatio_Implementation() const
 {
@@ -166,13 +165,15 @@ void ABossCharacterBase::InitializeWithConfig_Implementation(UBossConfigDataAsse
 	CurrentHP = MaxHP;
 	MaxStaggerGauge = Config->MaxStaggerGauge;
 	CurrentStaggerGauge = 0.f;
-	CurrentPhase = EBossPhase::Phase1_Probe;
+	CurrentPhase = EBossPhase::Phase1;
  
 	UE_LOG(LogTemp, Log, TEXT("[Boss] 초기화 완료 - HP: %.0f, MaxStagger: %.0f"),
 		MaxHP, MaxStaggerGauge);
 }
  
+
 // 내부 메서드
+ 
 void ABossCharacterBase::CheckPhaseTransition()
 {
 	if (!BossConfig)
@@ -184,14 +185,18 @@ void ABossCharacterBase::CheckPhaseTransition()
 	EBossPhase NewPhase = CurrentPhase;
  
 	// HP 비율에 따른 페이즈 결정
-	// PhaseConfigs는 Phase1(HP 1.0~0.7), Phase2(0.7~0.35), Phase3(0.35~0)
-	if (HPRatio <= 0.35f)
+	// Phase1(1.0~0.7), Phase2(0.7~0.5), Phase2_Enhanced(0.5~0.25), Phase3(0.25~0)
+	if (HPRatio <= 0.25f)
 	{
-		NewPhase = EBossPhase::Phase3_Awakening;
+		NewPhase = EBossPhase::Phase3_Cutscene;
+	}
+	else if (HPRatio <= 0.50f)
+	{
+		NewPhase = EBossPhase::Phase2_Enhanced;
 	}
 	else if (HPRatio <= 0.70f)
 	{
-		NewPhase = EBossPhase::Phase2_Assault;
+		NewPhase = EBossPhase::Phase2;
 	}
  
 	if (NewPhase != CurrentPhase)
@@ -271,4 +276,3 @@ void ABossCharacterBase::HandleDeath()
 	// TODO: 사망 이펙트 재생
 	// TODO: 일정 시간 후 액터 제거 또는 비가시화
 }
-

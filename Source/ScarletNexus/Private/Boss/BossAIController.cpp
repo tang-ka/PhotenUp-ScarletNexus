@@ -10,17 +10,11 @@
 ABossAIController::ABossAIController(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
-	// -------------------------------------------------------
+	
 	// StateTree AI Component 생성
-	// 이 컴포넌트가 StateTree 에셋을 실행하고
-	// AI Controller를 Context로 전달합니다.
-	// -------------------------------------------------------
 	StateTreeAIComp = CreateDefaultSubobject<UStateTreeAIComponent>(TEXT("StateTreeAIComp"));
  
-	// -------------------------------------------------------
-	// AI Perception 설정 (선택사항)
-	// 카렌 트래버스는 시야 기반으로 플레이어를 추적
-	// -------------------------------------------------------
+	// 시야 기반으로 플레이어를 추적
 	UAIPerceptionComponent* PerceptionComp = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("PerceptionComp"));
 	SetPerceptionComponent(*PerceptionComp);
  
@@ -72,9 +66,8 @@ void ABossAIController::ForcePhaseTransition(EBossPhase NewPhase)
  
 	CurrentPhase = NewPhase;
  
-	// TODO: StateTree에 페이즈 전환 이벤트를 보내서
+	// StateTree에 페이즈 전환연출 보내기
 	// 전환 연출 State로 진입시키기
-	// SendStateTreeEvent(FGameplayTag::RequestGameplayTag("Boss.Event.PhaseTransition"));
 }
  
 void ABossAIController::SendStateTreeEvent(FGameplayTag EventTag)
@@ -83,14 +76,6 @@ void ABossAIController::SendStateTreeEvent(FGameplayTag EventTag)
 	{
 		return;
 	}
- 
-	// UE 5.7 StateTree는 SendStateTreeEvent를 통해
-	// 외부에서 StateTree에 이벤트를 전달할 수 있습니다.
-	// 이를 통해 피격, 경직, 브레인 크래시 등의 외부 트리거를
-	// StateTree의 Transition 조건으로 사용할 수 있습니다.
- 
-	// TODO: UE 5.7의 정확한 이벤트 전송 API 확인 후 구현
-	// StateTreeAIComp->SendStateTreeEvent(EventTag);
  
 	UE_LOG(LogTemp, Log, TEXT("[BossAI] StateTree 이벤트 전송: %s"), *EventTag.ToString());
 }
