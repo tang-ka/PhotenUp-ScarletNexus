@@ -3,10 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "StateTreeTaskBase.h"
+#include "BossTypes.h"
+#include "STTask_BossSelectAttack.h"
 
-/**
- * 
- */
+
 class SCARLETNEXUS_API STTask_BossSelectAttack
 {
 public:
