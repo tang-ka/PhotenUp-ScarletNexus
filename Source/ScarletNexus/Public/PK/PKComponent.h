@@ -19,6 +19,7 @@ public:
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 public:
 	// Called every frame
@@ -36,6 +37,11 @@ public:
 	UPROPERTY(EditAnywhere)
 	float TraceRadius = 100.f;
 	
+	// 트레이싱 타이머
+	FTimerHandle TraceTimerHandle;
+	// 트레이싱 딜레이
+	float TraceDelay = 0.5f;
+	
 	// 탐색 조준중인 타겟 PK오브젝트
 	UPROPERTY()
 	TObjectPtr<class APKObject> CurrentTarget;
@@ -48,7 +54,7 @@ public:
 	
 	// 타겟 탐색
 	UFUNCTION(BlueprintCallable)
-	class APKObject* TraceTarget() const;
+	void TraceTarget();
 	// 타겟 홀드
 	UFUNCTION(BlueprintCallable)
 	void HoldTarget();
