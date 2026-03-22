@@ -65,8 +65,6 @@ void ABossAIController::ForcePhaseTransition(EBossPhase NewPhase)
 		static_cast<int32>(NewPhase));
  
 	CurrentPhase = NewPhase;
- 
-	// StateTree에 페이즈 전환연출 보내기
 	// 전환 연출 State로 진입시키기
 }
  

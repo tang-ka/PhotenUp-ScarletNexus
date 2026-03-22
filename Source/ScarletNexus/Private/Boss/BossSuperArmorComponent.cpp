@@ -64,7 +64,6 @@ bool UBossSuperArmorComponent::ShouldAbsorbHit(
 		return false;
 	}
  
-	// Flinch는 항상 무시 옵션
 	if (bAlwaysIgnoreFlinch && ReactionType == EHitReactionType::Flinch)
 	{
 		return true;
@@ -73,8 +72,6 @@ bool UBossSuperArmorComponent::ShouldAbsorbHit(
 	// 누적 대미지가 임계값을 넘으면 슈퍼아머 파괴
 	if (AccumulatedDamage + IncomingDamage >= SuperArmorBreakThreshold)
 	{
-		// const_cast는 이상적이지 않지만, 슈퍼아머 파괴는 즉각 반영 필요
-		// 실제 구현에서는 Mutable 패턴이나 별도 이벤트로 처리 권장
 		UE_LOG(LogTemp, Log,
 			TEXT("[SuperArmor] 파괴! (누적: %.0f + 신규: %.0f >= 임계: %.0f)"),
 			AccumulatedDamage, IncomingDamage, SuperArmorBreakThreshold);

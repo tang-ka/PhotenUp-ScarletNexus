@@ -127,7 +127,7 @@ void FSTTask_BossHitReaction::ExitState(
 	const FStateTreeTransitionResult& Transition) const
 {
 	// 리액션이 끝나면 별도 정리 작업 없음
-	// 상위 State에서 Idle로 돌아가며 자연스럽게 다음 행동 선택
+	// State에서 Idle로 돌아가고 다음 행동 선택함
 }
  
 EHitDirection FSTTask_BossHitReaction::CalculateHitDirection(
