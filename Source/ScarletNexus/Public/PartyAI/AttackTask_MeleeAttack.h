@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "StateTreeTaskBase.h"
+#include "AttackTask_MeleeAttack.generated.h"
 
 class APlayerCharacterBase;
 
