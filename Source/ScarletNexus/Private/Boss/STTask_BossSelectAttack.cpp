@@ -1,3 +1,6 @@
+
+
+
 #include "Boss/STTask_BossSelectAttack.h"
 #include "StateTreeExecutionContext.h"
 #include "GameFramework/Character.h"
@@ -41,9 +44,21 @@ EStateTreeRunStatus FSTTask_BossSelectAttack::EnterState(
 	const FBossAttackPattern& SelectedPattern = AvailablePatterns[InstanceData.SelectedPatternIndex];
  
 	ACharacter* BossCharacter = Cast<ACharacter>(InstanceData.ContextActor);
-	if (!BossCharacter || !SelectedPattern.AttackMontage)
+	if (!BossCharacter)
 	{
 		return EStateTreeRunStatus::Failed;
+	}
+ 
+	UE_LOG(LogTemp, Log, TEXT("[BossSelectAttack] 패턴 선택: %s (Phase: %d, Distance: %.0f)"),
+		*SelectedPattern.AttackTag.ToString(),
+		static_cast<int32>(InstanceData.CurrentPhase),
+		InstanceData.DistanceToPlayer);
+ 
+	// 몽타주가 없으면 바로 완료 (테스트용)
+	if (!SelectedPattern.AttackMontage)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[BossSelectAttack] 몽타주 없음 - 바로 완료"));
+		return EStateTreeRunStatus::Succeeded;
 	}
  
 	UAnimInstance* AnimInstance = BossCharacter->GetMesh()->GetAnimInstance();
@@ -54,11 +69,6 @@ EStateTreeRunStatus FSTTask_BossSelectAttack::EnterState(
  
 	// 몽타주 재생
 	AnimInstance->Montage_Play(SelectedPattern.AttackMontage, 1.f);
- 
-	UE_LOG(LogTemp, Log, TEXT("[BossSelectAttack] 패턴 선택: %s (Phase: %d, Distance: %.0f)"),
-		*SelectedPattern.AttackTag.ToString(),
-		static_cast<int32>(InstanceData.CurrentPhase),
-		InstanceData.DistanceToPlayer);
  
 	// 몽타주가 끝날 때까지 Running 유지
 	return EStateTreeRunStatus::Running;
