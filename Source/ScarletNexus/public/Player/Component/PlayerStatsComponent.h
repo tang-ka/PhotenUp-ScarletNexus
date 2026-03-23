@@ -30,7 +30,7 @@ public:
 	void Heal(int32 HealAmount) { SetCurrentHP(CurrentHP + HealAmount); }
 	
 	UFUNCTION(BlueprintCallable)
-	void TakeDamage(int32 DamageAmount) { SetCurrentHP(CurrentHP - DamageAmount); }
+	void ReceiveDamage(int32 DamageAmount) { SetCurrentHP(CurrentHP - DamageAmount); }
 	
 #pragma region Getters & Setters
 	UFUNCTION(BlueprintCallable)
