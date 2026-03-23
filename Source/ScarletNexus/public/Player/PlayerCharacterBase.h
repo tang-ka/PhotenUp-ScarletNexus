@@ -58,6 +58,7 @@ private:
 #pragma region Dash
 	bool bIsDashing{false}; // 상태 중심
 	bool bCanDash{true};	// 상태 및 쿨타임 중심
+	bool bNeedAdjustActorForward{false}; // 대쉬 방향이 이동 방향과 다를 때 true
 	FVector DashDirection{};
 	FVector DashVelocity{};
 	float DashTimeRemaining{0.f};
