@@ -26,12 +26,13 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType,
 	                           FActorComponentTickFunction* ThisTickFunction) override;
+	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
 
 #pragma region Getters
 	bool GetHasSoftTarget() const { return SoftTarget.IsValid(); }
-	ACharacter* GetSoftTarget() const { return SoftTarget.IsValid() ? SoftTarget.Get() : nullptr; }
-	ACharacter* GetHardTarget() const { return HardTarget.IsValid() ? HardTarget.Get() : nullptr; }
-	ACharacter* GetCurrentTarget() const;
+	AActor* GetSoftTarget() const { return SoftTarget.IsValid() ? SoftTarget.Get() : nullptr; }
+	AActor* GetHardTarget() const { return HardTarget.IsValid() ? HardTarget.Get() : nullptr; }
+	AActor* GetCurrentTarget() const;
 #pragma endregion
 
 #pragma region Lock-On
@@ -43,7 +44,8 @@ public:
 private:
 	void InitDetectionSphere();
 	void UpdateSoftTarget();
-	ACharacter* FindBestSoftTarget() const;
+	AActor* EvaluateCandidates() const;
+	float CalcScreenCenterScore(AActor* Target) const;	
 
 	UFUNCTION()
 	void OnBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
@@ -66,15 +68,32 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Perception|SoftTarget Settings", meta = (ClampMin = "0.0", ClampMax = "1.0"))
 	float CosMinAngle{0.707f}; // 45도
 
+	UPROPERTY(EditAnywhere, Category = "Perception|SoftTarget Settings", meta = (ClampMin = "0.0", ClampMax = "1.0"))
+	float DistWeight{0.3f};
+	
+	UPROPERTY(EditAnywhere, Category = "Perception|SoftTarget Settings", meta = (ClampMin = "0.0", ClampMax = "1.0"))
+	float AngleWeight{0.3f};
+	
+	UPROPERTY(EditAnywhere, Category = "Perception|SoftTarget Settings", meta = (ClampMin = "0.0", ClampMax = "1.0"))
+	float ScreenWeight{0.4f};
+	
 	UPROPERTY(EditAnywhere, Category = "Perception|HardTarget Settings")
-	float SoftTargetUpdateInterval{0.25f};
-
+	float SoftTargetUpdateInterval{0.15f};
+	
+	UPROPERTY(EditAnywhere, Category = "Perception|HardTarget Settings")
+	int32 TopCount{5};
 
 #pragma region Target
-	TWeakObjectPtr<ACharacter> SoftTarget;
-	TWeakObjectPtr<ACharacter> HardTarget;
-	bool bIsLockedOn{false};
-
+	TWeakObjectPtr<AActor> SoftTarget;
+	TWeakObjectPtr<AActor> HardTarget;
 	TWeakObjectPtr<AActor> PsychokinesisTarget;
+	
+	TArray<TWeakObjectPtr<AActor>> CandidateSoftTargets;
+	TArray<TWeakObjectPtr<AActor>> CandidatePsychokinesisTargets;
 #pragma endregion
+	
+	bool bIsLockedOn{false};
+	
+	UPROPERTY(EditAnywhere, Category = "Perception|Debug")
+	bool bDrawDebug{false};
 };
