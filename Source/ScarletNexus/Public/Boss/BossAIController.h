@@ -17,10 +17,12 @@ class SCARLETNEXUS_API ABossAIController : public AAIController
  
 public:
 	ABossAIController(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
+ 
 	
 	// Lifecycle
 	virtual void OnPossess(APawn* InPawn) override;
 	virtual void OnUnPossess() override;
+ 
 	
 	// 외부에서 호출할 수 있는 인터페이스
  
@@ -39,13 +41,14 @@ public:
 protected:
 	
 	// Components
-	
+ 
 	// StateTree AI Component - StateTree 실행의 핵심
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Boss|AI")
 	TObjectPtr<UStateTreeAIComponent> StateTreeAIComp;
+ 
 	
 	// Config
-	
+ 
 	// 보스 설정 Data Asset
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Boss|Config")
 	TObjectPtr<UBossConfigDataAsset> BossConfig;
@@ -54,5 +57,5 @@ protected:
 	// Runtime State
  
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Boss|State")
-	EBossPhase CurrentPhase = EBossPhase::Phase1_Probe;
+	EBossPhase CurrentPhase = EBossPhase::Phase1;
 };
