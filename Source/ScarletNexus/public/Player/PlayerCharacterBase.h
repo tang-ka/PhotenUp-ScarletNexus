@@ -61,8 +61,11 @@ protected:
 	void OnJumpInput(const FInputActionValue& Value);
 	void OnCompleteJumpInput(const FInputActionValue& Value);
 	void OnDodgeInput(const FInputActionValue& Value);
+	
 	void OnBasicAttackInput(const FInputActionValue& Value);
 	void OnPsychokinesisInput(const FInputActionValue& Value);
+	void OnCompletePsychokinesisInput(const FInputActionValue& Value);
+	
 	void OnBackAttackInput(const FInputActionValue& Value);
 	void OnLockOnInput(const FInputActionValue& Value);
 #pragma endregion

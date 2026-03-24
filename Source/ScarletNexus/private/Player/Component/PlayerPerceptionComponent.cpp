@@ -3,15 +3,18 @@
 
 #include "Player/Component/PlayerPerceptionComponent.h"
 
+#include "Camera/CameraComponent.h"
 #include "Components/SphereComponent.h"
 #include "GameFramework/Character.h"
 #include "Interface/DamageableHelper.h"
+#include "Interface/PKInteractable.h"
+#include "Player/PlayerCharacterBase.h"
 
 
 UPlayerPerceptionComponent::UPlayerPerceptionComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
-
+	PerceptionAngleCos = FMath::Cos(FMath::DegreesToRadians(PerceptionAngleDeg));
 }
 
 void UPlayerPerceptionComponent::BeginPlay()
@@ -23,11 +26,11 @@ void UPlayerPerceptionComponent::BeginPlay()
 	GetWorld()->GetTimerManager().SetTimer(
 		SoftTargetUpdateTimer,
 		this,
-		&UPlayerPerceptionComponent::UpdateSoftTarget,
+		&UPlayerPerceptionComponent::UpdatePerception,
 		SoftTargetUpdateInterval,
 		true
 	);
-	
+
 	// DistWeight와 AngleWeight의 합이 1이 되도록 강제
 	if (DistWeight + AngleWeight + ScreenWeight != 1.f)
 	{
@@ -36,21 +39,65 @@ void UPlayerPerceptionComponent::BeginPlay()
 		AngleWeight /= Total;
 		ScreenWeight /= Total;
 	}
+
+	DeactivateLockOn();
 }
 
 void UPlayerPerceptionComponent::TickComponent(float DeltaTime, ELevelTick TickType,
                                                FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-	
+
 	if (bDrawDebug)
 	{
+		AActor* CurrentTarget = GetCurrentTarget();
+
 		DrawDebugSphere(GetWorld(), GetOwner()->GetActorLocation(), SoftTargetRadius, 30, FColor::Green);
-		
-		if (SoftTarget.IsValid())
+
+		if (GetCurrentTarget())
 		{
-			DrawDebugSphere(GetWorld(), SoftTarget->GetActorLocation(), 30.f, 12, FColor::Red,
-				false, -1.f, 0, 5.f);
+			FVector CircleYAxis = FVector::RightVector;
+			FVector CircleZAxis = FVector::UpVector;
+
+			if (const APlayerCharacterBase* OwnerCharacter = Cast<APlayerCharacterBase>(GetOwner()))
+			{
+				if (const UCameraComponent* CameraComp = OwnerCharacter->GetCameraComp())
+				{
+					CircleYAxis = CameraComp->GetRightVector();
+					CircleZAxis = CameraComp->GetUpVector();
+				}
+			}
+
+			FColor CircleColor = bIsLockedOn ? FColor::Red : FColor::Green;
+
+			// billboard 형태로 타겟 위치에 원 그리기 (카메라 화면을 향하도록)
+			DrawDebugCircle(GetWorld(),
+			                CurrentTarget->GetActorLocation(),
+			                80.f, 30, CircleColor,
+			                false, -1.f, 0, 4,
+			                CircleYAxis, CircleZAxis, false);
+		}
+
+		if (GetPsychokinesisTarget())
+		{
+			FVector CircleYAxis = FVector::RightVector;
+			FVector CircleZAxis = FVector::UpVector;
+
+			if (const APlayerCharacterBase* OwnerCharacter = Cast<APlayerCharacterBase>(GetOwner()))
+			{
+				if (const UCameraComponent* CameraComp = OwnerCharacter->GetCameraComp())
+				{
+					CircleYAxis = CameraComp->GetRightVector();
+					CircleZAxis = CameraComp->GetUpVector();
+				}
+			}
+
+			// billboard 형태로 타겟 위치에 원 그리기 (카메라 화면을 향하도록)
+			DrawDebugCircle(GetWorld(),
+			                GetPsychokinesisTarget()->GetActorLocation(),
+			                80.f, 30, FColor::Purple,
+			                false, -1.f, 0, 4,
+			                CircleYAxis, CircleZAxis, false);
 		}
 	}
 }
@@ -73,11 +120,21 @@ AActor* UPlayerPerceptionComponent::GetCurrentTarget() const
 void UPlayerPerceptionComponent::ActivateLockOn()
 {
 	bIsLockedOn = true;
+
+	if (HasSoftTarget())
+	{
+		HardTarget = SoftTarget;
+	}
 }
 
 void UPlayerPerceptionComponent::DeactivateLockOn()
 {
 	bIsLockedOn = false;
+
+	if (HardTarget.IsValid())
+	{
+		HardTarget.Reset();
+	}
 }
 
 void UPlayerPerceptionComponent::InitDetectionSphere()
@@ -93,7 +150,7 @@ void UPlayerPerceptionComponent::InitDetectionSphere()
 		return;
 	}
 
-	DetectionSphere = NewObject<USphereComponent>(this, TEXT("DetectionSphere"));
+	DetectionSphere = NewObject<USphereComponent>(Owner, TEXT("DetectionSphere"));
 
 	DetectionSphere->SetupAttachment(GetOwner()->GetRootComponent());
 	DetectionSphere->RegisterComponent();
@@ -105,30 +162,72 @@ void UPlayerPerceptionComponent::InitDetectionSphere()
 
 	DetectionSphere->OnComponentBeginOverlap.AddDynamic(this, &UPlayerPerceptionComponent::OnBeginOverlap);
 	DetectionSphere->OnComponentEndOverlap.AddDynamic(this, &UPlayerPerceptionComponent::OnEndOverlap);
+
+	TArray<AActor*> InitialOverlaps;
+	DetectionSphere->GetOverlappingActors(InitialOverlaps);
+
+	for (AActor* Actor : InitialOverlaps)
+	{
+		if (DamageableHelpers::IsDamageable(Actor))
+		{
+			if (ACharacter* Character = Cast<ACharacter>(Actor))
+			{
+				CandidateSoftTargets.Add(Character);
+			}
+		}
+
+		if (Actor->GetClass()->ImplementsInterface(UPKInteractable::StaticClass()))
+		{
+			CandidatePsychokinesisTargets.Add(Actor);
+		}
+	}
 }
 
-void UPlayerPerceptionComponent::UpdateSoftTarget()
+void UPlayerPerceptionComponent::UpdatePerception()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Updating Soft Target"));
-	
-	SoftTarget = EvaluateCandidates();
+	if (!bIsLockedOn)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Updating Soft Target"));
+		SoftTarget = EvaluateCandidates(CandidateSoftTargets);
+	}
+
+	PsychokinesisTarget = EvaluateCandidates(CandidatePsychokinesisTargets, 0.1f, 0.2f, 0.7f);
 }
 
-AActor* UPlayerPerceptionComponent::EvaluateCandidates() const
+AActor* UPlayerPerceptionComponent::EvaluateCandidates(const TArray<TWeakObjectPtr<AActor>>& Candidates,
+                                                       float InDistWeight,
+                                                       float InAngleWeight,
+                                                       float InScreenWeight) const
 {
-	if (CandidateSoftTargets.Num() == 0)
+	// 음수(센티넬)이면 멤버 변수 값을 사용
+	if (InDistWeight < 0.f || InAngleWeight < 0.f || InScreenWeight < 0.f)
+	{
+		InDistWeight = DistWeight;
+		InAngleWeight = AngleWeight;
+		InScreenWeight = ScreenWeight;
+	}
+	else
+	{
+		// 양수면 가중치 합이 1이 되도록 정규화
+		const float Total = InDistWeight + InAngleWeight + InScreenWeight;
+		InDistWeight /= Total;
+		InAngleWeight /= Total;
+		InScreenWeight /= Total;
+	}
+
+	if (Candidates.Num() == 0)
 	{
 		return nullptr;
 	}
 
-	AActor* Owner = GetOwner();
-	const FVector MyLocation = GetOwner()->GetActorLocation();
-	const FVector Forward = GetOwner()->GetActorForwardVector();
+	const auto* Owner = Cast<APlayerCharacterBase>(GetOwner());
+	const FVector MyLocation = Owner->GetActorLocation();
+	const FVector Forward = Owner->GetCameraComp()->GetForwardVector();
 
 	TArray<TPair<AActor*, float>> PreFiltered;
-	PreFiltered.Reserve(CandidateSoftTargets.Num());
+	PreFiltered.Reserve(Candidates.Num());
 
-	for (auto& Candidate : CandidateSoftTargets)
+	for (auto& Candidate : Candidates)
 	{
 		if (!Candidate.IsValid())
 		{
@@ -142,7 +241,7 @@ AActor* UPlayerPerceptionComponent::EvaluateCandidates() const
 		const float CosAngle = FVector::DotProduct(Forward, DirectionNorm);
 
 		// 방향이 범위 밖인 후보는 제외 (뒤에 있는 후보도 자동 제외)
-		if (CosAngle < CosMinAngle)
+		if (CosAngle < PerceptionAngleCos)
 		{
 			continue;
 		}
@@ -151,7 +250,7 @@ AActor* UPlayerPerceptionComponent::EvaluateCandidates() const
 		const float DistScore = 1.0f - FMath::Clamp(Distance / SoftTargetRadius, 0.f, 1.f);
 		// 각도 점수 계산(0~1, 정면에 가까울수록 높음)
 		const float AngleScore = FMath::Clamp(CosAngle, 0.f, 1.f);
-		const float PreScore = (DistWeight * DistScore) + (AngleWeight * AngleScore);
+		const float PreScore = (InDistWeight * DistScore) + (InAngleWeight * AngleScore);
 
 		PreFiltered.Emplace(Candidate.Get(), PreScore);
 	}
@@ -167,23 +266,23 @@ AActor* UPlayerPerceptionComponent::EvaluateCandidates() const
 	});
 
 	const int32 TopN = FMath::Min(PreFiltered.Num(), TopCount); // 상위 5개 후보만 실제로 스크린 좌표로 변환해서 비교
-	
+
 	// 스크린 중앙이랑 가까운 후보 선정 (최적화 : 상위 N개 후보만 실제로 스크린 좌표로 변환해서 비교)
 	AActor* BestCandidate = nullptr;
 	float BestScore = -FLT_MAX;
-	
+
 	for (int32 i = 0; i < TopN; i++)
 	{
 		float ScreenScore = CalcScreenCenterScore(PreFiltered[i].Key);
-		float TotalScore = PreFiltered[i].Value + ScreenScore * ScreenWeight;
-		
+		float TotalScore = PreFiltered[i].Value + ScreenScore * InScreenWeight;
+
 		if (TotalScore > BestScore)
 		{
 			BestScore = TotalScore;
 			BestCandidate = PreFiltered[i].Key;
 		}
 	}
-	
+
 	return BestCandidate;
 }
 
@@ -210,7 +309,7 @@ float UPlayerPerceptionComponent::CalcScreenCenterScore(AActor* Target) const
 
 	int32 ViewportX, ViewportY;
 	PC->GetViewportSize(ViewportX, ViewportY);
-	
+
 	FVector2D ScreenCenter(ViewportX * 0.5f, ViewportY * 0.5f);
 	float MaxDist = ScreenCenter.Size();
 	float DistFromCenter = FVector2D::Distance(ScreenPos, ScreenCenter);
@@ -231,10 +330,10 @@ void UPlayerPerceptionComponent::OnBeginOverlap(UPrimitiveComponent* OverlappedC
 		}
 	}
 
-	// if (OtherActor->GetClass()->ImplementsInterface(UPsychokinesisTargetable::StaticClass()))
-	// {
-	// 	CandidatePsychokinesisTargets.Add(OtherActor);
-	// }
+	if (OtherActor->GetClass()->ImplementsInterface(UPKInteractable::StaticClass()))
+	{
+		CandidatePsychokinesisTargets.Add(OtherActor);
+	}
 }
 
 void UPlayerPerceptionComponent::OnEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
@@ -245,4 +344,11 @@ void UPlayerPerceptionComponent::OnEndOverlap(UPrimitiveComponent* OverlappedCom
 	{
 		SoftTarget.Reset();
 	}
+
+	if (GetHardTarget() == OtherActor)
+	{
+		HardTarget.Reset();
+	}
+
+	CandidatePsychokinesisTargets.Remove(OtherActor);
 }

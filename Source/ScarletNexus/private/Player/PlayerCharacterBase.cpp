@@ -196,6 +196,7 @@ void APlayerCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 		// Skills
 		InputComp->BindAction(IA_BasicAttack, ETriggerEvent::Started, this, &APlayerCharacterBase::OnBasicAttackInput);
 		InputComp->BindAction(IA_Psychokinesis, ETriggerEvent::Started, this, &APlayerCharacterBase::OnPsychokinesisInput);
+		InputComp->BindAction(IA_Psychokinesis, ETriggerEvent::Completed, this, &APlayerCharacterBase::OnCompletePsychokinesisInput);
 		
 		InputComp->BindAction(IA_BackAttack, ETriggerEvent::Started, this, &APlayerCharacterBase::OnBackAttackInput);
 		InputComp->BindAction(IA_LockOn, ETriggerEvent::Started, this, &APlayerCharacterBase::OnLockOnInput);
@@ -270,7 +271,15 @@ void APlayerCharacterBase::OnBasicAttackInput(const FInputActionValue& Value)
 
 void APlayerCharacterBase::OnPsychokinesisInput(const FInputActionValue& Value)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Psychokinesis!"));
+	PsychokinesisComp->SetTarget(GetPerceptionComp()->GetCurrentTarget());
+	PsychokinesisComp->SetPickedObject(GetPerceptionComp()->GetPsychokinesisTarget());
+	
+	PsychokinesisComp->StartHold();
+}
+
+void APlayerCharacterBase::OnCompletePsychokinesisInput(const FInputActionValue& Value)
+{
+	PsychokinesisComp->ReleaseHold();
 }
 
 void APlayerCharacterBase::OnBackAttackInput(const FInputActionValue& Value)

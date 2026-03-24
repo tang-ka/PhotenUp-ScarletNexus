@@ -43,8 +43,11 @@ void APKObject::OnPKPickuped_Implementation()
 	if (StaticMeshComp)
 	{
 		// 물리, 중력 off
-		StaticMeshComp->SetSimulatePhysics(false);
-		StaticMeshComp->SetEnableGravity(false);
+		// StaticMeshComp->SetSimulatePhysics(false);
+		// StaticMeshComp->SetEnableGravity(false);
+		
+		BoxComp->SetSimulatePhysics(false);
+		BoxComp->SetEnableGravity(false);
 	}
 }
 
@@ -53,15 +56,17 @@ void APKObject::OnPKReleased_Implementation()
 	if (StaticMeshComp)
 	{
 		// 물리, 중력 on
-		StaticMeshComp->SetSimulatePhysics(true);
-		StaticMeshComp->SetEnableGravity(true);
+		// StaticMeshComp->SetSimulatePhysics(true);
+		// StaticMeshComp->SetEnableGravity(true);
+		
+		BoxComp->SetSimulatePhysics(true);
+		BoxComp->SetEnableGravity(true);
 	}
 }
 
 void APKObject::OnPKThrown_Implementation(const FVector& ThrowDir, float ThrowForce)
 {
 	// 물리, 중력 on
-	StaticMeshComp->SetSimulatePhysics(true);
-	StaticMeshComp->SetEnableGravity(true);
-	
+	// StaticMeshComp->SetSimulatePhysics(true);
+	// StaticMeshComp->SetEnableGravity(true);
 }
