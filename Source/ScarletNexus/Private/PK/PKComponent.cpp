@@ -90,7 +90,7 @@ void UPKComponent::TraceTarget()
 		
 		// 이미 잡혀 있는 오브젝트 제외
 		APKObject* pkObj = Cast<APKObject>(actor);
-		if (!pkObj || !pkObj->CanBePickeduped()) continue;
+		if (!pkObj || !pkObj->Execute_CanBePickeduped(actor)) continue;
 		
 		// 시야각 필터링 (owner 전방 기준)
 		FVector toActor = (actor->GetActorLocation() - ownerLoc).GetSafeNormal();
@@ -149,7 +149,7 @@ void UPKComponent::ReleaseTarget()
 {
 	if (!HeldObject) return;
 	
-	IPKInteractable::Execute_OnPKReleased(CurrentTarget);
+	IPKInteractable::Execute_OnPKReleased(HeldObject);
 	HeldObject->ObjectState = EPKObjectState::CanBePickedUp;
 	
 	UE_LOG(LogTemp, Warning, TEXT("[PKComponent::HoldTarget] 잡기 해제. HeldObject : %s"), *HeldObject->GetName());

@@ -12,19 +12,16 @@ UPartyAIComponent::UPartyAIComponent()
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = false;
 
-	// ...
+	StateTreeComp = CreateDefaultSubobject<UStateTreeComponent>(TEXT("StateTreeComp"));
 }
-
 
 // Called when the game starts
 void UPartyAIComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// ...
 	
 }
-
 
 // Called every frame
 void UPartyAIComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
