@@ -62,4 +62,8 @@ public:
 	void ReleaseTarget();
 	UFUNCTION(BlueprintCallable)
 	void UseHeldTarget(const FVector& ThrowDir, float ThrowForce);
+	
+	// 현재 잡은 PK오브젝트가 있는지 체크
+	UFUNCTION(BlueprintCallable)
+	bool IsHoldingPKObject() { return HeldObject != nullptr; }
 };

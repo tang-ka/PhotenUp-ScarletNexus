@@ -15,7 +15,7 @@ struct FAttackTask_MeleeAttackInstanceData
 	
 	// Evaluator에서 받아온 타겟
 	UPROPERTY(EditAnywhere, meta=(Input))
-	TObjectPtr<APlayerCharacterBase> Target = nullptr;
+	TObjectPtr<AActor> Target = nullptr;
 	
 	// 공격 범위 
 	UPROPERTY(EditAnywhere)
@@ -23,7 +23,7 @@ struct FAttackTask_MeleeAttackInstanceData
 	
 	// 데미지
 	UPROPERTY(EditAnywhere)
-	float Damage = 30.f;
+	int32 Damage = 30;
 	
 	// 공격 쿨다운
 	UPROPERTY(EditAnywhere)
@@ -34,7 +34,7 @@ struct FAttackTask_MeleeAttackInstanceData
 	bool bAttacked = false;
 };
 
-USTRUCT(DisplayName="Attack: Melee Attack")
+USTRUCT(DisplayName="Party: Melee Attack")
 struct FAttackTask_MeleeAttack : public FStateTreeTaskBase
 {
 	GENERATED_BODY()

@@ -16,6 +16,10 @@ struct FPartyEvaluatorInstanceData
 	UPROPERTY(EditAnywhere, meta=(Output))
 	TObjectPtr<APlayerCharacterBase> TrackedPlayer = nullptr;
 	
+	// 최근접 적 (IDamageable 적용체)
+	UPROPERTY(EditAnywhere, meta=(Output))
+	TObjectPtr<AActor> NearestEnemy = nullptr;
+	
 	UPROPERTY(EditAnywhere)
 	float DetectRadius = 1200.f;
 	

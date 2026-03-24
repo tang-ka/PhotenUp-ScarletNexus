@@ -25,10 +25,10 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-	// 에디터에서 ST_PartyCharacter 할당
+	// 에디터에서 ST_PartyCharacter 할당 or 경로 설정 Set
 	UPROPERTY(EditAnywhere, Category = "AI")
 	TObjectPtr<class UStateTree> PartyCharacterST;
-
+	
 	// AIController에서 Possess 시 호출
 	void StartAI();
 

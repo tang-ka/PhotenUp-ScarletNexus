@@ -5,7 +5,10 @@
 
 #include "StateTreeExecutionContext.h"
 #include "Engine/OverlapResult.h"
+#include "Interface/Damageable.h"
+#include "Interface/DamageableHelper.h"
 #include "Player/PlayerCharacterBase.h"
+#include "ProfilingDebugging/CookStats.h"
 
 void FPartyEvaluator::Tick(FStateTreeExecutionContext& Context, const float DeltaTime) const
 {
@@ -26,22 +29,45 @@ void FPartyEvaluator::Tick(FStateTreeExecutionContext& Context, const float Delt
 		FCollisionShape::MakeSphere(data.DetectRadius),
 		params);
 	
+	// 파티
 	APlayerCharacterBase* nearest = nullptr;
 	float bestDist = FLT_MAX;
 	
+	// 적
+	AActor* nearestEnemy = nullptr;
+	float bestEnemyDist = FLT_MAX;
+	
 	for (const FOverlapResult& hit : overlaps)
 	{
-		APlayerCharacterBase* player = Cast<APlayerCharacterBase>(hit.GetActor());
-		if (!player) continue;
+		AActor* actor = hit.GetActor();
+		if (!actor) continue;
 		
-		float dist = FVector::DistSquared(owner->GetActorLocation(), player->GetActorLocation());
-		if (dist < bestDist)
+		// 파티 (플레이 캐릭터) 탐색
+		if (APlayerCharacterBase* player = Cast<APlayerCharacterBase>(actor))
 		{
-			bestDist = dist;
-			nearest = player;
+			float dist = FVector::DistSquared(owner->GetActorLocation(), player->GetActorLocation());
+			if (dist < bestDist)
+			{
+				bestDist = dist;
+				nearest = player;
+			}
+			continue; // 플레이어 탐색하면 적 탐색 스킵
+		}
+		
+		// 적 탐색
+		if (DamageableHelpers::IsDamageable(actor))
+		{
+			float dist = FVector::DistSquared(owner->GetActorLocation(), actor->GetActorLocation());
+			if (dist < bestEnemyDist)
+			{
+				bestEnemyDist = dist;
+				nearestEnemy = actor;
+			}
 		}
 	}
 	
+	
 	data.TrackedPlayer = nearest;
-	data.bInAttackRange = nearest ? (FVector::Dist(owner->GetActorLocation(), nearest->GetActorLocation()) <= data.AttackRange) : false;
+	data.NearestEnemy = nearestEnemy;
+	data.bInAttackRange = nearestEnemy ? (FVector::Dist(owner->GetActorLocation(), nearest->GetActorLocation()) <= data.AttackRange) : false;
 }
