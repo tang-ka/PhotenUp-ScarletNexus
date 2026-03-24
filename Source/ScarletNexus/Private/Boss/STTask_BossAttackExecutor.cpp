@@ -2,6 +2,7 @@
 
 
 #include "Boss/STTask_BossAttackExecutor.h"
+#include "Boss/BossCloneActor.h"
 #include "StateTreeExecutionContext.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -11,6 +12,7 @@
 #include "NavigationSystem.h"
  
 // EnterState - 공격 선택 후 초기화
+
 EStateTreeRunStatus FSTTask_BossAttackExecutor::EnterState(
 	FStateTreeExecutionContext& Context,
 	const FStateTreeTransitionResult& Transition) const
@@ -42,7 +44,9 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::EnterState(
 	}
 }
  
+
 // Tick - 선택된 공격 실행
+
 EStateTreeRunStatus FSTTask_BossAttackExecutor::Tick(
 	FStateTreeExecutionContext& Context,
 	const float DeltaTime) const
@@ -68,7 +72,9 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::Tick(
 	}
 }
  
+
 // ExitState - 안전장치
+
 void FSTTask_BossAttackExecutor::ExitState(
 	FStateTreeExecutionContext& Context,
 	const FStateTreeTransitionResult& Transition) const
@@ -81,9 +87,23 @@ void FSTTask_BossAttackExecutor::ExitState(
 		Boss->SetActorHiddenInGame(false);
 		Boss->SetActorEnableCollision(true);
 	}
+ 
+	// 분신 정리
+	if (Data.LeftClone && !Data.LeftClone->IsActorBeingDestroyed())
+	{
+		Data.LeftClone->Destroy();
+	}
+	if (Data.RightClone && !Data.RightClone->IsActorBeingDestroyed())
+	{
+		Data.RightClone->Destroy();
+	}
+	Data.LeftClone = nullptr;
+	Data.RightClone = nullptr;
 }
  
+
 // 공격 선택 (랜덤)
+
 EActiveAttackType FSTTask_BossAttackExecutor::SelectAttack() const
 {
 	const int32 Roll = FMath::RandRange(0, 1);
@@ -103,6 +123,7 @@ EActiveAttackType FSTTask_BossAttackExecutor::SelectAttack() const
  
 
 // 텔레포트 킥 - Enter
+
 EStateTreeRunStatus FSTTask_BossAttackExecutor::EnterTeleportKick(
 	FInstanceDataType& Data, ACharacter* Boss) const
 {
@@ -209,7 +230,7 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickTeleportKick(
 }
  
 
-// 분신 돌진 - Enter
+// 분신 돌진 - Enter (본체 + 왼쪽/오른쪽 분신 스폰)
 
 EStateTreeRunStatus FSTTask_BossAttackExecutor::EnterCloneRush(
 	FInstanceDataType& Data, ACharacter* Boss) const
@@ -220,20 +241,80 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::EnterCloneRush(
 		return EStateTreeRunStatus::Failed;
 	}
  
-	Data.CRPhase = ECRPhase::WindUp;
+	Data.CRPhase = ECRPhase::SpawnClones;
+	Data.bDamageApplied = false;
+	Data.bBossRushDamageApplied = false;
+ 
+	// 플레이어를 향한 방향
 	Data.CRStartLocation = Boss->GetActorLocation();
 	Data.CRDirection = (Player->GetActorLocation() - Data.CRStartLocation).GetSafeNormal2D();
 	Data.CRTargetLocation = Data.CRStartLocation + Data.CRDirection * CR_RushDistance;
  
+	// 보스 회전
 	Boss->SetActorRotation(Data.CRDirection.Rotation());
  
-	UE_LOG(LogTemp, Log, TEXT("[CloneRush] 돌진 준비 → %s"), *Data.CRDirection.ToString());
+	// 좌우 벡터 계산
+	const FVector RightVector = FVector::CrossProduct(FVector::UpVector, Data.CRDirection).GetSafeNormal();
+ 
+	// 왼쪽 분신 스폰 (보스 기준 왼쪽)
+	const FVector LeftSpawnLoc = Data.CRStartLocation - RightVector * CR_CloneSpacing;
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.Owner = Boss;
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+ 
+	ABossCloneActor* LeftClone = Boss->GetWorld()->SpawnActor<ABossCloneActor>(
+		ABossCloneActor::StaticClass(), LeftSpawnLoc,
+		Data.CRDirection.Rotation(), SpawnParams);
+ 
+	if (LeftClone)
+	{
+		const FVector LeftToPlayer = (Player->GetActorLocation() - LeftSpawnLoc).GetSafeNormal2D();
+		LeftClone->InitRush(LeftToPlayer, CR_RushSpeed, CR_RushDistance, CR_Damage, CR_RushWidth, CR_KnockbackForce);
+ 
+		// 보스 메시 복사 (외형 동일하게)
+		if (USkeletalMeshComponent* BossMesh = Boss->GetMesh())
+		{
+			if (USkeletalMeshComponent* CloneMesh = LeftClone->FindComponentByClass<USkeletalMeshComponent>())
+			{
+				CloneMesh->SetSkeletalMesh(BossMesh->GetSkeletalMeshAsset());
+			}
+		}
+ 
+		Data.LeftClone = LeftClone;
+		UE_LOG(LogTemp, Log, TEXT("[CloneRush] 왼쪽 분신 스폰: %s"), *LeftSpawnLoc.ToString());
+	}
+ 
+	// 오른쪽 분신 스폰 (보스 기준 오른쪽)
+	const FVector RightSpawnLoc = Data.CRStartLocation + RightVector * CR_CloneSpacing;
+ 
+	ABossCloneActor* RightClone = Boss->GetWorld()->SpawnActor<ABossCloneActor>(
+		ABossCloneActor::StaticClass(), RightSpawnLoc,
+		Data.CRDirection.Rotation(), SpawnParams);
+ 
+	if (RightClone)
+	{
+		const FVector RightToPlayer = (Player->GetActorLocation() - RightSpawnLoc).GetSafeNormal2D();
+		LeftClone->InitRush(RightToPlayer, CR_RushSpeed, CR_RushDistance, CR_Damage, CR_RushWidth, CR_KnockbackForce);
+ 
+		if (USkeletalMeshComponent* BossMesh = Boss->GetMesh())
+		{
+			if (USkeletalMeshComponent* CloneMesh = RightClone->FindComponentByClass<USkeletalMeshComponent>())
+			{
+				CloneMesh->SetSkeletalMesh(BossMesh->GetSkeletalMeshAsset());
+			}
+		}
+ 
+		Data.RightClone = RightClone;
+		UE_LOG(LogTemp, Log, TEXT("[CloneRush] 오른쪽 분신 스폰: %s"), *RightSpawnLoc.ToString());
+	}
+ 
+	UE_LOG(LogTemp, Log, TEXT("[CloneRush] 3체 준비 완료 - 준비 동작 시작"));
  
 	return EStateTreeRunStatus::Running;
 }
  
 
-// 분신 돌진 - Tick
+// 분신 돌진 - Tick (왼쪽 → 오른쪽 → 본체 순차 돌진)
 
 EStateTreeRunStatus FSTTask_BossAttackExecutor::TickCloneRush(
 	FInstanceDataType& Data, ACharacter* Boss, float DeltaTime) const
@@ -242,17 +323,81 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickCloneRush(
  
 	switch (Data.CRPhase)
 	{
+	case ECRPhase::SpawnClones:
+		// 스폰 직후 바로 WindUp으로
+		Data.CRPhase = ECRPhase::WindUp;
+		Data.PhaseTimer = 0.f;
+		break;
+ 
 	case ECRPhase::WindUp:
+		// 분신/본신 3체 모두 준비 동작 대기
 		if (Data.PhaseTimer >= CR_WindUpDuration)
 		{
-			Data.CRPhase = ECRPhase::Rushing;
+			// 왼쪽 분신부터 돌진!
+			if (ABossCloneActor* LeftClone = Cast<ABossCloneActor>(Data.LeftClone))
+			{
+				LeftClone->StartRush();
+			}
+			Data.CRPhase = ECRPhase::LeftRush;
 			Data.PhaseTimer = 0.f;
-			UE_LOG(LogTemp, Log, TEXT("[CloneRush] 돌진 시작!"));
+			UE_LOG(LogTemp, Log, TEXT("[CloneRush] 왼쪽 분신 돌진 시작!"));
 		}
 		break;
  
-	case ECRPhase::Rushing:
+	case ECRPhase::LeftRush:
 		{
+			// 왼쪽 분신 돌진 완료 대기
+			ABossCloneActor* LeftClone = Cast<ABossCloneActor>(Data.LeftClone);
+			if (!LeftClone || LeftClone->IsRushComplete())
+			{
+				Data.CRPhase = ECRPhase::LeftDelay;
+				Data.PhaseTimer = 0.f;
+				UE_LOG(LogTemp, Log, TEXT("[CloneRush] 왼쪽 완료 → 딜레이"));
+			}
+		}
+		break;
+ 
+	case ECRPhase::LeftDelay:
+		// 순차 딜레이
+		if (Data.PhaseTimer >= CR_SequenceDelay)
+		{
+			// 오른쪽 분신 돌진!
+			if (ABossCloneActor* RightClone = Cast<ABossCloneActor>(Data.RightClone))
+			{
+				RightClone->StartRush();
+			}
+			Data.CRPhase = ECRPhase::RightRush;
+			Data.PhaseTimer = 0.f;
+			UE_LOG(LogTemp, Log, TEXT("[CloneRush] 오른쪽 분신 돌진 시작!"));
+		}
+		break;
+ 
+	case ECRPhase::RightRush:
+		{
+			// 오른쪽 분신 돌진 완료 대기
+			ABossCloneActor* RightClone = Cast<ABossCloneActor>(Data.RightClone);
+			if (!RightClone || RightClone->IsRushComplete())
+			{
+				Data.CRPhase = ECRPhase::RightDelay;
+				Data.PhaseTimer = 0.f;
+				UE_LOG(LogTemp, Log, TEXT("[CloneRush] 오른쪽 완료 → 본체 준비"));
+			}
+		}
+		break;
+ 
+	case ECRPhase::RightDelay:
+		// 본체 돌진 전 딜레이
+		if (Data.PhaseTimer >= CR_SequenceDelay)
+		{
+			Data.CRPhase = ECRPhase::BossRush;
+			Data.PhaseTimer = 0.f;
+			UE_LOG(LogTemp, Log, TEXT("[CloneRush] 본체 돌진 시작!"));
+		}
+		break;
+ 
+	case ECRPhase::BossRush:
+		{
+			// 본체 직접 돌진
 			const FVector CurrentLoc = Boss->GetActorLocation();
 			const FVector NewLoc = CurrentLoc + Data.CRDirection * CR_RushSpeed * DeltaTime;
 			const float DistanceTraveled = FVector::Dist2D(Data.CRStartLocation, NewLoc);
@@ -262,43 +407,34 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickCloneRush(
 				Boss->SetActorLocation(Data.CRTargetLocation);
 				Data.CRPhase = ECRPhase::Recovery;
 				Data.PhaseTimer = 0.f;
-				UE_LOG(LogTemp, Log, TEXT("[CloneRush] 돌진 완료 → 회복"));
+				UE_LOG(LogTemp, Log, TEXT("[CloneRush] 본체 돌진 완료 → 회복"));
 			}
 			else
 			{
 				Boss->SetActorLocation(NewLoc);
  
-				// 돌진 중 매 프레임 데미지 체크
-				if (!Data.bDamageApplied)
+				// 본체 돌진 데미지
+				if (!Data.bBossRushDamageApplied)
 				{
-					const FVector DamageCenter = Boss->GetActorLocation();
+					ApplyDamageInRadius(Boss, Boss->GetActorLocation(), CR_RushWidth,
+						CR_Damage, CR_KnockbackForce, Data.CRDirection);
+ 
+					// 데미지 적용 여부는 ApplyDamageInRadius 안에서 확인
 					TArray<FOverlapResult> Overlaps;
 					FCollisionQueryParams QueryParams;
 					QueryParams.AddIgnoredActor(Boss);
- 
 					Boss->GetWorld()->OverlapMultiByChannel(
-						Overlaps, DamageCenter, FQuat::Identity,
-						ECC_Pawn, FCollisionShape::MakeSphere(CR_RushWidth),
-						QueryParams);
- 
+						Overlaps, Boss->GetActorLocation(), FQuat::Identity,
+						ECC_Pawn, FCollisionShape::MakeSphere(CR_RushWidth), QueryParams);
 					for (const FOverlapResult& Overlap : Overlaps)
 					{
-						ACharacter* HitChar = Cast<ACharacter>(Overlap.GetActor());
-						if (HitChar && HitChar != Boss)
+						if (ACharacter* HitChar = Cast<ACharacter>(Overlap.GetActor()))
 						{
-							FDamageEvent DamageEvent;
-							HitChar->TakeDamage(CR_Damage, DamageEvent, nullptr, Boss);
- 
-							UE_LOG(LogTemp, Log, TEXT("[CloneRush] %s에게 %.0f 데미지!"),
-								*HitChar->GetName(), CR_Damage);
- 
-							if (UCharacterMovementComponent* Mov = HitChar->GetCharacterMovement())
+							if (HitChar != Boss)
 							{
-								const FVector KBDir = (Data.CRDirection + FVector(0.f, 0.f, 0.3f)).GetSafeNormal();
-								Mov->AddImpulse(KBDir * CR_KnockbackForce, true);
+								Data.bBossRushDamageApplied = true;
+								break;
 							}
- 
-							Data.bDamageApplied = true;
 						}
 					}
 				}

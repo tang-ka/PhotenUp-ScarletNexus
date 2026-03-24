@@ -21,7 +21,7 @@ enum class EBossPhase : uint8
 	// HP 50% ~ 25%: 염동력 사물 던지기 추가
 	Phase2_Enhanced		UMETA(DisplayName = "Phase 2-2"),
  
-	// HP 25% 도달: 컷씬 후 Phase2_Enhanced 패턴 반복
+	// HP 25% : 컷씬 후 Phase2_Enhanced 패턴 반복
 	Phase3_Cutscene		UMETA(DisplayName = "Phase 3"),
 };
  

@@ -23,26 +23,21 @@ EStateTreeRunStatus FSTTask_BossStagger::EnterState(
 		return EStateTreeRunStatus::Failed;
 	}
  
-	// -------------------------------------------------------
+	
 	// 이동 정지
-	// -------------------------------------------------------
 	if (UCharacterMovementComponent* MoveComp = BossChar->GetCharacterMovement())
 	{
 		MoveComp->StopMovementImmediately();
 	}
  
-	// -------------------------------------------------------
 	// 현재 재생 중인 몽타주 강제 중단
-	// -------------------------------------------------------
 	UAnimInstance* AnimInstance = BossChar->GetMesh()->GetAnimInstance();
 	if (AnimInstance)
 	{
 		AnimInstance->Montage_Stop(0.15f);
 	}
  
-	// -------------------------------------------------------
 	// 그로기 진입 몽타주 재생
-	// -------------------------------------------------------
 	TransitionToSubPhase(InstanceData, BossChar, EStaggerSubPhase::EnterStagger);
  
 	UE_LOG(LogTemp, Log, TEXT("[BossStagger] 그로기 상태 진입 (Phase: %d)"),
