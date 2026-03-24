@@ -19,6 +19,8 @@ public:
 	virtual void BeginPlay() override;
 	virtual void Tick( float DeltaSeconds ) override;
 	
+	const FName WeaponSocketName = FName("Weapon");
+	
 	// 근거리 창 기본 공격
 	UFUNCTION(BlueprintCallable, Category = Attack)
 	void Attack();
@@ -29,12 +31,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Attack)
 	float SpearAttackCooldown = 1.2f;
 	
-	// 염력 스킬 (집기 -> 던지기)
+	// 염력 스킬 
+	// 염력 스킬 사용 (집기 -> 던지기)
 	UFUNCTION(BlueprintCallable, Category = PK)
 	void SkillPK();
-	// 염력으로 집을 수 있는 최대 반경
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = PK)
-	float PKRange = 800.f;
 	// 염력 던지는 힘
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PK")
 	float PKForce = 2000.f;

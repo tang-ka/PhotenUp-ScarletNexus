@@ -26,6 +26,10 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	// 무기
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	class AActor* WeaponActor;
+	
 	// State Tree 실행 콤포넌트
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
 	TObjectPtr<class UPartyAIComponent> PartyAIComp;

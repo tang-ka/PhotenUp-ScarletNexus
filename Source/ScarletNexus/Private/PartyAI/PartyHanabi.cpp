@@ -27,6 +27,8 @@ APartyHanabi::APartyHanabi()
 void APartyHanabi::BeginPlay()
 {
 	Super::BeginPlay();
+	
+	// 무기 붙히기
 }
 
 void APartyHanabi::Tick(float DeltaSeconds)

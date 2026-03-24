@@ -45,6 +45,8 @@ void APKObject::OnPKPickuped_Implementation()
 		// 물리, 중력 off
 		StaticMeshComp->SetSimulatePhysics(false);
 		StaticMeshComp->SetEnableGravity(false);
+		// 홀드 중에는 충돌 끄기
+		StaticMeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}
 }
 
@@ -55,6 +57,8 @@ void APKObject::OnPKReleased_Implementation()
 		// 물리, 중력 on
 		StaticMeshComp->SetSimulatePhysics(true);
 		StaticMeshComp->SetEnableGravity(true);
+		// 홀드 풀리면 다시 충돌 켜기
+		StaticMeshComp->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	}
 }
 
@@ -63,5 +67,9 @@ void APKObject::OnPKThrown_Implementation(const FVector& ThrowDir, float ThrowFo
 	// 물리, 중력 on
 	StaticMeshComp->SetSimulatePhysics(true);
 	StaticMeshComp->SetEnableGravity(true);
+	// 충돌 재활성화
+	StaticMeshComp->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	
+	// Impulse는 PKComponent::UseHeldTarget에서 적용
+	bUsedObject = true;
 }
