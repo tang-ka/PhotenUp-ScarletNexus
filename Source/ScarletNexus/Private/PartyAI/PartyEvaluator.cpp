@@ -3,6 +3,7 @@
 
 #include "PartyAI/PartyEvaluator.h"
 
+#include "ScarletNexus.h"
 #include "StateTreeExecutionContext.h"
 #include "Engine/OverlapResult.h"
 #include "Interface/Damageable.h"
@@ -12,6 +13,7 @@
 
 void FPartyEvaluator::Tick(FStateTreeExecutionContext& Context, const float DeltaTime) const
 {
+	PRINTLOG(TEXT("Tick 호출"));
 	auto& data = Context.GetInstanceData(*this);
 	
 	AActor* owner = Cast<AActor>(Context.GetOwner());
@@ -69,5 +71,5 @@ void FPartyEvaluator::Tick(FStateTreeExecutionContext& Context, const float Delt
 	
 	data.TrackedPlayer = nearest;
 	data.NearestEnemy = nearestEnemy;
-	data.bInAttackRange = nearestEnemy ? (FVector::Dist(owner->GetActorLocation(), nearest->GetActorLocation()) <= data.AttackRange) : false;
+	data.bInAttackRange = nearestEnemy ? (FVector::Dist(owner->GetActorLocation(), nearestEnemy->GetActorLocation()) <= data.AttackRange) : false;
 }

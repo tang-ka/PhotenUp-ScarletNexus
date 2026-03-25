@@ -3,6 +3,7 @@
 
 #include "PK/PKComponent.h"
 
+#include "ScarletNexus.h"
 #include "Engine/OverlapResult.h"
 #include "Interface/PKInteractable.h"
 #include "PK/PKObject.h"
@@ -111,7 +112,7 @@ void UPKComponent::TraceTarget()
 	CurrentTarget = nearestPKObject;
 	if (CurrentTarget)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[PKComponent::TraceTarget] 최근접 PKObject: {0}"), CurrentTarget.GetFName());
+		PRINTLOG(TEXT("최근접 PKObject: %s"), *CurrentTarget.GetName())
 	}
 }
 

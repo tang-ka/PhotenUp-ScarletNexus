@@ -19,8 +19,8 @@ bool UPCStateTreeSchema::IsStructAllowed(const UScriptStruct* InScriptStruct) co
 
 bool UPCStateTreeSchema::IsClassAllowed(const UClass* InClass) const
 {
-	// UPartyAIComponent를 소유 콤포넌트로 지정
-	return InClass->IsChildOf(UPartyAIComponent::StaticClass());
+	// UStateTreeComponent를 소유 콤포넌트로 지정
+	return InClass->IsChildOf(UStateTreeComponent::StaticClass());
 }
 
 bool UPCStateTreeSchema::IsExternalItemAllowed(const UStruct& InStruct) const

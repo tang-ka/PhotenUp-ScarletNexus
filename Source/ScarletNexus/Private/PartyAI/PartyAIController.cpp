@@ -39,7 +39,7 @@ void APartyAIController::BeginPlay()
 }
 
 void APartyAIController::OnPossess(APawn* InPawn)
-{
+{  
 	Super::OnPossess(InPawn);
 
 	// State Tree 시작은 PartyAIComponent에서 처리
