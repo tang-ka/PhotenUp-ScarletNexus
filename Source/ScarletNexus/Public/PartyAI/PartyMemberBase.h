@@ -30,7 +30,31 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
 	TObjectPtr<class UPartyAIComponent> PartyAIComp;
 
-	// 사거리
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
-	float AttackRange = 500.f;
+	// 스탯
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Status")
+	int MaxHP = 200;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Status")
+	int CurrHP;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Status")
+	int ATK = 20;
+	
+	UFUNCTION(BlueprintCallable, Category = "Status")
+	virtual void TakeDamage_Party(int Damage);
+	UFUNCTION(BlueprintCallable, Category = "Status")
+	bool IsAlive() const { return CurrHP > 0; }
+	
+	// 쿨타임
+	// 스킬 쿨타임 등록
+	UFUNCTION(BlueprintCallable, Category = "Cooldown")
+	void SetCooldown(FName SkillName, float Duration);
+	// 스킬 사용 가능 여부 확인
+	UFUNCTION(BlueprintCallable, Category = "Cooldown")
+	bool IsSkillReady(FName SkillName) const;
+	// 잔여 쿨타임
+	UFUNCTION(BlueprintCallable, Category = "Cooldown")
+	float GetRemainCooldown(FName SkillName) const;
+	
+protected:
+	// 스킬명 -> 쿨타임 종료 시각 (WorldTime)
+	TMap<FName, float> CooldownEndTimes;
 };
