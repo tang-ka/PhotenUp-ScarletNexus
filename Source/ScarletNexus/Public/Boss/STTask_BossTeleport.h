@@ -71,9 +71,8 @@ struct SCARLETNEXUS_API FSTTask_BossTeleport : public FStateTreeTaskCommonBase
 		FStateTreeExecutionContext& Context,
 		const FStateTreeTransitionResult& Transition) const override;
  
-	// --- 설정 ---
  
-	// 텔레포트 전략
+	// 텔레포트
 	UPROPERTY(EditAnywhere, Category = "Config")
 	ETeleportStrategy Strategy = ETeleportStrategy::BehindPlayer;
  

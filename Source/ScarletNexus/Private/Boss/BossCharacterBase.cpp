@@ -5,6 +5,7 @@
 #include "Boss/BossAIController.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Engine/DamageEvents.h"
  
 ABossCharacterBase::ABossCharacterBase()
 {
@@ -40,13 +41,23 @@ void ABossCharacterBase::BeginPlay()
 void ABossCharacterBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
- 
-	// 경직 게이지 자연 감소
 	UpdateStaggerDecay(DeltaTime);
 }
  
-
+// ============================================================
+// UE TakeDamage → 내부 시스템 연결
+// ============================================================
+float ABossCharacterBase::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent,
+	AController* EventInstigator, AActor* DamageCauser)
+{
+	const float ActualDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+	ApplyDamage_Implementation(ActualDamage, DamageCauser);
+	return ActualDamage;
+}
+ 
+// ============================================================
 // IBossCharacterInterface 구현
+// ============================================================
  
 float ABossCharacterBase::GetHPRatio_Implementation() const
 {
@@ -171,8 +182,9 @@ void ABossCharacterBase::InitializeWithConfig_Implementation(UBossConfigDataAsse
 		MaxHP, MaxStaggerGauge);
 }
  
-
+// ============================================================
 // 내부 메서드
+// ============================================================
  
 void ABossCharacterBase::CheckPhaseTransition()
 {
@@ -204,15 +216,35 @@ void ABossCharacterBase::CheckPhaseTransition()
 		const EBossPhase OldPhase = CurrentPhase;
 		CurrentPhase = NewPhase;
  
-		UE_LOG(LogTemp, Log, TEXT("[Boss] 페이즈 전환: %d -> %d (HP Ratio: %.2f)"),
+		UE_LOG(LogTemp, Warning, TEXT("[Boss] ========== 페이즈 전환! =========="));
+		UE_LOG(LogTemp, Warning, TEXT("[Boss] %d → %d (HP: %.0f / %.0f, 비율: %.1f%%)"),
 			static_cast<int32>(OldPhase),
 			static_cast<int32>(NewPhase),
-			HPRatio);
+			CurrentHP, MaxHP, HPRatio * 100.f);
  
-		// 페이즈 전환 이벤트 브로드캐스트
+		// 페이즈별 특수 처리
+		switch (NewPhase)
+		{
+		case EBossPhase::Phase2:
+			UE_LOG(LogTemp, Warning, TEXT("[Boss] Phase2 진입 - 맵 색상 변경 + ElectricOrbs 해금"));
+			// TODO: 맵/캐릭터 색상 변경 연출
+			break;
+ 
+		case EBossPhase::Phase2_Enhanced:
+			UE_LOG(LogTemp, Warning, TEXT("[Boss] Phase2_Enhanced 진입 - TelekinesisThrow 해금"));
+			break;
+ 
+		case EBossPhase::Phase3_Cutscene:
+			UE_LOG(LogTemp, Warning, TEXT("[Boss] Phase3 진입 - 컷씬 재생!"));
+			// TODO: 컷씬 재생 후 Phase2_Enhanced 패턴으로 전투 재개
+			break;
+ 
+		default:
+			break;
+		}
+ 
 		OnPhaseChanged.Broadcast(OldPhase, NewPhase);
  
-		// AI Controller에 페이즈 전환 이벤트 전달
 		if (ABossAIController* BossAI = Cast<ABossAIController>(GetController()))
 		{
 			BossAI->SendStateTreeEvent(
