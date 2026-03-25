@@ -68,7 +68,6 @@ void FPartyEvaluator::Tick(FStateTreeExecutionContext& Context, const float Delt
 		}
 	}
 	
-	
 	data.TrackedPlayer = nearest;
 	data.NearestEnemy = nearestEnemy;
 	data.bInAttackRange = nearestEnemy ? (FVector::Dist(owner->GetActorLocation(), nearestEnemy->GetActorLocation()) <= data.AttackRange) : false;
