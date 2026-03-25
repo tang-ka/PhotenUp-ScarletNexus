@@ -13,7 +13,7 @@
 
 void FPartyEvaluator::Tick(FStateTreeExecutionContext& Context, const float DeltaTime) const
 {
-	PRINTLOG(TEXT("Tick 호출"));
+	PRINTLOG_GT(TEXT("Tick 호출"));
 	auto& data = Context.GetInstanceData(*this);
 	
 	AActor* owner = Cast<AActor>(Context.GetOwner());

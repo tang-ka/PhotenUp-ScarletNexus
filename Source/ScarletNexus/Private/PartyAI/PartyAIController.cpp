@@ -3,6 +3,7 @@
 
 #include "PartyAI/PartyAIController.h"
 
+#include "ScarletNexus.h"
 #include "PartyAI/PartyAIComponent.h"
 #include "PartyAI/PartyMemberBase.h"
 #include "Perception/AIPerceptionComponent.h"
@@ -42,6 +43,8 @@ void APartyAIController::OnPossess(APawn* InPawn)
 {  
 	Super::OnPossess(InPawn);
 
+	PRINTLOG_GT(TEXT("호출됨. Pawn: %s"), *InPawn->GetName());
+	
 	// State Tree 시작은 PartyAIComponent에서 처리
 	if (APartyMemberBase* PMB = Cast<APartyMemberBase>(InPawn))
 	{

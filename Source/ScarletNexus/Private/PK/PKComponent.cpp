@@ -110,10 +110,10 @@ void UPKComponent::TraceTarget()
 	}
 	
 	CurrentTarget = nearestPKObject;
-	if (CurrentTarget)
+	/*if (CurrentTarget)
 	{
-		PRINTLOG(TEXT("최근접 PKObject: %s"), *CurrentTarget.GetName())
-	}
+		PRINTLOG_GT(TEXT("최근접 PKObject: %s"), *CurrentTarget.GetName())
+	}*/
 }
 
 void UPKComponent::HoldTarget()

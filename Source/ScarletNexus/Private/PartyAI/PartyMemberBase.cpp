@@ -3,7 +3,9 @@
 
 #include "PartyAI/PartyMemberBase.h"
 
+#include "ScarletNexus.h"
 #include "PartyAI/PartyAIComponent.h"
+#include "PartyAI/PartyAIController.h"
 
 // Sets default values
 APartyMemberBase::APartyMemberBase()
@@ -11,6 +13,9 @@ APartyMemberBase::APartyMemberBase()
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
+	AIControllerClass = APartyAIController::StaticClass();
+	
 	PartyAIComp = CreateDefaultSubobject<UPartyAIComponent>(TEXT("PartyAIComp"));
 }
 
@@ -19,6 +24,8 @@ void APartyMemberBase::BeginPlay()
 {
 	Super::BeginPlay();
 	CurrHP = MaxHP;
+	
+	PRINTLOG_GT(TEXT("Controller: %s"), GetController() ? *GetController()->GetName() : TEXT("Null"));
 }
 
 // Called every frame

@@ -12,6 +12,8 @@ UPartyAIComponent::UPartyAIComponent()
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = false;
+	
+	StateTreeComp = CreateDefaultSubobject<UStateTreeComponent>(TEXT("StateTreeComp"));
 }
 
 // Called when the game starts
@@ -34,14 +36,14 @@ void UPartyAIComponent::StartAI()
 {
 	if (!PartyCharacterST)
 	{
-		PRINTLOG(TEXT("PartyCharacterST가 없다!"));
+		PRINTLOG_GT(TEXT("PartyCharacterST가 없다!"));
 		return;
 	}
 	
 	AActor* owner = GetOwner();
 	if (!owner)
 	{
-		PRINTLOG(TEXT("GetOwner가 없다!"));
+		PRINTLOG_GT(TEXT("GetOwner가 없다!"));
 		return;
 	}
 	
@@ -49,12 +51,12 @@ void UPartyAIComponent::StartAI()
 	
 	if (!StateTreeComp)
 	{
-		PRINTLOG(TEXT("StateTreeComp가 없다!"));
+		PRINTLOG_GT(TEXT("StateTreeComp가 없다!"));
 		return;
 	}
 	
 	StateTreeComp->SetStateTree(PartyCharacterST);
 	//StateTreeComp->RegisterComponent();
 	StateTreeComp->StartLogic();
-	PRINTLOG(TEXT("State Tree 시작. owner: %s"), *owner->GetName());
+	PRINTLOG_GT(TEXT("State Tree 시작. owner: %s"), *owner->GetName());
 }
