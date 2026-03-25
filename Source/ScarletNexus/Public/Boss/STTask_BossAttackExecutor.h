@@ -36,7 +36,7 @@ UENUM()
 enum class EOOPhase : uint8
 {
 	Charging,    // 보스 주변에 전류구 생성
-	Flying,      // 전부 발사 → 플레이어 추적 비행
+	Flying,      // 전부 발사 -> 플레이어 추적 비행
 	Done,
 };
  
@@ -162,8 +162,8 @@ struct SCARLETNEXUS_API FSTTask_BossAttackExecutor : public FStateTreeTaskCommon
  
 	// 분신 돌진 
 	UPROPERTY(EditAnywhere, Category = "CloneRush") float CR_WindUpDuration = 0.6f;
-	UPROPERTY(EditAnywhere, Category = "CloneRush") float CR_RushSpeed = 2500.f;
-	UPROPERTY(EditAnywhere, Category = "CloneRush") float CR_RushDistance = 800.f;
+	UPROPERTY(EditAnywhere, Category = "CloneRush") float CR_RushSpeed = 3500.f;
+	UPROPERTY(EditAnywhere, Category = "CloneRush") float CR_RushDistance = 1200.f;
 	UPROPERTY(EditAnywhere, Category = "CloneRush") float CR_RecoveryDuration = 0.5f;
 	UPROPERTY(EditAnywhere, Category = "CloneRush") float CR_Damage = 200.f;
 	UPROPERTY(EditAnywhere, Category = "CloneRush") float CR_RushWidth = 150.f;
@@ -173,7 +173,7 @@ struct SCARLETNEXUS_API FSTTask_BossAttackExecutor : public FStateTreeTaskCommon
  
 	// 공중 전류
 	UPROPERTY(EditAnywhere, Category = "AerialElectric") float AE_VanishDuration = 0.2f;
-	UPROPERTY(EditAnywhere, Category = "AerialElectric") float AE_HoverHeight = 500.f;
+	UPROPERTY(EditAnywhere, Category = "AerialElectric") float AE_HoverHeight = 300.f;
 	UPROPERTY(EditAnywhere, Category = "AerialElectric") float AE_ChargeDuration = 0.8f;
 	UPROPERTY(EditAnywhere, Category = "AerialElectric") float AE_DischargeDuration = 0.6f;
 	UPROPERTY(EditAnywhere, Category = "AerialElectric") float AE_DamageRadius = 400.f;
@@ -184,7 +184,7 @@ struct SCARLETNEXUS_API FSTTask_BossAttackExecutor : public FStateTreeTaskCommon
 	// 얼음가시
 	UPROPERTY(EditAnywhere, Category = "IceSpikes") float IS_WindUpDuration = 0.5f;
 	UPROPERTY(EditAnywhere, Category = "IceSpikes") float IS_WarningDuration = 0.8f;
-	UPROPERTY(EditAnywhere, Category = "IceSpikes") int32 IS_SpikeCount = 20;
+	UPROPERTY(EditAnywhere, Category = "IceSpikes") int32 IS_SpikeCount = 50;
 	UPROPERTY(EditAnywhere, Category = "IceSpikes") float IS_AreaLength = 1200.f;
 	UPROPERTY(EditAnywhere, Category = "IceSpikes") float IS_AreaWidth = 1000.f;
 	UPROPERTY(EditAnywhere, Category = "IceSpikes") float IS_AreaStartOffset = 150.f;
@@ -198,16 +198,16 @@ struct SCARLETNEXUS_API FSTTask_BossAttackExecutor : public FStateTreeTaskCommon
 	UPROPERTY(EditAnywhere, Category = "ElectricOrbs") int32 OO_OrbCount = 5;
 	UPROPERTY(EditAnywhere, Category = "ElectricOrbs") float OO_ChargeDuration = 0.6f;
 	UPROPERTY(EditAnywhere, Category = "ElectricOrbs") float OO_LaunchInterval = 0.15f;
-	UPROPERTY(EditAnywhere, Category = "ElectricOrbs") float OO_OrbSpeed = 800.f;
+	UPROPERTY(EditAnywhere, Category = "ElectricOrbs") float OO_OrbSpeed = 200.f;
 	UPROPERTY(EditAnywhere, Category = "ElectricOrbs") float OO_OrbMaxDistance = 2000.f;
 	UPROPERTY(EditAnywhere, Category = "ElectricOrbs") float OO_Damage = 100.f;
-	UPROPERTY(EditAnywhere, Category = "ElectricOrbs") float OO_OrbRadius = 80.f;
+	UPROPERTY(EditAnywhere, Category = "ElectricOrbs") float OO_OrbRadius = 20.f;
 	UPROPERTY(EditAnywhere, Category = "ElectricOrbs") float OO_KnockbackForce = 500.f;
 	UPROPERTY(EditAnywhere, Category = "ElectricOrbs") float OO_OrbitRadius = 150.f;
 	// 추적 회전 속도 (초당 방향 보간 비율, 1.0 = 즉시 추적, 0.5 = 느리게)
-	UPROPERTY(EditAnywhere, Category = "ElectricOrbs") float OO_TrackingStrength = 1.5f;
+	UPROPERTY(EditAnywhere, Category = "ElectricOrbs") float OO_TrackingStrength = 90.0f;
 	// 전류구 시간 최대 5초
-	UPROPERTY(EditAnywhere, Category = "ElectricOrbs") float OO_MaxLifetime = 5.f;
+	UPROPERTY(EditAnywhere, Category = "ElectricOrbs") float OO_MaxLifetime = 4.f;
  
 	// // 염동력 투척 (Phase2_Enhanced+)
 	// // 주변 사물을 들어올려 플레이어에게 투척

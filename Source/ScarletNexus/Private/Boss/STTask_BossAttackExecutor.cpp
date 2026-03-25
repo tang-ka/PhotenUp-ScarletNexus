@@ -12,6 +12,7 @@
 #include "Engine/OverlapResult.h"
 #include "NavigationSystem.h"
 #include "DrawDebugHelpers.h"
+#include "Components/CapsuleComponent.h"
  
 
 // EnterState
@@ -193,13 +194,37 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::EnterCloneRush(
 	Boss->SetActorRotation(Data.CRDirection.Rotation());
 	const FVector RV = FVector(-Data.CRDirection.Y, Data.CRDirection.X, 0.f);
 	FActorSpawnParameters SP; SP.Owner = Boss; SP.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+ 
+	// 보스 캡슐/메시 정보 확인
+	float BossCapsuleRadius = 42.f, BossCapsuleHalfHeight = 96.f;
+	if (const UCapsuleComponent* BossCapsule = Boss->GetCapsuleComponent())
+	{
+		BossCapsule->GetScaledCapsuleSize(BossCapsuleRadius, BossCapsuleHalfHeight);
+	}
+ 
 	const FVector LL = Data.CRStartLocation - RV * CR_CloneSpacing;
 	if (ABossCloneActor* LC = Boss->GetWorld()->SpawnActor<ABossCloneActor>(ABossCloneActor::StaticClass(), LL, FRotator::ZeroRotator, SP))
 	{
 		FVector LD = FVector(Player->GetActorLocation().X-LL.X, Player->GetActorLocation().Y-LL.Y, 0.f).GetSafeNormal();
 		float LDist = FVector::Dist2D(LL, Player->GetActorLocation()) + 200.f;
 		LC->InitRush(LD, CR_RushSpeed, LDist, CR_Damage, CR_RushWidth, CR_KnockbackForce);
-		if (auto* BM = Boss->GetMesh()) if (auto* CM = LC->FindComponentByClass<USkeletalMeshComponent>()) CM->SetSkeletalMesh(BM->GetSkeletalMeshAsset());
+ 
+		// 보스 외형 복사 (메시 + 스케일 + 캡슐)
+		if (auto* BM = Boss->GetMesh())
+		{
+			if (auto* CM = LC->FindComponentByClass<USkeletalMeshComponent>())
+			{
+				CM->SetSkeletalMesh(BM->GetSkeletalMeshAsset());
+				CM->SetRelativeTransform(BM->GetRelativeTransform());
+				CM->SetAnimInstanceClass(BM->GetAnimInstance() ? BM->GetAnimInstance()->GetClass() : nullptr);
+			}
+		}
+		if (auto* CC = LC->FindComponentByClass<UCapsuleComponent>())
+		{
+			CC->SetCapsuleSize(BossCapsuleRadius, BossCapsuleHalfHeight);
+		}
+		LC->SetActorScale3D(Boss->GetActorScale3D());
+ 
 		Data.LeftClone = LC;
 	}
 	const FVector RL = Data.CRStartLocation + RV * CR_CloneSpacing;
@@ -208,7 +233,23 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::EnterCloneRush(
 		FVector RD = FVector(Player->GetActorLocation().X-RL.X, Player->GetActorLocation().Y-RL.Y, 0.f).GetSafeNormal();
 		float RDist = FVector::Dist2D(RL, Player->GetActorLocation()) + 200.f;
 		RC->InitRush(RD, CR_RushSpeed, RDist, CR_Damage, CR_RushWidth, CR_KnockbackForce);
-		if (auto* BM = Boss->GetMesh()) if (auto* CM = RC->FindComponentByClass<USkeletalMeshComponent>()) CM->SetSkeletalMesh(BM->GetSkeletalMeshAsset());
+ 
+		// 보스 외형 복사
+		if (auto* BM = Boss->GetMesh())
+		{
+			if (auto* CM = RC->FindComponentByClass<USkeletalMeshComponent>())
+			{
+				CM->SetSkeletalMesh(BM->GetSkeletalMeshAsset());
+				CM->SetRelativeTransform(BM->GetRelativeTransform());
+				CM->SetAnimInstanceClass(BM->GetAnimInstance() ? BM->GetAnimInstance()->GetClass() : nullptr);
+			}
+		}
+		if (auto* CC = RC->FindComponentByClass<UCapsuleComponent>())
+		{
+			CC->SetCapsuleSize(BossCapsuleRadius, BossCapsuleHalfHeight);
+		}
+		RC->SetActorScale3D(Boss->GetActorScale3D());
+ 
 		Data.RightClone = RC;
 	}
 	UE_LOG(LogTemp, Log, TEXT("[CloneRush] 3체 준비 완료"));
@@ -359,6 +400,7 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickIceSpikes(
 }
  
 
+//  전류구 (ElectricOrbs) — Phase2부터
 //  보스 주변에 5개 전류구 생성 → 플레이어를 향해 순차 발사
 
 EStateTreeRunStatus FSTTask_BossAttackExecutor::EnterElectricOrbs(
@@ -374,15 +416,23 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::EnterElectricOrbs(
 	Data.OOOrbDirections.Empty();
 	Data.OOOrbHit.Empty();
  
-	// 보스 주변에 전류구 원형 배치
+	// 보스 앞에서 가로 일렬 배치
 	const FVector BossLoc = Boss->GetActorLocation();
+	const FVector FwdDir = Boss->GetActorForwardVector();
+	const FVector RightDir = FVector(-FwdDir.Y, FwdDir.X, 0.f);
+ 
+	// 보스 앞 200cm 지점, 허리 높이 80cm
+	const float ForwardOffset = 200.f;
+	const float HeightOffset = 40.f;
+	const FVector LineCenter = BossLoc + FwdDir * ForwardOffset + FVector(0, 0, HeightOffset);
+ 
 	for (int32 i = 0; i < OO_OrbCount; i++)
 	{
-		const float Angle = (2.f * PI / OO_OrbCount) * i;
-		const FVector OrbPos = BossLoc + FVector(
-			FMath::Cos(Angle) * OO_OrbitRadius,
-			FMath::Sin(Angle) * OO_OrbitRadius,
-			150.f); // 보스 허리 높이
+		// 가로로 균등 배치 (-2, -1, 0, 1, 2 식으로)
+		const float HalfCount = (OO_OrbCount - 1) * 0.5f;
+		const float Offset = (i - HalfCount) * OO_OrbitRadius;
+		const FVector OrbPos = LineCenter + RightDir * Offset;
+ 
 		Data.OOOrbPositions.Add(OrbPos);
 		Data.OOOrbDirections.Add(FVector::ZeroVector);
 		Data.OOOrbHit.Add(false);
