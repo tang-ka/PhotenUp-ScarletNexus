@@ -60,13 +60,7 @@ void ABossCloneActor::Tick(float DeltaTime)
  
 	if (bRushComplete)
 	{
-		// 돌진 완료 후 소멸 대기
-		DestroyTimer += DeltaTime;
-		if (DestroyTimer >= DestroyDelay)
-		{
-			UE_LOG(LogTemp, Log, TEXT("[BossClone] 분신 소멸"));
-			Destroy();
-		}
+		// 돌진 완료 후 대기 (ExitState에서 정리됨)
 		return;
 	}
  

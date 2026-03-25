@@ -40,8 +40,17 @@ public:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
  
+	// UE 기본 TakeDamage → 내부 ApplyDamage로 연결
+	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent,
+		AController* EventInstigator, AActor* DamageCauser) override;
+ 
+	// 현재 페이즈 조회 (AttackExecutor 등에서 사용)
+	UFUNCTION(BlueprintCallable, Category = "Boss")
+	EBossPhase GetCurrentPhase() const { return CurrentPhase; }
+ 
 	
 	// IBossCharacterInterface 구현
+	
 	virtual float GetHPRatio_Implementation() const override;
 	virtual float GetCurrentHP_Implementation() const override;
 	virtual void ApplyDamage_Implementation(float DamageAmount, AActor* DamageCauser) override;
@@ -54,7 +63,8 @@ public:
 	virtual void InitializeWithConfig_Implementation(UBossConfigDataAsset* Config) override;
  
 	
-	// Delegates (이벤트)
+	// 이벤트
+	
 	UPROPERTY(BlueprintAssignable, Category = "Boss|Events")
 	FOnBossPhaseChanged OnPhaseChanged;
  
@@ -67,11 +77,12 @@ public:
 protected:
 	
 	// Config
+	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Boss|Config")
 	TObjectPtr<UBossConfigDataAsset> BossConfig;
  
-	
 	// Stats (런타임)
+	
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Boss|Stats")
 	float MaxHP = 10000.f;
  
@@ -94,6 +105,7 @@ protected:
  
 	
 	// State
+	
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Boss|State")
 	EBossPhase CurrentPhase = EBossPhase::Phase1;
  
@@ -105,9 +117,7 @@ protected:
  
 	// 마지막으로 경직 대미지를 받은 시각
 	float LastStaggerHitTime = 0.f;
- 
 	
-	// 내부 메서드
  
 	// HP 변화에 따른 페이즈 전환 체크
 	void CheckPhaseTransition();

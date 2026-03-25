@@ -42,8 +42,8 @@ private:
 	// 돌진 파라미터
 	FVector RushDirection = FVector::ZeroVector;
 	FVector StartLocation = FVector::ZeroVector;
-	float RushSpeed = 2500.f;
-	float RushDistance = 800.f;
+	float RushSpeed = 3000.f;
+	float RushDistance = 1200.f;
 	float Damage = 200.f;
 	float DamageRadius = 150.f;
 	float KnockbackForce = 1200.f;
