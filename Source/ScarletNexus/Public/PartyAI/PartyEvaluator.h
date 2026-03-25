@@ -41,5 +41,6 @@ struct FPartyEvaluator : public FStateTreeEvaluatorBase
 		return FInstanceDataType::StaticStruct();
 	}
 	
+	virtual void TreeStart(FStateTreeExecutionContext& Context) const override;
 	virtual void Tick(FStateTreeExecutionContext& Context, const float DeltaTime) const override;
 };

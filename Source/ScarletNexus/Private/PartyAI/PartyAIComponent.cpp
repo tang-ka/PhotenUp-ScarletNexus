@@ -27,7 +27,7 @@ void UPartyAIComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAct
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	// ...
+	
 }
 
 void UPartyAIComponent::StartAI()
@@ -63,6 +63,12 @@ void UPartyAIComponent::StartAI()
 	
 	StateTreeComp->SetStateTree(PartyCharacterST);
 	//StateTreeComp->RegisterComponent();
+	//StateTreeComp->InitializeComponent();
 	StateTreeComp->StartLogic();
+	/*owner->GetWorld()->GetTimerManager().SetTimerForNextTick([this]()
+	{
+		if (StateTreeComp)
+			StateTreeComp->StartLogic();
+	});*/
 	PRINTLOG_GT(TEXT("State Tree 시작. owner: %s"), *owner->GetName());
 }

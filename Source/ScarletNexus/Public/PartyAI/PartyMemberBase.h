@@ -30,10 +30,12 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	class AActor* WeaponActor;
 	
-	// State Tree 실행 콤포넌트
+	// 콤포넌트
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
 	TObjectPtr<class UPartyAIComponent> PartyAIComp;
-
+	UPROPERTY(VisibleAnywhere, Category = "AI")
+	TObjectPtr<class UStateTreeComponent> StateTreeComp;
+	
 	// 스탯
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Status")
 	int MaxHP = 200;

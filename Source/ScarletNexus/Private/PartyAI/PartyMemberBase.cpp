@@ -17,6 +17,7 @@ APartyMemberBase::APartyMemberBase()
 	AIControllerClass = APartyAIController::StaticClass();
 	
 	PartyAIComp = CreateDefaultSubobject<UPartyAIComponent>(TEXT("PartyAIComp"));
+	StateTreeComp = CreateDefaultSubobject<UStateTreeComponent>(TEXT("StateTreeComp"));
 }
 
 // Called when the game starts or when spawned
@@ -33,6 +34,11 @@ void APartyMemberBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	// 상태 디버그
+#if WITH_EDITOR
+	
+#endif
+	
 }
 
 // Called to bind functionality to input
