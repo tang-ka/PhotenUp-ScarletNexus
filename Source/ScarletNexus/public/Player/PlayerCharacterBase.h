@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "Interface/Damageable.h"
 #include "PlayerCharacterBase.generated.h"
 
 class UPsychokinesisComponent;
@@ -22,7 +23,7 @@ struct FInputActionValue;
  * Basic Attack is not implemented yet, but the input action is set up for it.
  */
 UCLASS()
-class SCARLETNEXUS_API APlayerCharacterBase : public ACharacter
+class SCARLETNEXUS_API APlayerCharacterBase : public ACharacter, public IDamageable
 {
 	GENERATED_BODY()
 
@@ -37,6 +38,22 @@ public:
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	
+#pragma region IDamageable Interface
+	virtual bool ReceiveDamage_Implementation(FDamageInfo DamageInfo) override;
+	virtual int GetHP_Implementation() const override;
+	virtual float GetHPPercent_Implementation() const override;
+	virtual bool IsDead_Implementation() const override;
+#pragma endregion
+	
+#pragma region Component Getters
+	FORCEINLINE UCameraComponent* GetCameraComp() const { return CameraComp; }
+	FORCEINLINE USpringArmComponent* GetSpringArmComp() const { return SpringArmComp; }
+	FORCEINLINE UPlayerStatsComponent* GetStatsComp() const { return StatsComp; }
+	FORCEINLINE UPlayerStateComponent* GetStateComp() const { return StateComp; }
+	FORCEINLINE UPlayerPerceptionComponent* GetPerceptionComp() const { return PerceptionComp; }
+	FORCEINLINE UPsychokinesisComponent* GetPsychokinesisComp() const { return PsychokinesisComp; }
+#pragma endregion
+	
 protected:
 #pragma region Input Action Functions
 	void OnMoveInput(const FInputActionValue& Value);
@@ -44,38 +61,24 @@ protected:
 	void OnJumpInput(const FInputActionValue& Value);
 	void OnCompleteJumpInput(const FInputActionValue& Value);
 	void OnDodgeInput(const FInputActionValue& Value);
+	
 	void OnBasicAttackInput(const FInputActionValue& Value);
 	void OnPsychokinesisInput(const FInputActionValue& Value);
+	void OnCompletePsychokinesisInput(const FInputActionValue& Value);
+	
+	void OnBackAttackInput(const FInputActionValue& Value);
+	void OnLockOnInput(const FInputActionValue& Value);
 #pragma endregion
+
+	virtual void BasicAttack() {};
+	virtual void BackAttack();
 	
 private:
 	void Move(const FVector2D& Direction);
 	void Look(const FVector2D& LookVector);
-	void Dash();
+	void Dash(FVector& InDashDirection);
 	void ResetDash();
-
-private:
-#pragma region Dash
-	bool bIsDashing{false}; // 상태 중심
-	bool bCanDash{true};	// 상태 및 쿨타임 중심
-	bool bNeedAdjustActorForward{false}; // 대쉬 방향이 이동 방향과 다를 때 true
-	FVector DashDirection{};
-	FVector DashVelocity{};
-	float DashTimeRemaining{0.f};
-	FTimerHandle DashCooldownTimer;
-	
-	UPROPERTY(EditDefaultsOnly, Category = "Dash")
-	float DashDistance{600.f};
-	
-	UPROPERTY(EditDefaultsOnly, Category = "Dash")
-	float DashDuration{0.2f};
-	
-	UPROPERTY(EditDefaultsOnly, Category = "Dash")
-	float DashCooldown{0.2f};
-	
-	UPROPERTY(EditDefaultsOnly, Category = "Dash")
-	float DashDampingFactor{0.5f};
-#pragma endregion
+	void LockOnToggle();
 	
 protected:
 #pragma region Input Action Properties
@@ -99,9 +102,37 @@ protected:
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	TObjectPtr<UInputAction> IA_Psychokinesis;
-#pragma endregion
 	
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	TObjectPtr<UInputAction> IA_BackAttack;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	TObjectPtr<UInputAction> IA_LockOn;
+#pragma endregion
+
 private:
+#pragma region Dash Properties
+	bool bIsDashing{false}; // 상태 중심
+	bool bCanDash{true};	// 상태 및 쿨타임 중심
+	bool bNeedAdjustLookForward{false}; // 대쉬 방향이 이동 방향과 다를 때 true
+	FVector DashDirection{};
+	FVector DashVelocity{};
+	float DashTimeRemaining{0.f};
+	FTimerHandle DashCooldownTimer;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Dash")
+	float DashDistance{600.f};
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Dash")
+	float DashDuration{0.2f};
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Dash")
+	float DashCooldown{0.2f};
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Dash")
+	float DashDampingFactor{0.5f};
+#pragma endregion
+
 #pragma region Component
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<USpringArmComponent> SpringArmComp;
