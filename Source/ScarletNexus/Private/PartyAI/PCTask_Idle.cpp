@@ -4,6 +4,7 @@
 #include "PartyAI/PCTask_Idle.h"
 
 #include "AIController.h"
+#include "ScarletNexus.h"
 #include "StateTreeExecutionContext.h"
 #include "GameFramework/Character.h"
 #include "Player/PlayerCharacterBase.h"
@@ -22,6 +23,11 @@ EStateTreeRunStatus FPCTask_Follow::EnterState(FStateTreeExecutionContext& Conte
 EStateTreeRunStatus FPCTask_Follow::Tick(FStateTreeExecutionContext& Context, const float DeltaTime) const
 {
 	auto& data = Context.GetInstanceData(*this);
+	
+#if WITH_EDITOR
+	PRINTLOG_GT(TEXT("FollowTarget: %s"), data.FollowTarget ? *data.FollowTarget->GetName() : TEXT("Null"));
+#endif
+	
 	AActor* owner = Cast<AActor>(Context.GetOwner());
 	if (!owner || !data.FollowTarget) return EStateTreeRunStatus::Failed;
 	

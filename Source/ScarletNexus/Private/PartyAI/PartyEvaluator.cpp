@@ -5,6 +5,7 @@
 
 #include "ScarletNexus.h"
 #include "StateTreeExecutionContext.h"
+#include "Boss/BossCharacterBase.h"
 #include "Engine/OverlapResult.h"
 #include "Interface/Damageable.h"
 #include "Interface/DamageableHelper.h"
@@ -67,7 +68,8 @@ void FPartyEvaluator::Tick(FStateTreeExecutionContext& Context, const float Delt
 		}
 		
 		// 적 탐색
-		if (DamageableHelpers::IsDamageable(actor))
+		if (Cast<ABossCharacterBase>(actor))
+		//if (DamageableHelpers::IsDamageable(actor))
 		{
 			float dist = FVector::DistSquared(owner->GetActorLocation(), actor->GetActorLocation());
 			if (dist < bestEnemyDist)
@@ -82,4 +84,8 @@ void FPartyEvaluator::Tick(FStateTreeExecutionContext& Context, const float Delt
 	data.TrackedPlayer = nearest;
 	data.NearestEnemy = nearestEnemy;
 	data.bInAttackRange = nearestEnemy ? (FVector::Dist(owner->GetActorLocation(), nearestEnemy->GetActorLocation()) <= data.AttackRange) : false;
+	
+#if WITH_EDITOR
+	PRINTLOG_GT(TEXT("NearestEnemy: %s, bInAttackRange: %d"), nearestEnemy ? *nearestEnemy->GetName() : TEXT("Null"), data.bInAttackRange);
+#endif
 }
