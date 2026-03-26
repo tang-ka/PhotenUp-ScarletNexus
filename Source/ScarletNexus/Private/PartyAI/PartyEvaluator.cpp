@@ -62,7 +62,7 @@ void FPartyEvaluator::Tick(FStateTreeExecutionContext& Context, const float Delt
 			{
 				bestDist = dist;
 				nearest = player;
-				PRINTLOG_GT(TEXT("최근접 플레이어: %s"), *nearest->GetName());
+				//RINTLOG_GT(TEXT("최근접 플레이어: %s"), *nearest->GetName());
 			}
 			continue; // 플레이어 탐색하면 적 탐색 스킵
 		}
@@ -76,7 +76,7 @@ void FPartyEvaluator::Tick(FStateTreeExecutionContext& Context, const float Delt
 			{
 				bestEnemyDist = dist;
 				nearestEnemy = actor;
-				PRINTLOG_GT(TEXT("최근접 적: %s"), *nearestEnemy->GetName());
+				//PRINTLOG_GT(TEXT("최근접 적: %s"), *nearestEnemy->GetName());
 			}
 		}
 	}
