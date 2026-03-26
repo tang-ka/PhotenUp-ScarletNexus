@@ -25,6 +25,9 @@ void FPartyEvaluator::Tick(FStateTreeExecutionContext& Context, const float Delt
 	AActor* owner = Cast<AActor>(Context.GetOwner());
 	if (!owner) return;
 	
+	// 디버깅용
+	data.OwnerActor = owner;
+	
 	TArray<FOverlapResult> overlaps;
 	FCollisionQueryParams params;
 	params.AddIgnoredActor(owner);

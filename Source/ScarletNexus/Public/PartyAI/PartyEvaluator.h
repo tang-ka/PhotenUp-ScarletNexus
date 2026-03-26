@@ -13,6 +13,9 @@ struct FPartyEvaluatorInstanceData
 {
 	GENERATED_BODY()
 	
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<AActor> OwnerActor = nullptr;
+	
 	UPROPERTY(EditAnywhere, meta=(Output))
 	TObjectPtr<APlayerCharacterBase> TrackedPlayer = nullptr;
 	
