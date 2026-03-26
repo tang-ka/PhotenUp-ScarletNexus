@@ -44,9 +44,9 @@ void ABossCharacterBase::Tick(float DeltaTime)
 	UpdateStaggerDecay(DeltaTime);
 }
  
-// ============================================================
+
 // UE TakeDamage → 내부 시스템 연결
-// ============================================================
+
 float ABossCharacterBase::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent,
 	AController* EventInstigator, AActor* DamageCauser)
 {
@@ -55,9 +55,7 @@ float ABossCharacterBase::TakeDamage(float DamageAmount, struct FDamageEvent con
 	return ActualDamage;
 }
  
-// ============================================================
 // IBossCharacterInterface 구현
-// ============================================================
  
 float ABossCharacterBase::GetHPRatio_Implementation() const
 {
@@ -182,9 +180,9 @@ void ABossCharacterBase::InitializeWithConfig_Implementation(UBossConfigDataAsse
 		MaxHP, MaxStaggerGauge);
 }
  
-// ============================================================
+
 // 내부 메서드
-// ============================================================
+
  
 void ABossCharacterBase::CheckPhaseTransition()
 {
@@ -304,7 +302,5 @@ void ABossCharacterBase::HandleDeath()
 	// 콜리전 비활성화 (통과 가능)
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
  
-	// TODO: 사망 몽타주 재생
-	// TODO: 사망 이펙트 재생
-	// TODO: 일정 시간 후 액터 제거 또는 비가시화
+	
 }
