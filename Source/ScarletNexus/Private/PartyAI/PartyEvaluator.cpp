@@ -81,8 +81,23 @@ void FPartyEvaluator::Tick(FStateTreeExecutionContext& Context, const float Delt
 		}
 	}
 	
+	// 적 찾으면 갱신
+	if (nearestEnemy)
+	{
+		data.NearestEnemy = nearestEnemy;
+		data.TimeSinceEnemyLost = 0.f;
+	}
+	else if (data.NearestEnemy)
+	{
+		// 이전에 적이 있었는데 이번 틱에는 못 찾은 경우 -> 딜레이 후 해제
+		data.TimeSinceEnemyLost += DeltaTime;
+		if (data.TimeSinceEnemyLost >= data.LoseEnemyDelay)
+		{
+			data.NearestEnemy = nullptr;
+		}
+	}
+	
 	data.TrackedPlayer = nearest;
-	data.NearestEnemy = nearestEnemy;
 	data.bInAttackRange = nearestEnemy ? (FVector::Dist(owner->GetActorLocation(), nearestEnemy->GetActorLocation()) <= data.AttackRange) : false;
 	
 #if WITH_EDITOR

@@ -31,6 +31,12 @@ struct FPartyEvaluatorInstanceData
 	
 	UPROPERTY(EditAnywhere, meta=(Output))
 	bool bInAttackRange = false;
+	
+	// 적 상실 후 유지 시간
+	UPROPERTY(EditAnywhere)
+	float LoseEnemyDelay = 2.f;
+	
+	float TimeSinceEnemyLost = 0.f;
 };
 
 USTRUCT(DisplayName = "Party Evaluator")

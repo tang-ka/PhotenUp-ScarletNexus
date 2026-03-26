@@ -4,6 +4,7 @@
 #include "PartyAI/PCTask_Chase.h"
 
 #include "AIController.h"
+#include "ScarletNexus.h"
 #include "StateTreeExecutionContext.h"
 #include "GameFramework/Character.h"
 
@@ -32,6 +33,9 @@ EStateTreeRunStatus FPCTask_MoveToEnemy::Tick(FStateTreeExecutionContext& Contex
 	if (!owner || !data.Target) return EStateTreeRunStatus::Failed;
 	
 	const float dist = FVector::Dist(owner->GetActorLocation(), data.Target->GetActorLocation());
+#if WITH_EDITOR
+	PRINTLOG_GT(TEXT("dist: %.1f, AcceptanceRadius: %.1f"), dist, data.AcceptanceRadius);
+#endif
 	
 	// 공격 범위 도달 -> Succeeded로 Combat 전환
 	if (dist <= data.AcceptanceRadius)
