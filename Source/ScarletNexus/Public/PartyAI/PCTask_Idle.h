@@ -4,35 +4,35 @@
 
 #include "CoreMinimal.h"
 #include "StateTreeTaskBase.h"
-#include "PKTask_LiftObject.generated.h"
+#include "PCTask_Idle.generated.h"
 
-class APKObject;
+class APlayerCharacterBase;
 
 USTRUCT()
-struct FPKTask_LiftObjectInstanceData
+struct FPCTask_FollowInstanceData
 {
 	GENERATED_BODY()
 	
+	// Evaluator에서 받아온 플레이어
 	UPROPERTY(EditAnywhere, meta=(Input))
-	TObjectPtr<APKObject> TargetPKObject = nullptr;
+	TObjectPtr<APlayerCharacterBase> FollowTarget = nullptr;
 	
+	// 이 거리 이내면 정지
 	UPROPERTY(EditAnywhere)
-	float LiftHeight = 120.f;
+	float AcceptanceRadius = 200.f;
 	
+	// 이 거리 밖이면 이동 시작
 	UPROPERTY(EditAnywhere)
-	float LiftInterpSpeed = 6.f;
+	float FollowStartDistance = 400.f;
 	
-	UPROPERTY(EditAnywhere)
-	float AimReadyTime = 0.8f;
-	
-	float ElapsedTime = 0.f;
+	bool bIsMoving = false;
 };
 
-USTRUCT(DisplayName="PK: Lift Object")
-struct FPKTask_LiftObject : public FStateTreeTaskCommonBase
+USTRUCT(DisplayName="Party: Follow Player (Idle)")
+struct FPCTask_Follow : public FStateTreeTaskCommonBase
 {
 	GENERATED_BODY()
-	using FInstanceDataType = FPKTask_LiftObjectInstanceData;
+	using FInstanceDataType = FPCTask_FollowInstanceData;
 	
 	virtual const UStruct* GetInstanceDataType() const override
 	{

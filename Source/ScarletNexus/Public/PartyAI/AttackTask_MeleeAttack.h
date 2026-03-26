@@ -35,7 +35,7 @@ struct FAttackTask_MeleeAttackInstanceData
 };
 
 USTRUCT(DisplayName="Party: Melee Attack")
-struct FAttackTask_MeleeAttack : public FStateTreeTaskBase
+struct FAttackTask_MeleeAttack : public FStateTreeTaskCommonBase
 {
 	GENERATED_BODY()
 	using FInstanceDataType = FAttackTask_MeleeAttackInstanceData;

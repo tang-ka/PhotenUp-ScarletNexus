@@ -31,7 +31,7 @@ struct FPartyEvaluatorInstanceData
 };
 
 USTRUCT(DisplayName = "Party Evaluator")
-struct FPartyEvaluator : public FStateTreeEvaluatorBase
+struct FPartyEvaluator : public FStateTreeEvaluatorCommonBase
 {
 	GENERATED_BODY()
 	using FInstanceDataType = FPartyEvaluatorInstanceData;

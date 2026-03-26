@@ -28,7 +28,7 @@ struct FPKTask_ThrowObjectInstanceData
 };
 
 USTRUCT(DisplayName="PK: Throw Object")
-struct FPKTask_ThrowObject  : public FStateTreeTaskBase
+struct FPKTask_ThrowObject  : public FStateTreeTaskCommonBase
 {
 	GENERATED_BODY()
 	using FInstanceDataType = FPKTask_ThrowObjectInstanceData;

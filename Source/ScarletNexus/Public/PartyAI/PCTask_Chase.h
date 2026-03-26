@@ -4,35 +4,27 @@
 
 #include "CoreMinimal.h"
 #include "StateTreeTaskBase.h"
-#include "PKTask_LiftObject.generated.h"
-
-class APKObject;
+#include "PCTask_Chase.generated.h"
 
 USTRUCT()
-struct FPKTask_LiftObjectInstanceData
+struct FPCTask_MoveToEnemyInstanceData
 {
 	GENERATED_BODY()
 	
+	// Evaluator에서 받아온 적
 	UPROPERTY(EditAnywhere, meta=(Input))
-	TObjectPtr<APKObject> TargetPKObject = nullptr;
+	TObjectPtr<AActor> Target = nullptr;
 	
+	// 공격 사거리 안까지 접근
 	UPROPERTY(EditAnywhere)
-	float LiftHeight = 120.f;
-	
-	UPROPERTY(EditAnywhere)
-	float LiftInterpSpeed = 6.f;
-	
-	UPROPERTY(EditAnywhere)
-	float AimReadyTime = 0.8f;
-	
-	float ElapsedTime = 0.f;
+	float AcceptanceRadius = 150.f;
 };
 
-USTRUCT(DisplayName="PK: Lift Object")
-struct FPKTask_LiftObject : public FStateTreeTaskCommonBase
+USTRUCT(DisplayName="Party: Chase Enemy (Chase)")
+struct FPCTask_MoveToEnemy : public FStateTreeTaskCommonBase
 {
 	GENERATED_BODY()
-	using FInstanceDataType = FPKTask_LiftObjectInstanceData;
+	using FInstanceDataType = FPCTask_MoveToEnemyInstanceData;
 	
 	virtual const UStruct* GetInstanceDataType() const override
 	{

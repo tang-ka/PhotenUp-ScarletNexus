@@ -21,7 +21,7 @@ struct FPKTask_FindObjectInstanceData
 };
 
 USTRUCT(DisplayName = "PK: Find Object")
-struct FPKTask_FindObject : public FStateTreeTaskBase
+struct FPKTask_FindObject : public FStateTreeTaskCommonBase
 {
 	GENERATED_BODY()
 	using FInstanceDataType = FPKTask_FindObjectInstanceData;
