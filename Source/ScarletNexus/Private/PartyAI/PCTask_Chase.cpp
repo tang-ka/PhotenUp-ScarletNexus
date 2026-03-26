@@ -34,7 +34,7 @@ EStateTreeRunStatus FPCTask_MoveToEnemy::Tick(FStateTreeExecutionContext& Contex
 	
 	const float dist = FVector::Dist(owner->GetActorLocation(), data.Target->GetActorLocation());
 #if WITH_EDITOR
-	PRINTLOG_GT(TEXT("dist: %.1f, AcceptanceRadius: %.1f"), dist, data.AcceptanceRadius);
+	//PRINTLOG_GT(TEXT("dist: %.1f, AcceptanceRadius: %.1f"), dist, data.AcceptanceRadius);
 #endif
 	
 	// 공격 범위 도달 -> Succeeded로 Combat 전환
@@ -47,7 +47,10 @@ EStateTreeRunStatus FPCTask_MoveToEnemy::Tick(FStateTreeExecutionContext& Contex
 	ACharacter* ownerChar = Cast<ACharacter>(owner);
 	if (AAIController* AI = Cast<AAIController>(ownerChar->GetController()))
 	{
-		AI->MoveToActor(data.Target, data.AcceptanceRadius);
+		EPathFollowingRequestResult::Type result = AI->MoveToActor(data.Target, data.AcceptanceRadius);
+#if WITH_EDITOR
+		//PRINTLOG_GT(TEXT("MoveToActor Result: %d"), result);
+#endif
 	}
 	
 	return EStateTreeRunStatus::Running;

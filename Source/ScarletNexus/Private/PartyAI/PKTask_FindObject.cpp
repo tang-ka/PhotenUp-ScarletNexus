@@ -3,6 +3,7 @@
 
 #include "PartyAI/PKTask_FindObject.h"
 
+#include "ScarletNexus.h"
 #include "StateTreeExecutionContext.h"
 #include "Engine/OverlapResult.h"
 #include "Interface/PKInteractable.h"
@@ -11,6 +12,10 @@
 EStateTreeRunStatus FPKTask_FindObject::EnterState(FStateTreeExecutionContext& Context,
                                                    const FStateTreeTransitionResult& Transition) const
 {
+#if WITH_EDITOR
+	PRINTLOG_GT(TEXT("PKO탐색 진입"))
+#endif
+	
 	auto& data = Context.GetInstanceData(*this);
 	AActor* owner = Cast<AActor>(Context.GetOwner());
 	if (!owner) return EStateTreeRunStatus::Failed;
@@ -48,7 +53,17 @@ EStateTreeRunStatus FPKTask_FindObject::EnterState(FStateTreeExecutionContext& C
 		}
 	}
 	
-	if (!best) return EStateTreeRunStatus::Failed;
+	if (!best)
+	{
+#if WITH_EDITOR
+		PRINTLOG_GT(TEXT("PKO 못찾음"))
+#endif
+		return EStateTreeRunStatus::Failed;
+	}
+	
 	data.FoundObject = best;
+#if WITH_EDITOR
+	PRINTLOG_GT(TEXT("PKO: %s"), *best->GetName());
+#endif
 	return EStateTreeRunStatus::Succeeded;
 }

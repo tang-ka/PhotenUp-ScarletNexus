@@ -3,7 +3,9 @@
 
 #include "PartyAI/AttackTask_MeleeAttack.h"
 
+#include "ScarletNexus.h"
 #include "StateTreeExecutionContext.h"
+#include "Boss/BossCharacterBase.h"
 #include "Interface/Damageable.h"
 #include "Interface/DamageableHelper.h"
 
@@ -11,11 +13,16 @@ EStateTreeRunStatus FAttackTask_MeleeAttack::EnterState(FStateTreeExecutionConte
                                                         const FStateTreeTransitionResult& Transition) const
 {
 	auto& data = Context.GetInstanceData(*this);
+	
+#if WITH_EDITOR
+	PRINTLOG_GT(TEXT("Attack Target: %s"), data.Target ? *data.Target->GetName() : TEXT("NULL"));
+#endif
+	
 	data.ElapsedTime = 0.f;
 	data.bAttacked = false;
 	
 	// IDamageable 적용 체크
-	if (!DamageableHelpers::IsDamageable(data.Target)) return EStateTreeRunStatus::Failed;
+	if (/*!DamageableHelpers::IsDamageable(data.Target)*/Cast<ABossCharacterBase>(data.Target)) return EStateTreeRunStatus::Failed;
 	
 	return EStateTreeRunStatus::Running;
 }

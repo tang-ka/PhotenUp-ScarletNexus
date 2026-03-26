@@ -25,7 +25,7 @@ EStateTreeRunStatus FPCTask_Follow::Tick(FStateTreeExecutionContext& Context, co
 	auto& data = Context.GetInstanceData(*this);
 	
 #if WITH_EDITOR
-	PRINTLOG_GT(TEXT("FollowTarget: %s"), data.FollowTarget ? *data.FollowTarget->GetName() : TEXT("Null"));
+	//PRINTLOG_GT(TEXT("FollowTarget: %s"), data.FollowTarget ? *data.FollowTarget->GetName() : TEXT("Null"));
 #endif
 	
 	AActor* owner = Cast<AActor>(Context.GetOwner());

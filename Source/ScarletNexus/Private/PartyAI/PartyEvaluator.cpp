@@ -101,6 +101,6 @@ void FPartyEvaluator::Tick(FStateTreeExecutionContext& Context, const float Delt
 	data.bInAttackRange = nearestEnemy ? (FVector::Dist(owner->GetActorLocation(), nearestEnemy->GetActorLocation()) <= data.AttackRange) : false;
 	
 #if WITH_EDITOR
-	PRINTLOG_GT(TEXT("NearestEnemy: %s, bInAttackRange: %d"), nearestEnemy ? *nearestEnemy->GetName() : TEXT("Null"), data.bInAttackRange);
+	//PRINTLOG_GT(TEXT("NearestEnemy: %s, bInAttackRange: %d"), nearestEnemy ? *nearestEnemy->GetName() : TEXT("Null"), data.bInAttackRange);
 #endif
 }
