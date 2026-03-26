@@ -6,6 +6,7 @@
 #include "StateTreeEvaluatorBase.h"
 #include "PartyEvaluator.generated.h"
 
+class APKObject;
 class APlayerCharacterBase;
 
 USTRUCT()
@@ -36,7 +37,15 @@ struct FPartyEvaluatorInstanceData
 	UPROPERTY(EditAnywhere)
 	float LoseEnemyDelay = 2.f;
 	
+	UPROPERTY()
 	float TimeSinceEnemyLost = 0.f;
+	
+	// PK 오브젝트 탐색 추가
+	UPROPERTY(EditAnywhere)
+	float PKSearchRadius = 800.f;
+	
+	UPROPERTY(EditAnywhere, meta=(Output))
+	TObjectPtr<APKObject> FoundPKObject = nullptr;
 };
 
 USTRUCT(DisplayName = "Party Evaluator")
