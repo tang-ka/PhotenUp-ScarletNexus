@@ -10,6 +10,7 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Interface/DamageableHelper.h"
 #include "Player/Component/PlayerPerceptionComponent.h"
 #include "Player/Component/PlayerStateComponent.h"
 #include "Player/Component/PlayerStatsComponent.h"
