@@ -10,6 +10,7 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Interface/DamageableHelper.h"
 #include "Player/Component/PlayerPerceptionComponent.h"
 #include "Player/Component/PlayerStateComponent.h"
 #include "Player/Component/PlayerStatsComponent.h"
@@ -74,6 +75,22 @@ APlayerCharacterBase::APlayerCharacterBase()
 	if (IA_PsychokinesisAsset.Succeeded())
 	{
 		IA_Psychokinesis = IA_PsychokinesisAsset.Object;
+	}
+	
+	ConstructorHelpers::FObjectFinder<UInputAction> IA_BackAttackAsset(
+		TEXT("'/Game/SSH/Inputs/IA_BackAttack.IA_BackAttack'")
+	);
+	if (IA_BackAttackAsset.Succeeded())
+	{
+		IA_BackAttack = IA_BackAttackAsset.Object;
+	}
+	
+	ConstructorHelpers::FObjectFinder<UInputAction> IA_LockOnAsset(
+		TEXT("'/Game/SSH/Inputs/IA_LockOn.IA_LockOn'")
+	);
+	if (IA_LockOnAsset.Succeeded())
+	{
+		IA_LockOn = IA_LockOnAsset.Object;
 	}
 #pragma endregion
 
@@ -145,17 +162,20 @@ void APlayerCharacterBase::Tick(float DeltaTime)
 		}
 	}
 	
-	// 입력 없이 앞으로 대쉬 할 떄 Actor 방향 조정
-	if (bNeedAdjustActorForward)
+	if (bNeedAdjustLookForward)
 	{
 		const FQuat CurQuat = GetActorQuat();
-		const FQuat TargetQuat = DashDirection.ToOrientationQuat();
+		// const FQuat TargetQuat = DashDirection.ToOrientationQuat();
+		FVector CameraForwardXYPlane = GetCameraComp()->GetForwardVector();
+		CameraForwardXYPlane.Z = 0.f;
+		CameraForwardXYPlane.Normalize();
+		const FQuat TargetQuat = CameraForwardXYPlane.ToOrientationQuat();
 		const FQuat NewQuat = FQuat::Slerp(CurQuat, TargetQuat, 0.5f);
 		SetActorRotation(NewQuat);
-		if (FQuat::ErrorAutoNormalize(CurQuat, TargetQuat) < 0.01f)
+		if (FQuat::ErrorAutoNormalize(NewQuat, TargetQuat) < 0.01f)
 		{
 			SetActorRotation(TargetQuat);
-			bNeedAdjustActorForward = false;
+			bNeedAdjustLookForward = false;
 		}
 	}
 }
@@ -176,10 +196,35 @@ void APlayerCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 
 		// Skills
 		InputComp->BindAction(IA_BasicAttack, ETriggerEvent::Started, this, &APlayerCharacterBase::OnBasicAttackInput);
-		InputComp->BindAction(IA_Psychokinesis, ETriggerEvent::Started, this,
-		                      &APlayerCharacterBase::OnPsychokinesisInput);
+		InputComp->BindAction(IA_Psychokinesis, ETriggerEvent::Started, this, &APlayerCharacterBase::OnPsychokinesisInput);
+		InputComp->BindAction(IA_Psychokinesis, ETriggerEvent::Completed, this, &APlayerCharacterBase::OnCompletePsychokinesisInput);
+		
+		InputComp->BindAction(IA_BackAttack, ETriggerEvent::Started, this, &APlayerCharacterBase::OnBackAttackInput);
+		InputComp->BindAction(IA_LockOn, ETriggerEvent::Started, this, &APlayerCharacterBase::OnLockOnInput);
 	}
 }
+
+#pragma region IDamageable Interface
+bool APlayerCharacterBase::ReceiveDamage_Implementation(FDamageInfo DamageInfo)
+{
+	return IDamageable::ReceiveDamage_Implementation(DamageInfo);
+}
+
+int APlayerCharacterBase::GetHP_Implementation() const
+{
+	return IDamageable::GetHP_Implementation();
+}
+
+float APlayerCharacterBase::GetHPPercent_Implementation() const
+{
+	return IDamageable::GetHPPercent_Implementation();
+}
+
+bool APlayerCharacterBase::IsDead_Implementation() const
+{
+	return IDamageable::IsDead_Implementation();
+}
+#pragma endregion
 
 #pragma region Input Action Functions
 void APlayerCharacterBase::OnMoveInput(const FInputActionValue& Value)
@@ -206,19 +251,56 @@ void APlayerCharacterBase::OnCompleteJumpInput(const FInputActionValue& Value)
 
 void APlayerCharacterBase::OnDodgeInput(const FInputActionValue& Value)
 {
-	Dash();
+	DashDirection = GetLastMovementInputVector();
+	
+	if (DashDirection.IsNearlyZero())
+	{
+		// DodgeDirection = GetMesh()->GetRightVector();
+		// Camera 방향으로 대쉬하도록 변경
+		DashDirection = CameraComp->GetForwardVector();
+		bNeedAdjustLookForward = true;
+	}
+	
+	Dash(DashDirection);
 }
 
 void APlayerCharacterBase::OnBasicAttackInput(const FInputActionValue& Value)
 {
 	UE_LOG(LogTemp, Warning, TEXT("Basic Attack!"));
+	BasicAttack();
 }
 
 void APlayerCharacterBase::OnPsychokinesisInput(const FInputActionValue& Value)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Psychokinesis!"));
+	PsychokinesisComp->SetTarget(GetPerceptionComp()->GetCurrentTarget());
+	PsychokinesisComp->SetPickedObject(GetPerceptionComp()->GetPsychokinesisTarget());
+	
+	PsychokinesisComp->StartHold();
+}
+
+void APlayerCharacterBase::OnCompletePsychokinesisInput(const FInputActionValue& Value)
+{
+	PsychokinesisComp->ReleaseHold();
+}
+
+void APlayerCharacterBase::OnBackAttackInput(const FInputActionValue& Value)
+{
+	UE_LOG(LogTemp, Warning, TEXT("Back Attack!"));
+	BackAttack();
+}
+
+void APlayerCharacterBase::OnLockOnInput(const FInputActionValue& Value)
+{
+	LockOnToggle();
 }
 #pragma endregion
+
+void APlayerCharacterBase::BackAttack()
+{
+	DashDirection = -GetCameraComp()->GetForwardVector();
+	bNeedAdjustLookForward = true;
+	Dash(DashDirection);
+}
 
 void APlayerCharacterBase::Move(const FVector2D& InDirection)
 {
@@ -244,7 +326,7 @@ void APlayerCharacterBase::Look(const FVector2D& LookVector)
 	AddControllerPitchInput(-LookVector.Y);
 }
 
-void APlayerCharacterBase::Dash()
+void APlayerCharacterBase::Dash(FVector& InDashDirection)
 {
 	if (!bCanDash || GetCharacterMovement()->IsFalling())
 	{
@@ -254,20 +336,10 @@ void APlayerCharacterBase::Dash()
 	bIsDashing = true;
 	bCanDash = false;
 	
-	DashDirection = GetLastMovementInputVector();
-	if (DashDirection.IsNearlyZero())
-	{
-		// DodgeDirection = GetMesh()->GetRightVector();
-		// Camera 방향으로 대쉬하도록 변경
-		DashDirection = CameraComp->GetForwardVector();
-		
-		bNeedAdjustActorForward = true;
-	}
+	InDashDirection.Normalize();
+	InDashDirection.Z = 0.f;
 
-	DashDirection.Normalize();
-	DashDirection.Z = 0.f;
-
-	DashVelocity = DashDirection * (DashDistance / DashDuration);
+	DashVelocity = InDashDirection * (DashDistance / DashDuration);
 	DashTimeRemaining = DashDuration;
 
 	GetCharacterMovement()->Velocity.Z = 0;
@@ -277,4 +349,11 @@ void APlayerCharacterBase::ResetDash()
 {
 	bIsDashing = false;
 	bCanDash = true;
+}
+
+void APlayerCharacterBase::LockOnToggle()
+{
+	auto* Perception = GetPerceptionComp();
+	Perception->IsLockedOnActivate() ? Perception->DeactivateLockOn() : Perception->ActivateLockOn();
+	UE_LOG(LogTemp, Warning, TEXT("%s"), Perception->IsLockedOnActivate() ? TEXT("Locked On") : TEXT("Locked Off"));
 }

@@ -11,7 +11,7 @@ APlayerKasane::APlayerKasane()
 	PrimaryActorTick.bCanEverTick = true;
 
 	ConstructorHelpers::FObjectFinder<USkeletalMesh> MeshAsset(
-		TEXT("'/Game/Models/Kasane/Kasane.Kasane'")
+		TEXT("'/Game/Models/GS_UModel/Characters/Kasane_GS/Kasane_SKM.Kasane_SKM'")
 	);
 
 	if (MeshAsset.Succeeded())
@@ -19,7 +19,7 @@ APlayerKasane::APlayerKasane()
 		GetMesh()->SetSkeletalMesh(MeshAsset.Object);
 		GetMesh()->SetRelativeLocation(FVector(0.0f, 0.0f, -88.0f));
 		GetMesh()->SetRelativeRotation(FRotator(0.0f, -90.0f, 0.0f));
-		GetMesh()->SetRelativeScale3D(FVector(1.55f, 1.55f, 1.55f));
+		GetMesh()->SetRelativeScale3D(FVector(0.42f, 0.42f, 0.42f));
 	}
 }
 
