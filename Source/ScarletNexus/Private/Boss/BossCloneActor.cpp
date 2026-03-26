@@ -2,11 +2,11 @@
 
 
 #include "Boss/BossCloneActor.h"
+#include "Interface/DamageableHelper.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "Engine/DamageEvents.h"
 #include "Engine/OverlapResult.h"
  
 ABossCloneActor::ABossCloneActor()
@@ -21,11 +21,10 @@ ABossCloneActor::ABossCloneActor()
 	MeshComp = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Mesh"));
 	MeshComp->SetupAttachment(CapsuleComp);
 	MeshComp->SetRelativeLocation(FVector(0.f, 0.f, -96.f));
- 
-	// 분신 반투명 효과 (나중에 머티리얼로 교체)
-	// MeshComp->SetScalarParameterValueOnMaterials(TEXT("Opacity"), 0.5f);
+	
 }
  
+
 void ABossCloneActor::InitRush(const FVector& InDirection, float InSpeed, float InDistance,
 	float InDamage, float InDamageRadius, float InKnockback)
 {
@@ -60,7 +59,7 @@ void ABossCloneActor::Tick(float DeltaTime)
  
 	if (bRushComplete)
 	{
-		// 돌진 완료 후 대기 (ExitState에서 정리됨)
+		// 돌진 완료 후 대기
 		return;
 	}
  
@@ -76,7 +75,7 @@ void ABossCloneActor::Tick(float DeltaTime)
  
 	if (DistanceTraveled >= RushDistance)
 	{
-		// 돌진 완료
+		// 돌진 완
 		SetActorLocation(StartLocation + RushDirection * RushDistance);
 		bRushing = false;
 		bRushComplete = true;
@@ -100,7 +99,7 @@ void ABossCloneActor::ApplyRushDamage()
 	FCollisionQueryParams QueryParams;
 	QueryParams.AddIgnoredActor(this);
  
-	// 보스 본체도 무시 (Owner로 설정된 경우)
+	// 보스 본체도 무시
 	if (GetOwner())
 	{
 		QueryParams.AddIgnoredActor(GetOwner());
@@ -129,11 +128,12 @@ void ABossCloneActor::ApplyRushDamage()
 			continue;
 		}
  
-		FDamageEvent DamageEvent;
-		HitCharacter->TakeDamage(Damage, DamageEvent, nullptr, this);
- 
-		UE_LOG(LogTemp, Log, TEXT("[BossClone] %s에게 %.0f 데미지!"),
-			*HitCharacter->GetName(), Damage);
+		// IDamageable 인터페이스로 데미지 적용
+		if (DamageableHelpers::ApplyDamage(HitCharacter, GetOwner() ? GetOwner() : this, static_cast<int>(Damage)))
+		{
+			UE_LOG(LogTemp, Log, TEXT("[BossClone] %s에게 %.0f 데미지!"),
+				*HitCharacter->GetName(), Damage);
+		}
  
 		if (UCharacterMovementComponent* Movement = HitCharacter->GetCharacterMovement())
 		{
