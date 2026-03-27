@@ -1,11 +1,11 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Player/Component/ComboAttack/ComboInputBufferComponent.h"
+#include "Player/Component/ActionManagerComponent.h"
 
 
 // Sets default values for this component's properties
-UComboInputBufferComponent::UComboInputBufferComponent()
+UActionManagerComponent::UActionManagerComponent()
 {
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
@@ -16,7 +16,7 @@ UComboInputBufferComponent::UComboInputBufferComponent()
 
 
 // Called when the game starts
-void UComboInputBufferComponent::BeginPlay()
+void UActionManagerComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
@@ -26,8 +26,8 @@ void UComboInputBufferComponent::BeginPlay()
 
 
 // Called every frame
-void UComboInputBufferComponent::TickComponent(float DeltaTime, ELevelTick TickType,
-                                               FActorComponentTickFunction* ThisTickFunction)
+void UActionManagerComponent::TickComponent(float DeltaTime, ELevelTick TickType,
+                                            FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 

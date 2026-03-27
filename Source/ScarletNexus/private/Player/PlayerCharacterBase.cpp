@@ -11,6 +11,9 @@
 #include "EnhancedInputSubsystems.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Interface/DamageableHelper.h"
+#include "Player/Component/ActionManagerComponent.h"
+#include "Player/Component/ComboComponent.h"
+#include "Player/Component/InputBufferComponent.h"
 #include "Player/Component/PlayerPerceptionComponent.h"
 #include "Player/Component/PlayerStateComponent.h"
 #include "Player/Component/PlayerStatsComponent.h"
@@ -114,6 +117,9 @@ APlayerCharacterBase::APlayerCharacterBase()
 	StateComp = CreateDefaultSubobject<UPlayerStateComponent>(TEXT("StateComp"));
 	PerceptionComp = CreateDefaultSubobject<UPlayerPerceptionComponent>(TEXT("PerceptionComp"));
 	PsychokinesisComp = CreateDefaultSubobject<UPsychokinesisComponent>(TEXT("PsychokinesisComp"));
+	ActionManagerComp = CreateDefaultSubobject<UActionManagerComponent>(TEXT("ActionManagerComp"));
+	InputBufferComp = CreateDefaultSubobject<UInputBufferComponent>(TEXT("InputBufferComp"));
+	ComboComp = CreateDefaultSubobject<UComboComponent>(TEXT("ComboComp"));
 }
 
 void APlayerCharacterBase::BeginPlay()

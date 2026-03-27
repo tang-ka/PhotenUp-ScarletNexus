@@ -6,6 +6,7 @@
 #include "PlayerCharacterBase.h"
 #include "PlayerKasane.generated.h"
 
+
 UCLASS()
 class SCARLETNEXUS_API APlayerKasane : public APlayerCharacterBase
 {
@@ -22,8 +23,5 @@ public:
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-public:
-#pragma region Component
-
-#pragma endregion
+private:
 };

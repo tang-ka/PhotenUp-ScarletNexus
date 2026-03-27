@@ -1,11 +1,11 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Player/Component/ComboAttack/ComboStateMachineComponent.h"
+#include "Player/Component/ComboComponent.h"
 
 
 // Sets default values for this component's properties
-UComboStateMachineComponent::UComboStateMachineComponent()
+UComboComponent::UComboComponent()
 {
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
@@ -16,7 +16,7 @@ UComboStateMachineComponent::UComboStateMachineComponent()
 
 
 // Called when the game starts
-void UComboStateMachineComponent::BeginPlay()
+void UComboComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
@@ -26,8 +26,7 @@ void UComboStateMachineComponent::BeginPlay()
 
 
 // Called every frame
-void UComboStateMachineComponent::TickComponent(float DeltaTime, ELevelTick TickType,
-                                                FActorComponentTickFunction* ThisTickFunction)
+void UComboComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 

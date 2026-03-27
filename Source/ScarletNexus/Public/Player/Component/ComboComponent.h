@@ -4,17 +4,17 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "ComboStateMachineComponent.generated.h"
+#include "ComboComponent.generated.h"
 
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
-class SCARLETNEXUS_API UComboStateMachineComponent : public UActorComponent
+class SCARLETNEXUS_API UComboComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
 public:
 	// Sets default values for this component's properties
-	UComboStateMachineComponent();
+	UComboComponent();
 
 protected:
 	// Called when the game starts
