@@ -4,12 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "StateTreeTaskBase.h"
-#include "AttackTask_MeleeAttack.generated.h"
+#include "PCTask_Attack.generated.h"
 
 class APlayerCharacterBase;
 
 USTRUCT()
-struct FAttackTask_MeleeAttackInstanceData
+struct FPCTask_AttackInstanceData
 {
 	GENERATED_BODY()
 	
@@ -35,10 +35,10 @@ struct FAttackTask_MeleeAttackInstanceData
 };
 
 USTRUCT(DisplayName="Party: Melee Attack")
-struct FAttackTask_MeleeAttack : public FStateTreeTaskCommonBase
+struct FPCTask_Attack : public FStateTreeTaskCommonBase
 {
 	GENERATED_BODY()
-	using FInstanceDataType = FAttackTask_MeleeAttackInstanceData;
+	using FInstanceDataType = FPCTask_AttackInstanceData;
 	
 	virtual const UStruct* GetInstanceDataType() const override
 	{

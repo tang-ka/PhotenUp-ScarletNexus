@@ -68,8 +68,8 @@ void FPartyEvaluator::Tick(FStateTreeExecutionContext& Context, const float Delt
 		}
 		
 		// 적 탐색
-		if (Cast<ABossCharacterBase>(actor))
-		//if (DamageableHelpers::IsDamageable(actor))
+		//if (Cast<ABossCharacterBase>(actor))
+		if (DamageableHelpers::IsDamageable(actor))
 		{
 			float dist = FVector::DistSquared(owner->GetActorLocation(), actor->GetActorLocation());
 			if (dist < bestEnemyDist)

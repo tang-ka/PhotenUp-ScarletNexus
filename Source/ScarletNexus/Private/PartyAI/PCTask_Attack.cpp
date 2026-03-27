@@ -1,16 +1,16 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "PartyAI/AttackTask_MeleeAttack.h"
+#include "PartyAI/PCTask_Attack.h"
 
 #include "ScarletNexus.h"
 #include "StateTreeExecutionContext.h"
 #include "Boss/BossCharacterBase.h"
 #include "Interface/Damageable.h"
 #include "Interface/DamageableHelper.h"
+#include "PartyAI/PartyMemberBase.h"
 
-EStateTreeRunStatus FAttackTask_MeleeAttack::EnterState(FStateTreeExecutionContext& Context,
-                                                        const FStateTreeTransitionResult& Transition) const
+EStateTreeRunStatus FPCTask_Attack::EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const
 {
 	auto& data = Context.GetInstanceData(*this);
 	
@@ -22,12 +22,23 @@ EStateTreeRunStatus FAttackTask_MeleeAttack::EnterState(FStateTreeExecutionConte
 	data.bAttacked = false;
 	
 	// IDamageable 적용 체크
-	if (/*!DamageableHelpers::IsDamageable(data.Target)*/Cast<ABossCharacterBase>(data.Target)) return EStateTreeRunStatus::Failed;
+	if (!data.Target || !DamageableHelpers::IsDamageable(data.Target)/*Cast<ABossCharacterBase>(data.Target)*/) return EStateTreeRunStatus::Failed;
+	
+	// 타겟 방향으로 회전
+	AActor* owner = Cast<AActor>(data.Target);
+	if (owner)
+	{
+		FVector dir = (data.Target->GetActorLocation() - owner->GetActorLocation()).GetSafeNormal2D();
+		if (!dir.IsNearlyZero())
+		{
+			owner->SetActorRotation(dir.Rotation());
+		}
+	}
 	
 	return EStateTreeRunStatus::Running;
 }
 
-EStateTreeRunStatus FAttackTask_MeleeAttack::Tick(FStateTreeExecutionContext& Context, const float DeltaTime) const
+EStateTreeRunStatus FPCTask_Attack::Tick(FStateTreeExecutionContext& Context, const float DeltaTime) const
 {
 	auto& data = Context.GetInstanceData(*this);
 	AActor* owner = Cast<AActor>(Context.GetOwner());
@@ -39,13 +50,14 @@ EStateTreeRunStatus FAttackTask_MeleeAttack::Tick(FStateTreeExecutionContext& Co
 	if (!data.bAttacked && data.ElapsedTime >= data.AttackCooldown * 0.3f)
 	{
 		const float dist = FVector::Dist(owner->GetActorLocation(), data.Target->GetActorLocation());
-		
+		APartyMemberBase* partyMember = Cast<APartyMemberBase>(owner);
+		if (!partyMember) return EStateTreeRunStatus::Failed;
 		if (dist <= data.AttackRadius)
 		{
 			FDamageInfo info;
 			info.DamageAmount = data.Damage;
 			info.DamageCauser = owner;
-			
+			partyMember.
 			IDamageable::Execute_ReceiveDamage(data.Target, info);
 		}
 		data.bAttacked = true;
