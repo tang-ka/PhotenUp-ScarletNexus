@@ -101,13 +101,9 @@ EStateTreeRunStatus FPCTask_PK::Tick(FStateTreeExecutionContext& Context, const 
 		{
 		case EPKObjectType::Throwable:
 			// 던지기
-			if (UPrimitiveComponent* prim = data.FoundObject->FindComponentByClass<UPrimitiveComponent>())
-			{
-				const FVector throwDir = (data.TargetEnemy->GetActorLocation()
+			const FVector throwDir = (data.TargetEnemy->GetActorLocation()
 					- data.FoundObject->GetActorLocation()).GetSafeNormal();
-				data.FoundObject->Execute_OnPKThrown(data.FoundObject, throwDir, data.ThrowSpeed);
-				prim->AddImpulse(throwDir * data.ThrowSpeed, NAME_None, true);
-			}
+			data.FoundObject->Execute_OnPKThrownPS(data.FoundObject, throwDir, data.ThrowSpeed);
 			break;
 		case EPKObjectType::Crumplable:
 			break;

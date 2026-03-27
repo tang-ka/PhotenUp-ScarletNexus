@@ -94,11 +94,23 @@ void APKObject::OnPKThrown_Implementation(const FVector& ThrowDir, float ThrowFo
 	ObjectState = EPKObjectState::IsUsed;
 	
 	// 충돌 재활성화
-	
-	// 물리, 충돌 재활성화
-	BoxComp->SetSimulatePhysics(true);
 	BoxComp->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	bUsedObject = true;
+}
+
+// 물리 적용 전용 던지기
+void APKObject::OnPKThrownPS_Implementation(const FVector& ThrowDir, float ThrowForce)
+{
+	ObjectState = EPKObjectState::IsUsed;
+	
+	// 물리 활성화 
+	BoxComp->SetSimulatePhysics(true);
+	// 충돌 재활성화
+	BoxComp->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	bUsedObject = true;
+	
+	// 물리 충격
+	BoxComp->AddImpulse(ThrowDir * ThrowForce, NAME_None, true);
 }
 
 void APKObject::OnBoxHit(UPrimitiveComponent* HitComponent, AActor* OtherActor,
