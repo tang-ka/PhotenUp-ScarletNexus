@@ -9,8 +9,6 @@ namespace BossTags
 	
 	// 보스 이벤트 태그
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_PhaseTransition);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Stagger);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_BrainCrush);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Death);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_HitReaction);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_CutsceneStart);
@@ -40,8 +38,6 @@ namespace BossTags
  
 	
 	// 상태 태그
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_SuperArmor);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Invincible);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Staggered);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_InCutscene);
 }

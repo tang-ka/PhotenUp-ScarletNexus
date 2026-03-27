@@ -5,17 +5,14 @@
 #include "Boss/BossAIController.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Components/CapsuleComponent.h"
-#include "Engine/DamageEvents.h"
  
 ABossCharacterBase::ABossCharacterBase()
 {
 	PrimaryActorTick.bCanEverTick = true;
  
-	// AI Controller 클래스 지정
 	AIControllerClass = ABossAIController::StaticClass();
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
  
-	// 캐릭터 무브먼트 기본 설정
 	if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
 	{
 		MoveComp->MaxWalkSpeed = 500.f;
@@ -23,7 +20,6 @@ ABossCharacterBase::ABossCharacterBase()
 		MoveComp->RotationRate = FRotator(0.f, 540.f, 0.f);
 	}
  
-	// 컨트롤러 회전 사용하지 않음 (이동 방향으로 자동 회전)
 	bUseControllerRotationYaw = false;
 }
  
@@ -31,123 +27,65 @@ void ABossCharacterBase::BeginPlay()
 {
 	Super::BeginPlay();
  
-	// Config가 에디터에서 설정되어 있으면 초기화
 	if (BossConfig)
 	{
-		InitializeWithConfig_Implementation(BossConfig);
+		InitializeWithConfig(BossConfig);
 	}
 }
  
 void ABossCharacterBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	UpdateStaggerDecay(DeltaTime);
 }
  
 
-// UE TakeDamage → 내부 시스템 연결
+// IDamageable 구현
 
-float ABossCharacterBase::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent,
-	AController* EventInstigator, AActor* DamageCauser)
-{
-	const float ActualDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
-	ApplyDamage_Implementation(ActualDamage, DamageCauser);
-	return ActualDamage;
-}
  
-// IBossCharacterInterface 구현
- 
-float ABossCharacterBase::GetHPRatio_Implementation() const
+bool ABossCharacterBase::ReceiveDamage_Implementation(FDamageInfo DamageInfo)
 {
-	if (MaxHP <= 0.f)
+	if (CurrentHPValue <= 0.f)
 	{
-		return 0.f;
-	}
-	return FMath::Clamp(CurrentHP / MaxHP, 0.f, 1.f);
-}
- 
-float ABossCharacterBase::GetCurrentHP_Implementation() const
-{
-	return CurrentHP;
-}
- 
-void ABossCharacterBase::ApplyDamage_Implementation(float DamageAmount, AActor* DamageCauser)
-{
-	if (CurrentHP <= 0.f)
-	{
-		return; // 이미 사망
+		return false;
 	}
  
-	const float OldHP = CurrentHP;
-	CurrentHP = FMath::Clamp(CurrentHP - DamageAmount, 0.f, MaxHP);
+	const float OldHP = CurrentHPValue;
+	const float DamageAmount = static_cast<float>(DamageInfo.DamageAmount);
+	CurrentHPValue = FMath::Clamp(CurrentHPValue - DamageAmount, 0.f, MaxHPValue);
  
-	UE_LOG(LogTemp, Log, TEXT("[Boss] 대미지: %.0f (HP: %.0f -> %.0f / %.0f)"),
-		DamageAmount, OldHP, CurrentHP, MaxHP);
+	UE_LOG(LogTemp, Log, TEXT("[Boss] 대미지: %d (HP: %.0f -> %.0f / %.0f)"),
+		DamageInfo.DamageAmount, OldHP, CurrentHPValue, MaxHPValue);
  
-	// HP 변경 이벤트 브로드캐스트
-	OnHPChanged.Broadcast(CurrentHP, MaxHP, DamageAmount);
- 
-	// 페이즈 전환 체크
+	OnHPChanged.Broadcast(CurrentHPValue, MaxHPValue, DamageAmount);
 	CheckPhaseTransition();
  
-	// 사망 체크
-	if (CurrentHP <= 0.f)
+	if (CurrentHPValue <= 0.f)
 	{
 		HandleDeath();
 	}
+ 
+	return true;
 }
  
-float ABossCharacterBase::GetStaggerRatio_Implementation() const
+int ABossCharacterBase::GetHP_Implementation() const
 {
-	if (MaxStaggerGauge <= 0.f)
-	{
-		return 0.f;
-	}
-	return FMath::Clamp(CurrentStaggerGauge / MaxStaggerGauge, 0.f, 1.f);
+	return static_cast<int>(CurrentHPValue);
 }
  
-void ABossCharacterBase::ApplyStaggerDamage_Implementation(float StaggerAmount)
+float ABossCharacterBase::GetHPPercent_Implementation() const
 {
-	// 슈퍼아머 상태면 경직 대미지 무시
-	if (bSuperArmor)
-	{
-		UE_LOG(LogTemp, Verbose, TEXT("[Boss] 슈퍼아머 활성 - 경직 대미지 무시"));
-		return;
-	}
- 
-	const float OldStagger = CurrentStaggerGauge;
-	CurrentStaggerGauge = FMath::Clamp(CurrentStaggerGauge + StaggerAmount, 0.f, MaxStaggerGauge);
-	LastStaggerHitTime = GetWorld()->GetTimeSeconds();
- 
-	UE_LOG(LogTemp, Log, TEXT("[Boss] 경직 대미지: %.0f (Stagger: %.0f -> %.0f / %.0f)"),
-		StaggerAmount, OldStagger, CurrentStaggerGauge, MaxStaggerGauge);
- 
-	OnStaggerChanged.Broadcast(CurrentStaggerGauge, MaxStaggerGauge);
- 
-	// 경직 게이지 MAX 도달 시 -> AI Controller에 이벤트 전달
-	if (CurrentStaggerGauge >= MaxStaggerGauge)
-	{
-		UE_LOG(LogTemp, Log, TEXT("[Boss] 경직 게이지 MAX - 그로기 상태 진입"));
- 
-		if (ABossAIController* BossAI = Cast<ABossAIController>(GetController()))
-		{
-			// Boss.Event.Stagger 태그로 StateTree에 이벤트 전달
-			BossAI->SendStateTreeEvent(
-				FGameplayTag::RequestGameplayTag(FName("Boss.Event.Stagger")));
-		}
-	}
+	if (MaxHPValue <= 0.f) return 0.f;
+	return FMath::Clamp(CurrentHPValue / MaxHPValue, 0.f, 1.f);
 }
  
-bool ABossCharacterBase::IsStaggered_Implementation() const
+bool ABossCharacterBase::IsDead_Implementation() const
 {
-	return CurrentCombatState == EBossCombatState::Stagger
-		|| CurrentCombatState == EBossCombatState::BrainCrush;
+	return CurrentHPValue <= 0.f;
 }
  
-EBossCombatState ABossCharacterBase::GetCombatState_Implementation() const
-{
-	return CurrentCombatState;
-}
+
+// ICombatState 구현
+
  
 bool ABossCharacterBase::IsAttacking_Implementation() const
 {
@@ -158,10 +96,14 @@ bool ABossCharacterBase::IsAttacking_Implementation() const
  
 bool ABossCharacterBase::HasSuperArmor_Implementation() const
 {
-	return bSuperArmor;
+	return false;
 }
  
-void ABossCharacterBase::InitializeWithConfig_Implementation(UBossConfigDataAsset* Config)
+
+// 보스 전용
+
+ 
+void ABossCharacterBase::InitializeWithConfig(UBossConfigDataAsset* Config)
 {
 	if (!Config)
 	{
@@ -170,44 +112,29 @@ void ABossCharacterBase::InitializeWithConfig_Implementation(UBossConfigDataAsse
 	}
  
 	BossConfig = Config;
-	MaxHP = Config->MaxHP;
-	CurrentHP = MaxHP;
-	MaxStaggerGauge = Config->MaxStaggerGauge;
-	CurrentStaggerGauge = 0.f;
+	MaxHPValue = Config->MaxHP;
+	CurrentHPValue = MaxHPValue;
 	CurrentPhase = EBossPhase::Phase1;
  
-	UE_LOG(LogTemp, Log, TEXT("[Boss] 초기화 완료 - HP: %.0f, MaxStagger: %.0f"),
-		MaxHP, MaxStaggerGauge);
+	UE_LOG(LogTemp, Log, TEXT("[Boss] 초기화 완료 - HP: %.0f"), MaxHPValue);
 }
  
 
 // 내부 메서드
-
  
 void ABossCharacterBase::CheckPhaseTransition()
 {
-	if (!BossConfig)
-	{
-		return;
-	}
+	if (!BossConfig) return;
  
-	const float HPRatio = GetHPRatio_Implementation();
+	const float HPRatio = GetHPPercent_Implementation();
 	EBossPhase NewPhase = CurrentPhase;
  
-	// HP 비율에 따른 페이즈 결정
-	// Phase1(1.0~0.7), Phase2(0.7~0.5), Phase2_Enhanced(0.5~0.25), Phase3(0.25~0)
 	if (HPRatio <= 0.25f)
-	{
 		NewPhase = EBossPhase::Phase3_Cutscene;
-	}
 	else if (HPRatio <= 0.50f)
-	{
 		NewPhase = EBossPhase::Phase2_Enhanced;
-	}
 	else if (HPRatio <= 0.70f)
-	{
 		NewPhase = EBossPhase::Phase2;
-	}
  
 	if (NewPhase != CurrentPhase)
 	{
@@ -218,28 +145,7 @@ void ABossCharacterBase::CheckPhaseTransition()
 		UE_LOG(LogTemp, Warning, TEXT("[Boss] %d → %d (HP: %.0f / %.0f, 비율: %.1f%%)"),
 			static_cast<int32>(OldPhase),
 			static_cast<int32>(NewPhase),
-			CurrentHP, MaxHP, HPRatio * 100.f);
- 
-		// 페이즈별 특수 처리
-		switch (NewPhase)
-		{
-		case EBossPhase::Phase2:
-			UE_LOG(LogTemp, Warning, TEXT("[Boss] Phase2 진입 - 맵 색상 변경 + ElectricOrbs 해금"));
-			// TODO: 맵/캐릭터 색상 변경 연출
-			break;
- 
-		case EBossPhase::Phase2_Enhanced:
-			UE_LOG(LogTemp, Warning, TEXT("[Boss] Phase2_Enhanced 진입 - TelekinesisThrow 해금"));
-			break;
- 
-		case EBossPhase::Phase3_Cutscene:
-			UE_LOG(LogTemp, Warning, TEXT("[Boss] Phase3 진입 - 컷씬 재생!"));
-			// TODO: 컷씬 재생 후 Phase2_Enhanced 패턴으로 전투 재개
-			break;
- 
-		default:
-			break;
-		}
+			CurrentHPValue, MaxHPValue, HPRatio * 100.f);
  
 		OnPhaseChanged.Broadcast(OldPhase, NewPhase);
  
@@ -248,35 +154,7 @@ void ABossCharacterBase::CheckPhaseTransition()
 			BossAI->SendStateTreeEvent(
 				FGameplayTag::RequestGameplayTag(FName("Boss.Event.PhaseTransition")));
 		}
- 
-		// 페이즈 전환 시 경직 게이지 리셋
-		CurrentStaggerGauge = 0.f;
-		OnStaggerChanged.Broadcast(CurrentStaggerGauge, MaxStaggerGauge);
 	}
-}
- 
-void ABossCharacterBase::UpdateStaggerDecay(float DeltaTime)
-{
-	if (CurrentStaggerGauge <= 0.f)
-	{
-		return;
-	}
- 
-	// 경직 상태에서는 자연 감소하지 않음
-	if (IsStaggered_Implementation())
-	{
-		return;
-	}
- 
-	// 마지막 피격 후 일정 시간이 지나야 감소 시작
-	const float CurrentTime = GetWorld()->GetTimeSeconds();
-	if (CurrentTime - LastStaggerHitTime < StaggerDecayDelay)
-	{
-		return;
-	}
- 
-	CurrentStaggerGauge = FMath::Max(0.f, CurrentStaggerGauge - StaggerDecayRate * DeltaTime);
-	OnStaggerChanged.Broadcast(CurrentStaggerGauge, MaxStaggerGauge);
 }
  
 void ABossCharacterBase::HandleDeath()
@@ -285,22 +163,19 @@ void ABossCharacterBase::HandleDeath()
  
 	CurrentCombatState = EBossCombatState::Death;
  
-	// AI Controller에 사망 이벤트 전달
 	if (ABossAIController* BossAI = Cast<ABossAIController>(GetController()))
 	{
 		BossAI->SendStateTreeEvent(
 			FGameplayTag::RequestGameplayTag(FName("Boss.Event.Death")));
 	}
  
-	// 무브먼트 비활성화
 	if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
 	{
 		MoveComp->StopMovementImmediately();
 		MoveComp->DisableMovement();
 	}
  
-	// 콜리전 비활성화 (통과 가능)
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
- 
-	
 }
+
+

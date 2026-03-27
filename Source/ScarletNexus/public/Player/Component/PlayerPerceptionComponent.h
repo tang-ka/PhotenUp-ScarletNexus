@@ -28,12 +28,14 @@ public:
 	                           FActorComponentTickFunction* ThisTickFunction) override;
 	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
 
-#pragma region Getters
+#pragma region Getters & Setters
 	bool HasSoftTarget() const { return SoftTarget.IsValid(); }
 	AActor* GetSoftTarget() const { return SoftTarget.IsValid() ? SoftTarget.Get() : nullptr; }
 	AActor* GetHardTarget() const { return HardTarget.IsValid() ? HardTarget.Get() : nullptr; }
 	AActor* GetCurrentTarget() const;
 	AActor* GetPsychokinesisTarget() const { return PsychokinesisTarget.IsValid() ? PsychokinesisTarget.Get() : nullptr; }
+	
+	void SetActivePsychokinesisTargetUpdate(bool bIsActivate) { bNeedPsychokinesisTargetUpdate = bIsActivate; }
 #pragma endregion
 
 #pragma region Lock-On
@@ -101,6 +103,7 @@ private:
 #pragma endregion
 	
 	bool bIsLockedOn{false};
+	bool bNeedPsychokinesisTargetUpdate{true};
 	
 	UPROPERTY(EditAnywhere, Category = "Perception|Debug")
 	bool bDrawDebug{true};

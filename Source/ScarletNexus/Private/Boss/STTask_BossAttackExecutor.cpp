@@ -4,15 +4,16 @@
 #include "Boss/STTask_BossAttackExecutor.h"
 #include "Boss/BossCloneActor.h"
 #include "Boss/BossCharacterBase.h"
+#include "Interface/DamageableHelper.h"
 #include "StateTreeExecutionContext.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Engine/DamageEvents.h"
 #include "Engine/OverlapResult.h"
 #include "NavigationSystem.h"
 #include "DrawDebugHelpers.h"
-#include "Components/CapsuleComponent.h"
  
 
 // EnterState
@@ -37,7 +38,6 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::EnterState(
 	case EActiveAttackType::AerialElectric:  return EnterAerialElectric(Data, Boss);
 	case EActiveAttackType::IceSpikes:       return EnterIceSpikes(Data, Boss);
 	case EActiveAttackType::ElectricOrbs:    return EnterElectricOrbs(Data, Boss);
-	// case EActiveAttackType::TelekinesisThrow:return EnterTelekinesisThrow(Data, Boss);
 	default: return EStateTreeRunStatus::Failed;
 	}
 }
@@ -59,7 +59,6 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::Tick(
 	case EActiveAttackType::AerialElectric:  return TickAerialElectric(Data, Boss, DeltaTime);
 	case EActiveAttackType::IceSpikes:       return TickIceSpikes(Data, Boss, DeltaTime);
 	case EActiveAttackType::ElectricOrbs:    return TickElectricOrbs(Data, Boss, DeltaTime);
-	// case EActiveAttackType::TelekinesisThrow:return TickTelekinesisThrow(Data, Boss, DeltaTime);
 	default: return EStateTreeRunStatus::Failed;
 	}
 }
@@ -104,7 +103,7 @@ EActiveAttackType FSTTask_BossAttackExecutor::SelectAttack(const ACharacter* Bos
 		{
 			Pool.Add(EActiveAttackType::ElectricOrbs);
 		}
-		// TelekinesisThrow는 나중에 맵 액터 연동해서 형들이랑 추가하는걸로
+		// TelekinesisThrow는 나중에 맵 액터 연동 시 추가 예정
 	}
  
 	const int32 Roll = FMath::RandRange(0, Pool.Num() - 1);
@@ -195,7 +194,7 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::EnterCloneRush(
 	const FVector RV = FVector(-Data.CRDirection.Y, Data.CRDirection.X, 0.f);
 	FActorSpawnParameters SP; SP.Owner = Boss; SP.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
  
-	// 보스 캡슐/메시 정보 확인
+	// 보스 캡슐/메시 정보 캐싱
 	float BossCapsuleRadius = 42.f, BossCapsuleHalfHeight = 96.f;
 	if (const UCapsuleComponent* BossCapsule = Boss->GetCapsuleComponent())
 	{
@@ -400,7 +399,8 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickIceSpikes(
 }
  
 
-//  전류구 (ElectricOrbs) — Phase2부터
+
+//  전류구 (ElectricOrbs) — Phase2+
 //  보스 주변에 5개 전류구 생성 → 플레이어를 향해 순차 발사
 
 EStateTreeRunStatus FSTTask_BossAttackExecutor::EnterElectricOrbs(
@@ -423,7 +423,7 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::EnterElectricOrbs(
  
 	// 보스 앞 200cm 지점, 허리 높이 80cm
 	const float ForwardOffset = 200.f;
-	const float HeightOffset = 40.f;
+	const float HeightOffset = 80.f;
 	const FVector LineCenter = BossLoc + FwdDir * ForwardOffset + FVector(0, 0, HeightOffset);
  
 	for (int32 i = 0; i < OO_OrbCount; i++)
@@ -518,15 +518,15 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickElectricOrbs(
 					FQuat::Identity, ECC_Pawn, FCollisionShape::MakeSphere(OO_OrbRadius), QP);
 				for (auto& O : Overlaps)
 				{
-					ACharacter* Hit = Cast<ACharacter>(O.GetActor());
-					if (Hit && Hit != Boss)
+					AActor* HitActor = O.GetActor();
+					if (HitActor && HitActor != Boss && DamageableHelpers::IsDamageable(HitActor))
 					{
-						FDamageEvent DE;
-						Hit->TakeDamage(OO_Damage, DE, nullptr, Boss);
-						if (auto* M = Hit->GetCharacterMovement())
-							M->AddImpulse(Data.OOOrbDirections[i] * OO_KnockbackForce, true);
+						DamageableHelpers::ApplyDamage(HitActor, Boss, static_cast<int>(OO_Damage));
+						if (ACharacter* HitChar = Cast<ACharacter>(HitActor))
+							if (auto* M = HitChar->GetCharacterMovement())
+								M->AddImpulse(Data.OOOrbDirections[i] * OO_KnockbackForce, true);
 						UE_LOG(LogTemp, Log, TEXT("[ElectricOrbs] %s 히트! %.0f 데미지"),
-							*Hit->GetName(), OO_Damage);
+							*HitActor->GetName(), OO_Damage);
 						Data.OOOrbHit[i] = true;
 						break;
 					}
@@ -551,10 +551,9 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickElectricOrbs(
 	}
 	return EStateTreeRunStatus::Running;
 }
-
  
 
-// 공통 데미지
+// 공통 데미지 (IDamageable 인터페이스 사용)
 
 void FSTTask_BossAttackExecutor::ApplyDamageInRadius(
 	AActor* BossActor, const FVector& Center, float Radius,
@@ -565,11 +564,20 @@ void FSTTask_BossAttackExecutor::ApplyDamageInRadius(
 	BossActor->GetWorld()->OverlapMultiByChannel(Overlaps, Center, FQuat::Identity, ECC_Pawn, FCollisionShape::MakeSphere(Radius), QP);
 	for (auto& O : Overlaps)
 	{
-		ACharacter* Hit = Cast<ACharacter>(O.GetActor());
-		if (!Hit || Hit == BossActor) continue;
-		FDamageEvent DE; Hit->TakeDamage(Damage, DE, nullptr, BossActor);
-		UE_LOG(LogTemp, Log, TEXT("[Attack] %s에게 %.0f 데미지!"), *Hit->GetName(), Damage);
-		if (auto* M = Hit->GetCharacterMovement())
-			M->AddImpulse((Hit->GetActorLocation()-BossActor->GetActorLocation()).GetSafeNormal()*Knockback, true);
+		AActor* HitActor = O.GetActor();
+		if (!HitActor || HitActor == BossActor) continue;
+ 
+		// IDamageable 인터페이스로 데미지 적용
+		if (DamageableHelpers::ApplyDamage(HitActor, BossActor, static_cast<int>(Damage)))
+		{
+			UE_LOG(LogTemp, Log, TEXT("[Attack] %s에게 %.0f 데미지!"), *HitActor->GetName(), Damage);
+		}
+ 
+		// 넉백 (ACharacter만)
+		if (ACharacter* HitChar = Cast<ACharacter>(HitActor))
+		{
+			if (auto* M = HitChar->GetCharacterMovement())
+				M->AddImpulse((HitChar->GetActorLocation() - BossActor->GetActorLocation()).GetSafeNormal() * Knockback, true);
+		}
 	}
 }

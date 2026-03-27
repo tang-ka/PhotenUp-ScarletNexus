@@ -7,8 +7,8 @@
 #include "BossTypes.generated.h"
  
 
-
 // 보스 페이즈 정의 (4단계, HP 기준 전환)
+
 UENUM(BlueprintType)
 enum class EBossPhase : uint8
 {
@@ -21,12 +21,13 @@ enum class EBossPhase : uint8
 	// HP 50% ~ 25%: 염동력 사물 던지기 추가
 	Phase2_Enhanced		UMETA(DisplayName = "Phase 2-2"),
  
-	// HP 25% : 컷씬 후 Phase2_Enhanced 패턴 반복
+	// HP 25% 도달: 컷씬 후 Phase2_Enhanced 패턴 반복
 	Phase3_Cutscene		UMETA(DisplayName = "Phase 3"),
 };
  
 
 // 보스 전투 상태
+
 UENUM(BlueprintType)
 enum class EBossCombatState : uint8
 {
@@ -36,8 +37,6 @@ enum class EBossCombatState : uint8
 	RangedAttack,
 	CloneAttack,
 	HitReaction,
-	Stagger,
-	BrainCrush,
 	PhaseTransition,
 	Cutscene,
 	Death,
@@ -45,6 +44,7 @@ enum class EBossCombatState : uint8
  
 
 // 공격 패턴 타입
+
 UENUM(BlueprintType)
 enum class EBossAttackType : uint8
 {
@@ -63,6 +63,7 @@ enum class EBossAttackType : uint8
  
 
 // 피격 리액션 종류
+
 UENUM(BlueprintType)
 enum class EHitReactionType : uint8
 {
@@ -74,6 +75,7 @@ enum class EHitReactionType : uint8
  
 
 // 피격 방향
+
 UENUM(BlueprintType)
 enum class EHitDirection : uint8
 {
@@ -85,6 +87,7 @@ enum class EHitDirection : uint8
  
 
 // 공격 패턴 데이터
+
 USTRUCT(BlueprintType)
 struct FBossAttackPattern
 {
@@ -125,6 +128,7 @@ struct FBossAttackPattern
  
 
 // 페이즈 전환 설정
+
 USTRUCT(BlueprintType)
 struct FBossPhaseConfig
 {
@@ -156,6 +160,7 @@ struct FBossPhaseConfig
  
 
 // 보스 전체 설정 Data Asset
+
 UCLASS(BlueprintType)
 class SCARLETNEXUS_API UBossConfigDataAsset : public UDataAsset
 {
@@ -174,14 +179,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boss|Stats")
 	float MaxHP = 10000.f;
  
-	// 경직 게이지 최대치
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boss|Stats")
-	float MaxStaggerGauge = 100.f;
- 
-	// 브레인 크래시 가능 경직 비율
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boss|BrainCrush")
-	float BrainCrushThreshold = 0.8f;
- 
 	// 페이즈별 설정 조회
 	const FBossPhaseConfig* GetPhaseConfig(EBossPhase Phase) const
 	{
@@ -191,7 +188,7 @@ public:
 		});
 	}
  
-	// 현재 페이즈에서 사용 가능한 패턴 조회 (이전 페이즈 패턴 포함)
+	// 현재 페이즈에서 사용 가능한 패턴 조회 (누적 구조: 이전 페이즈 패턴도 포함)
 	TArray<FBossAttackPattern> GetAvailablePatterns(EBossPhase CurrentPhase) const
 	{
 		TArray<FBossAttackPattern> Result;

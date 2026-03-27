@@ -7,8 +7,6 @@ namespace BossTags
 {
 	// 이벤트
 	UE_DEFINE_GAMEPLAY_TAG(Event_PhaseTransition,	"Boss.Event.PhaseTransition");
-	UE_DEFINE_GAMEPLAY_TAG(Event_Stagger,			"Boss.Event.Stagger");
-	UE_DEFINE_GAMEPLAY_TAG(Event_BrainCrush,		"Boss.Event.BrainCrush");
 	UE_DEFINE_GAMEPLAY_TAG(Event_Death,				"Boss.Event.Death");
 	UE_DEFINE_GAMEPLAY_TAG(Event_HitReaction,		"Boss.Event.HitReaction");
 	UE_DEFINE_GAMEPLAY_TAG(Event_CutsceneStart,		"Boss.Event.CutsceneStart");
@@ -33,8 +31,6 @@ namespace BossTags
 	UE_DEFINE_GAMEPLAY_TAG(Teleport_Side,			"Boss.Teleport.Side");
  
 	// 상태
-	UE_DEFINE_GAMEPLAY_TAG(State_SuperArmor,		"Boss.State.SuperArmor");
 	UE_DEFINE_GAMEPLAY_TAG(State_Invincible,		"Boss.State.Invincible");
-	UE_DEFINE_GAMEPLAY_TAG(State_Staggered,			"Boss.State.Staggered");
 	UE_DEFINE_GAMEPLAY_TAG(State_InCutscene,		"Boss.State.InCutscene");
 }

@@ -12,6 +12,7 @@ enum class EPKObjectState : uint8
 {
 	CanBePickedUp = 0, // 집기 전
 	IsHeld,			   // 집힌 상태
+	CoolDown,		   // 잡히고 떨어지는 상태 (이 때 다시 잡히면 안됨)
 	IsUsed			   // 사용된 상태 (Thrown, Crumple, Ride)
 };
 
@@ -78,4 +79,11 @@ public:
 	virtual void OnPKPickuped_Implementation() override;
 	virtual void OnPKReleased_Implementation() override;
 	virtual void OnPKThrown_Implementation(const FVector& ThrowDir, float ThrowForce) override;
+
+private:
+	// 충돌 감지 → 땅에 닿으면 CanBePickedUp으로 복귀
+	UFUNCTION()
+	void OnBoxHit(UPrimitiveComponent* HitComponent, AActor* OtherActor,
+	              UPrimitiveComponent* OtherComp, FVector NormalImpulse,
+	              const FHitResult& Hit);
 };

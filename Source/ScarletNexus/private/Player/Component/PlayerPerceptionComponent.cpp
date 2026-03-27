@@ -187,11 +187,14 @@ void UPlayerPerceptionComponent::UpdatePerception()
 {
 	if (!bIsLockedOn)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Updating Soft Target"));
+		// UE_LOG(LogTemp, Warning, TEXT("Updating Soft Target"));
 		SoftTarget = EvaluateCandidates(CandidateSoftTargets);
 	}
-
-	PsychokinesisTarget = EvaluateCandidates(CandidatePsychokinesisTargets, 0.1f, 0.2f, 0.7f);
+	
+	if (bNeedPsychokinesisTargetUpdate)
+	{
+		PsychokinesisTarget = EvaluateCandidates(CandidatePsychokinesisTargets, 0.1f, 0.2f, 0.7f);
+	}
 }
 
 AActor* UPlayerPerceptionComponent::EvaluateCandidates(const TArray<TWeakObjectPtr<AActor>>& Candidates,

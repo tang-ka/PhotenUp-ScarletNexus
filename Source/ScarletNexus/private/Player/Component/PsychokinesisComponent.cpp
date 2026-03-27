@@ -3,9 +3,11 @@
 
 #include "Player/Component/PsychokinesisComponent.h"
 
+#include "ScarletNexus.h"
 #include "Camera/CameraComponent.h"
 #include "Interface/PKInteractable.h"
 #include "Player/PlayerCharacterBase.h"
+#include "Player/Component/PlayerPerceptionComponent.h"
 
 UPsychokinesisComponent::UPsychokinesisComponent()
 {
@@ -17,6 +19,7 @@ void UPsychokinesisComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
+	Me = Cast<APlayerCharacterBase>(GetOwner());
 }
 
 void UPsychokinesisComponent::TickComponent(float DeltaTime, ELevelTick TickType,
@@ -32,6 +35,22 @@ void UPsychokinesisComponent::TickComponent(float DeltaTime, ELevelTick TickType
 		const FVector TargetLocation = HoldStartLocation + FVector(0.f, 0.f, FloatingHeight);
 		const FVector NewLocation = FMath::Lerp(HoldStartLocation, TargetLocation, Alpha);
 		PickedObject->SetActorLocation(NewLocation);
+	}
+
+	if (bThrowing && HasPickedObject())
+	{
+		const FVector CurrentLocation = PickedObject->GetActorLocation();
+		const FVector NewLocation = FMath::VInterpConstantTo(
+			CurrentLocation, ThrowTargetLocation, DeltaTime, ThrowSpeed);
+
+		PickedObject->SetActorLocation(NewLocation);
+
+		// 타겟까지 남은 거리가 ThrowSpeed * DeltaTime 이하 → 도달한 것으로 판단하고 정지
+		const float DistRemaining = FVector::Dist(NewLocation, ThrowTargetLocation);
+		if (DistRemaining <= ThrowSpeed * DeltaTime + 1.f)
+		{
+			bThrowing = false;
+		}
 	}
 }
 
@@ -54,9 +73,15 @@ void UPsychokinesisComponent::StartHold()
 		return;
 	}
 	
+	// if (!IPKInteractable::Execute_CanBePickeduped(PickedObject.Get()))
+	// {
+	// 	return;
+	// }
+	
 	bHolding = true;
 	HoldStartLocation = PickedObject->GetActorLocation();
 	HoldElapsedTime = 0.f;
+	Me->GetPerceptionComp()->SetActivePsychokinesisTargetUpdate(false);
 	
 	IPKInteractable::Execute_OnPKPickuped(PickedObject.Get());
 	
@@ -76,22 +101,39 @@ void UPsychokinesisComponent::ReleaseHold()
 	IPKInteractable::Execute_OnPKReleased(PickedObject.Get());
 	
 	GetWorld()->GetTimerManager().ClearTimer(HoldTimerHandle);
+	Me->GetPerceptionComp()->SetActivePsychokinesisTargetUpdate(true);
 }
 
 void UPsychokinesisComponent::Throw()
 {	
-	// 던지는 방향과 힘은 임시로 고정값 사용 (나중에 플레이어의 바라보는 방향과 조작량에 따라 다르게 설정)
-	auto* Owner = Cast<APlayerCharacterBase>(GetOwner());
-	FVector ThrowDirection{};
-	
+	if (!HasPickedObject()) return;
+
+	// 던지는 방향 결정
 	if (!HasTarget())
 	{
-		ThrowDirection = Owner->GetCameraComp()->GetForwardVector();
+		ThrowDirection = Me->GetCameraComp()->GetForwardVector();
+		// 타겟이 없으면 전방 1000 units 지점을 임시 목표로 설정
+		ThrowDirection.Z = 50.f;
+		ThrowTargetLocation = PickedObject->GetActorLocation() + ThrowDirection * 3000.f;
 	}
 	else
 	{
-		ThrowDirection = ThrowTarget->GetActorLocation() - PickedObject->GetActorLocation();
+		FVector Origin;
+		FVector BoxExtent;
+		ThrowTarget->GetActorBounds(true, Origin, BoxExtent);
+		const float ZOffset = BoxExtent.Z / 4;
+		
+		ThrowTargetLocation = ThrowTarget->GetActorLocation();
+		ThrowTargetLocation.Z += ZOffset; // 타겟의 중심이 아닌 위쪽을 향하도록 Z 오프셋 추가
+		ThrowDirection = (ThrowTargetLocation - PickedObject->GetActorLocation()).GetSafeNormal();
 	}
+
+	IPKInteractable::Execute_OnPKThrown(PickedObject.Get(), ThrowDirection, ThrowSpeed);
+
+	bThrowing = true;
+	bHolding  = false;
+	GetWorld()->GetTimerManager().ClearTimer(HoldTimerHandle);
+	Me->GetPerceptionComp()->SetActivePsychokinesisTargetUpdate(true);
 }
 
 void UPsychokinesisComponent::StrongThrow()

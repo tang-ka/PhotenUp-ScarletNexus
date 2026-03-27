@@ -102,7 +102,7 @@ struct SCARLETNEXUS_API FSTTask_TeleportKick : public FStateTreeTaskCommonBase
  
 	// 킥 넉백 힘
 	UPROPERTY(EditAnywhere, Category = "Config")
-	float KnockbackForce = 1000.f;
+	float KnockbackForce = 50.f;
  
 private:
 	FVector CalculateTeleportTarget(const AActor* BossActor, const AActor* PlayerActor) const;

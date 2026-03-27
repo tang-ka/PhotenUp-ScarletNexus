@@ -160,7 +160,7 @@ struct SCARLETNEXUS_API FSTTask_BossAttackExecutor : public FStateTreeTaskCommon
 	UPROPERTY(EditAnywhere, Category = "TeleportKick") float TK_Damage = 150.f;
 	UPROPERTY(EditAnywhere, Category = "TeleportKick") float TK_KickRadius = 200.f;
 	UPROPERTY(EditAnywhere, Category = "TeleportKick") float TK_TeleportOffset = 250.f;
-	UPROPERTY(EditAnywhere, Category = "TeleportKick") float TK_KnockbackForce = 1000.f;
+	UPROPERTY(EditAnywhere, Category = "TeleportKick") float TK_KnockbackForce = 50.f;
  
 	// 분신 돌진 
 	UPROPERTY(EditAnywhere, Category = "CloneRush") float CR_WindUpDuration = 0.6f;
@@ -169,7 +169,7 @@ struct SCARLETNEXUS_API FSTTask_BossAttackExecutor : public FStateTreeTaskCommon
 	UPROPERTY(EditAnywhere, Category = "CloneRush") float CR_RecoveryDuration = 0.5f;
 	UPROPERTY(EditAnywhere, Category = "CloneRush") float CR_Damage = 200.f;
 	UPROPERTY(EditAnywhere, Category = "CloneRush") float CR_RushWidth = 150.f;
-	UPROPERTY(EditAnywhere, Category = "CloneRush") float CR_KnockbackForce = 1200.f;
+	UPROPERTY(EditAnywhere, Category = "CloneRush") float CR_KnockbackForce = 50.f;
 	UPROPERTY(EditAnywhere, Category = "CloneRush") float CR_CloneSpacing = 200.f;
 	UPROPERTY(EditAnywhere, Category = "CloneRush") float CR_SequenceDelay = 0.2f;
  
@@ -181,7 +181,7 @@ struct SCARLETNEXUS_API FSTTask_BossAttackExecutor : public FStateTreeTaskCommon
 	UPROPERTY(EditAnywhere, Category = "AerialElectric") float AE_DamageRadius = 400.f;
 	UPROPERTY(EditAnywhere, Category = "AerialElectric") float AE_Damage = 180.f;
 	UPROPERTY(EditAnywhere, Category = "AerialElectric") float AE_LandingDuration = 0.3f;
-	UPROPERTY(EditAnywhere, Category = "AerialElectric") float AE_KnockbackForce = 800.f;
+	UPROPERTY(EditAnywhere, Category = "AerialElectric") float AE_KnockbackForce = 50.f;
  
 	// 얼음가시
 	UPROPERTY(EditAnywhere, Category = "IceSpikes") float IS_WindUpDuration = 0.5f;
@@ -193,7 +193,7 @@ struct SCARLETNEXUS_API FSTTask_BossAttackExecutor : public FStateTreeTaskCommon
 	UPROPERTY(EditAnywhere, Category = "IceSpikes") float IS_HoldDuration = 1.0f;
 	UPROPERTY(EditAnywhere, Category = "IceSpikes") float IS_Damage = 120.f;
 	UPROPERTY(EditAnywhere, Category = "IceSpikes") float IS_SpikeRadius = 150.f;
-	UPROPERTY(EditAnywhere, Category = "IceSpikes") float IS_KnockbackForce = 600.f;
+	UPROPERTY(EditAnywhere, Category = "IceSpikes") float IS_KnockbackForce = 60.f;
  
 	// 전류구 (Phase2부터)
 	// 보스 주변에 전류구 생성 후 순차 발사
@@ -204,7 +204,7 @@ struct SCARLETNEXUS_API FSTTask_BossAttackExecutor : public FStateTreeTaskCommon
 	UPROPERTY(EditAnywhere, Category = "ElectricOrbs") float OO_OrbMaxDistance = 2000.f;
 	UPROPERTY(EditAnywhere, Category = "ElectricOrbs") float OO_Damage = 100.f;
 	UPROPERTY(EditAnywhere, Category = "ElectricOrbs") float OO_OrbRadius = 20.f;
-	UPROPERTY(EditAnywhere, Category = "ElectricOrbs") float OO_KnockbackForce = 500.f;
+	UPROPERTY(EditAnywhere, Category = "ElectricOrbs") float OO_KnockbackForce = 50.f;
 	UPROPERTY(EditAnywhere, Category = "ElectricOrbs") float OO_OrbitRadius = 150.f;
 	// 추적 회전 속도 (초당 방향 보간 비율, 1.0 = 즉시 추적, 0.5 = 느리게)
 	UPROPERTY(EditAnywhere, Category = "ElectricOrbs") float OO_TrackingStrength = 90.0f;

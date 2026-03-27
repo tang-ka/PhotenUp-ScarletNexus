@@ -6,7 +6,7 @@
 #include "StateTreeExecutionContext.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "Boss/IBossCharacterInterface.h"
+#include "Interface/DamageableHelper.h"
  
 EStateTreeRunStatus FSTTask_BossStagger::EnterState(
 	FStateTreeExecutionContext& Context,
@@ -23,21 +23,26 @@ EStateTreeRunStatus FSTTask_BossStagger::EnterState(
 		return EStateTreeRunStatus::Failed;
 	}
  
-	
+	// -------------------------------------------------------
 	// 이동 정지
+	// -------------------------------------------------------
 	if (UCharacterMovementComponent* MoveComp = BossChar->GetCharacterMovement())
 	{
 		MoveComp->StopMovementImmediately();
 	}
  
+	// -------------------------------------------------------
 	// 현재 재생 중인 몽타주 강제 중단
+	// -------------------------------------------------------
 	UAnimInstance* AnimInstance = BossChar->GetMesh()->GetAnimInstance();
 	if (AnimInstance)
 	{
 		AnimInstance->Montage_Stop(0.15f);
 	}
  
+	// -------------------------------------------------------
 	// 그로기 진입 몽타주 재생
+	// -------------------------------------------------------
 	TransitionToSubPhase(InstanceData, BossChar, EStaggerSubPhase::EnterStagger);
  
 	UE_LOG(LogTemp, Log, TEXT("[BossStagger] 그로기 상태 진입 (Phase: %d)"),
@@ -63,7 +68,9 @@ EStateTreeRunStatus FSTTask_BossStagger::Tick(
  
 	switch (InstanceData.SubPhase)
 	{
+	// -------------------------------------------------------
 	// 진입 모션 재생 중
+	// -------------------------------------------------------
 	case EStaggerSubPhase::EnterStagger:
 	{
 		// 진입 몽타주가 끝나면 루프로 전환
@@ -74,7 +81,9 @@ EStateTreeRunStatus FSTTask_BossStagger::Tick(
 		break;
 	}
  
+	// -------------------------------------------------------
 	// 그로기 루프 (플레이어의 브레인 크래시 입력 대기)
+	// -------------------------------------------------------
 	case EStaggerSubPhase::StaggerLoop:
 	{
 		// 브레인 크래시 발동 체크
@@ -102,21 +111,19 @@ EStateTreeRunStatus FSTTask_BossStagger::Tick(
 		break;
 	}
  
-	
+	// -------------------------------------------------------
 	// 브레인 크래시 연출 중
+	// -------------------------------------------------------
 	case EStaggerSubPhase::BrainCrush:
 	{
 		// 브레인 크래시 몽타주가 끝나면 완료
 		if (!AnimInstance || !AnimInstance->IsAnyMontagePlaying())
 		{
 			// 보너스 대미지 적용
-			if (BossChar->GetClass()->ImplementsInterface(UBossCharacterInterface::StaticClass()))
+			if (DamageableHelpers::IsDamageable(BossChar))
 			{
-				const float CurrentHP = IBossCharacterInterface::Execute_GetCurrentHP(BossChar);
-				// BrainCrushDamageRatio 만큼 MaxHP 비례 대미지
-				// 실제 MaxHP는 BossConfig에서 가져와야 하지만, 간단하게 처리
 				const float BonusDamage = 10000.f * BrainCrushDamageRatio;
-				IBossCharacterInterface::Execute_ApplyDamage(BossChar, BonusDamage, nullptr);
+				DamageableHelpers::ApplyDamage(BossChar, nullptr, static_cast<int>(BonusDamage));
  
 				UE_LOG(LogTemp, Log,
 					TEXT("[BossStagger] 브레인 크래시 대미지: %.0f"), BonusDamage);
@@ -127,7 +134,9 @@ EStateTreeRunStatus FSTTask_BossStagger::Tick(
 		break;
 	}
  
+	// -------------------------------------------------------
 	// 그로기 해제 모션 재생 중
+	// -------------------------------------------------------
 	case EStaggerSubPhase::RecoverFromStagger:
 	{
 		if (!AnimInstance || !AnimInstance->IsAnyMontagePlaying())
@@ -153,13 +162,7 @@ void FSTTask_BossStagger::ExitState(
 		return;
 	}
  
-	// 경직 게이지 리셋
-	if (BossChar->GetClass()->ImplementsInterface(UBossCharacterInterface::StaticClass()))
-	{
-		// 경직 게이지를 0으로 리셋
-		// ApplyStaggerDamage에 음수를 넣는 대신, 별도 리셋 함수가 이상적
-		// 지금은 캐릭터 클래스에서 직접 리셋하도록 위임
-	}
+	// 경직 게이지 리셋 (BossCharacterBase에서 페이즈 전환 시 자동 리셋됨)
  
 	// 이동 재활성화
 	if (UCharacterMovementComponent* MoveComp = BossChar->GetCharacterMovement())
