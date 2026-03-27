@@ -66,6 +66,13 @@ public:
 	// 사용되었는지 체크
 	bool bUsedObject = false;
 	
+	// 프로퍼티
+	UFUNCTION(BlueprintCallable)
+	EPKObjectType GetPKObjectType() { return ObjectType; }
+	
+	UFUNCTION(BlueprintCallable)
+	EPKObjectState GetPKObjectState() { return ObjectState; }
+	
 	// PK 인터페이스 구현
 	virtual bool CanBePickeduped_Implementation() const override;
 	virtual void OnPKPickuped_Implementation() override;

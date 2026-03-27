@@ -33,7 +33,7 @@ EStateTreeRunStatus FPCTask_PK::EnterState(FStateTreeExecutionContext& Context, 
 		AActor* actor = hit.GetActor();
 		if (!actor) continue;
 		if (!actor->Implements<UPKInteractable>()) continue;
-		if (!IPKInteractable::Execute_CanBePickeduped(actor)) continue;
+		if (!data.FoundObject->Execute_CanBePickeduped(actor)) continue;
 
 		APKObject* pkActor = Cast<APKObject>(actor);
 		if (!pkActor) continue;
@@ -51,12 +51,7 @@ EStateTreeRunStatus FPCTask_PK::EnterState(FStateTreeExecutionContext& Context, 
 	data.FoundObject = best;
 
 	// Lift 시작
-	IPKInteractable::Execute_OnPKPickuped(best);
-	if (UPrimitiveComponent* prim = best->FindComponentByClass<UPrimitiveComponent>())
-	{
-		prim->SetSimulatePhysics(false);
-		prim->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	}
+	data.FoundObject->Execute_OnPKPickuped(data.FoundObject);
 	data.Phase = EPKPhase::Lift;
 
 #if WITH_EDITOR
@@ -68,30 +63,22 @@ EStateTreeRunStatus FPCTask_PK::EnterState(FStateTreeExecutionContext& Context, 
 
 EStateTreeRunStatus FPCTask_PK::Tick(FStateTreeExecutionContext& Context, const float DeltaTime) const
 {
-/*#if WITH_EDITOR
-	PRINTLOG_GT(TEXT("Tick 진입"));
-#endif*/
 	auto& data = Context.GetInstanceData(*this);
 	AActor* owner = Cast<AActor>(Context.GetOwner());
 	if (!owner || !data.FoundObject)
 	{
-#if WITH_EDITOR
-		PRINTLOG_GT(TEXT("owner: %s | FoundObject: %s"), owner ? *owner->GetName() : TEXT("owner is Null"), data.FoundObject ? *data.FoundObject.GetName() : TEXT("FoundObject is Null"));
-#endif
 		return EStateTreeRunStatus::Failed;
 	}
-#if WITH_EDITOR
-	PRINTLOG_GT(TEXT("Phase: %s | ElapsedTime: %2.f"), *UEnum::GetValueAsString(data.Phase), DeltaTime);
-#endif
 	
 	if (data.Phase == EPKPhase::Lift)
 	{
 		const FVector hoverTarget = owner->GetActorLocation() 
 			+ owner->GetActorForwardVector() * 150.f 
 			+ FVector(0, 0, data.LiftHeight);
-
-		data.FoundObject->SetActorLocation(
-			FMath::VInterpTo(data.FoundObject->GetActorLocation(), hoverTarget, DeltaTime, data.LiftInterpSpeed), true);
+		
+		data.FoundObject->Execute_OnPKPickuped(data.FoundObject);
+		// 타겟까지 끌고 가기
+		data.FoundObject->SetActorLocation(FMath::VInterpTo(data.FoundObject->GetActorLocation(), hoverTarget, DeltaTime, data.LiftInterpSpeed), true);
 
 		data.ElapsedTime += DeltaTime;
 		if (data.ElapsedTime >= data.AimReadyTime)
@@ -103,13 +90,31 @@ EStateTreeRunStatus FPCTask_PK::Tick(FStateTreeExecutionContext& Context, const 
 
 	if (data.Phase == EPKPhase::Throw)
 	{
+#if WITH_EDITOR
+		PRINTLOG_GT(TEXT("Phase: %s | TargetEnemy: %s"), *UEnum::GetValueAsString(data.Phase), data.TargetEnemy ? *data.TargetEnemy.GetName() : TEXT("Null"));
+#endif
+		
 		if (!data.TargetEnemy) return EStateTreeRunStatus::Failed;
 
-		const FVector throwDir = (data.TargetEnemy->GetActorLocation() 
-			- data.FoundObject->GetActorLocation()).GetSafeNormal();
-
-		IPKInteractable::Execute_OnPKThrown(data.FoundObject, throwDir, data.ThrowSpeed);
-
+		// PK Object의 타입 분기
+		switch (data.FoundObject->GetPKObjectType())
+		{
+		case EPKObjectType::Throwable:
+			// 던지기
+			if (UPrimitiveComponent* prim = data.FoundObject->FindComponentByClass<UPrimitiveComponent>())
+			{
+				const FVector throwDir = (data.TargetEnemy->GetActorLocation()
+					- data.FoundObject->GetActorLocation()).GetSafeNormal();
+				data.FoundObject->Execute_OnPKThrown(data.FoundObject, throwDir, data.ThrowSpeed);
+				prim->AddImpulse(throwDir * data.ThrowSpeed, NAME_None, true);
+			}
+			break;
+		case EPKObjectType::Crumplable:
+			break;
+		case EPKObjectType::Rideable:
+			break;
+		}
+		
 		return EStateTreeRunStatus::Succeeded;
 	}
 
@@ -125,11 +130,6 @@ void FPCTask_PK::ExitState(FStateTreeExecutionContext& Context, const FStateTree
 #endif
 	
 	if (!data.FoundObject) return;
-
-	IPKInteractable::Execute_OnPKReleased(data.FoundObject);
-	if (UPrimitiveComponent* prim = data.FoundObject->FindComponentByClass<UPrimitiveComponent>())
-	{
-		prim->SetSimulatePhysics(true);
-		prim->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-	}
+	
+	data.FoundObject->Execute_OnPKReleased(data.FoundObject);
 }

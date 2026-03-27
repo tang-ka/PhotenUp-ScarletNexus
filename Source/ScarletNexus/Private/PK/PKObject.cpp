@@ -3,6 +3,7 @@
 
 #include "PK/PKObject.h"
 
+#include "ScarletNexus.h"
 #include "Components/BoxComponent.h"
 
 // Sets default values
@@ -48,6 +49,10 @@ void APKObject::OnPKPickuped_Implementation()
 
 		// 홀드 중에는 충돌 끄기
 		BoxComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		ObjectState = EPKObjectState::IsHeld;
+#if WITH_EDITOR
+		PRINTLOG_GT(TEXT("PK오브젝트: %s 픽업"), *this->GetName());
+#endif
 	}
 }
 
@@ -61,15 +66,23 @@ void APKObject::OnPKReleased_Implementation()
 
 		// 홀드 풀리면 다시 충돌 켜기
 		BoxComp->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		ObjectState = EPKObjectState::CanBePickedUp;
+#if WITH_EDITOR
+		PRINTLOG_GT(TEXT("PK오브젝트: %s 해제"), *this->GetName());
+#endif
 	}
 }
 
 void APKObject::OnPKThrown_Implementation(const FVector& ThrowDir, float ThrowForce)
 {
-	// 물리, 중력 on
-	// 충돌 재활성화
+	// 물리, 충돌 재활성화
+	BoxComp->SetSimulatePhysics(true);
 	BoxComp->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-	
-	// Impulse는 PKComponent::UseHeldTarget에서 적용
 	bUsedObject = true;
+	ObjectState = EPKObjectState::IsUsed;
+	// TODO 사라지는 처리 
+	//Destroy();
+#if WITH_EDITOR
+	PRINTLOG_GT(TEXT("PK오브젝트: %s 투척 | 방향 : X:%1.f, Y:%1.f, Z:%1.f | 강도 : %1.f"), *this->GetName(), ThrowDir.X, ThrowDir.Y, ThrowDir.Z, ThrowForce);
+#endif
 }
