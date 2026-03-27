@@ -1,10 +1,10 @@
 #include "PartyAI/PCTask_PK.h"
 
+#include "ScarletNexus.h"
 #include "StateTreeExecutionContext.h"
 #include "Engine/OverlapResult.h"
 #include "Interface/PKInteractable.h"
 #include "PK/PKObject.h"
-#include "Player/PlayerCharacterBase.h"
 
 EStateTreeRunStatus FPCTask_PK::EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const
 {
@@ -59,15 +59,31 @@ EStateTreeRunStatus FPCTask_PK::EnterState(FStateTreeExecutionContext& Context, 
 	}
 	data.Phase = EPKPhase::Lift;
 
+#if WITH_EDITOR
+	PRINTLOG_GT(TEXT("Phase: %s | FoundObject: %s"), *UEnum::GetValueAsString(data.Phase), *data.FoundObject.GetName())
+#endif
+	
 	return EStateTreeRunStatus::Running;
 }
 
 EStateTreeRunStatus FPCTask_PK::Tick(FStateTreeExecutionContext& Context, const float DeltaTime) const
 {
+/*#if WITH_EDITOR
+	PRINTLOG_GT(TEXT("Tick 진입"));
+#endif*/
 	auto& data = Context.GetInstanceData(*this);
 	AActor* owner = Cast<AActor>(Context.GetOwner());
-	if (!owner || !data.FoundObject) return EStateTreeRunStatus::Failed;
-
+	if (!owner || !data.FoundObject)
+	{
+#if WITH_EDITOR
+		PRINTLOG_GT(TEXT("owner: %s | FoundObject: %s"), owner ? *owner->GetName() : TEXT("owner is Null"), data.FoundObject ? *data.FoundObject.GetName() : TEXT("FoundObject is Null"));
+#endif
+		return EStateTreeRunStatus::Failed;
+	}
+#if WITH_EDITOR
+	PRINTLOG_GT(TEXT("Phase: %s | ElapsedTime: %2.f"), *UEnum::GetValueAsString(data.Phase), DeltaTime);
+#endif
+	
 	if (data.Phase == EPKPhase::Lift)
 	{
 		const FVector hoverTarget = owner->GetActorLocation() 
@@ -87,9 +103,9 @@ EStateTreeRunStatus FPCTask_PK::Tick(FStateTreeExecutionContext& Context, const 
 
 	if (data.Phase == EPKPhase::Throw)
 	{
-		if (!data.TargetPlayer) return EStateTreeRunStatus::Failed;
+		if (!data.TargetEnemy) return EStateTreeRunStatus::Failed;
 
-		const FVector throwDir = (data.TargetPlayer->GetActorLocation() 
+		const FVector throwDir = (data.TargetEnemy->GetActorLocation() 
 			- data.FoundObject->GetActorLocation()).GetSafeNormal();
 
 		IPKInteractable::Execute_OnPKThrown(data.FoundObject, throwDir, data.ThrowSpeed);
@@ -100,10 +116,14 @@ EStateTreeRunStatus FPCTask_PK::Tick(FStateTreeExecutionContext& Context, const 
 	return EStateTreeRunStatus::Failed;
 }
 
-void FPCTask_PK::ExitState(FStateTreeExecutionContext& Context,
-                                       const FStateTreeTransitionResult& Transition) const
+void FPCTask_PK::ExitState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const
 {
 	auto& data = Context.GetInstanceData(*this);
+	
+#if WITH_EDITOR
+	PRINTLOG_GT(TEXT("Phase: %s"), *UEnum::GetValueAsString(data.Phase));
+#endif
+	
 	if (!data.FoundObject) return;
 
 	IPKInteractable::Execute_OnPKReleased(data.FoundObject);

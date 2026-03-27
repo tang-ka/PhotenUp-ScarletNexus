@@ -22,9 +22,11 @@ struct FPCTask_PKInstanceData
 {
 	GENERATED_BODY()
 
+	/*UPROPERTY(EditAnywhere, meta=(Input))
+	TObjectPtr<APlayerCharacterBase> TargetPlayer = nullptr;*/
 	UPROPERTY(EditAnywhere, meta=(Input))
-	TObjectPtr<APlayerCharacterBase> TargetPlayer = nullptr;
-
+	TObjectPtr<AActor> TargetEnemy = nullptr;
+	
 	UPROPERTY(EditAnywhere)
 	float SearchRadius = 800.f;
 
