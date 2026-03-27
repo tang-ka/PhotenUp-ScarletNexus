@@ -7,6 +7,9 @@
 #include "Interface/Damageable.h"
 #include "PlayerCharacterBase.generated.h"
 
+class UComboComponent;
+class UInputBufferComponent;
+class UActionManagerComponent;
 class UPsychokinesisComponent;
 class UPlayerPerceptionComponent;
 class UPlayerStateComponent;
@@ -151,5 +154,14 @@ private:
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UPsychokinesisComponent> PsychokinesisComp;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UActionManagerComponent> ActionManagerComp;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UInputBufferComponent> InputBufferComp;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))	
+	TObjectPtr<UComboComponent> ComboComp;
 #pragma endregion
 };

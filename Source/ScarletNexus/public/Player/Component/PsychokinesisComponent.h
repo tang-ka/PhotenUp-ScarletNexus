@@ -7,6 +7,8 @@
 #include "PsychokinesisComponent.generated.h"
 
 
+class APlayerCharacterBase;
+
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class SCARLETNEXUS_API UPsychokinesisComponent : public UActorComponent
 {
@@ -52,18 +54,24 @@ public:
 	void StrongThrow(); // 기본 공격을 맞췄을 경우 발동
 	
 private:
+	UPROPERTY()
+	TObjectPtr<APlayerCharacterBase> Me;
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category=PK, meta=(AllowPrivateAccess=true))
 	TWeakObjectPtr<AActor> PickedObject;;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category=PK, meta=(AllowPrivateAccess=true))
 	TWeakObjectPtr<AActor> ThrowTarget;
 	
+#pragma region Throw Properties
 	UPROPERTY(EditDefaultsOnly, Category=PK)
-	float ThrowForce = 1000.f; // 던지는 힘
+	float ThrowSpeed = 4000.f; // 던지는 힘
 	
 	UPROPERTY(EditDefaultsOnly, Category=PK)
-	float StrongThrowForce = 1500.f; // 강한 던지는 힘 (기본 공격을 맞췄을 때)
+	float StrongThrowSpeed = 5000.f; // 강한 던지는 힘 (기본 공격을 맞췄을 때)
+#pragma endregion
 	
+#pragma region Hold Properties
 	UPROPERTY(EditDefaultsOnly, Category=PK)
 	float HoldTime = 2.f; // 이 시간이 지나면 던짐.
 	
@@ -73,10 +81,19 @@ private:
 	
 	FVector HoldStartLocation;
 	float HoldElapsedTime = 0.f; // Hold 시작 후 경과 시간
+#pragma endregion 
+
+#pragma region Throw State
+	bool bThrowing = false;              // 던지기 이동 중 여부
+	FVector ThrowDirection = FVector::ZeroVector; // 던지는 방향 (정규화)
+	FVector ThrowTargetLocation = FVector::ZeroVector; // 던진 순간 타겟 위치
+#pragma endregion
 	
-	UPROPERTY(EditDefaultsOnly, Category=PK)
+#pragma region Floating Properties
+	UPROPERTY(EditDefaultsOnly, Category="PK|Floating")
 	float FloatingHeight = 200.f; // 집어서 띄워지는 높이 (플레이어로부터)
 	
-	UPROPERTY(EditDefaultsOnly, Category=PK)
+	UPROPERTY(EditDefaultsOnly, Category="PK|Floating")
 	float FloatingTime = 1.f;
+#pragma endregion
 };
