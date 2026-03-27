@@ -8,8 +8,8 @@
 #include "STEval_BossPhase.generated.h"
  
 
-// Evaluator Instance Data
 // StateTree가 관리하는 런타임 데이터
+
 USTRUCT()
 struct FSTEval_BossPhaseInstanceData
 {
@@ -23,10 +23,6 @@ struct FSTEval_BossPhaseInstanceData
 	UPROPERTY(EditAnywhere, Category = "Output")
 	float HPRatio = 1.f;
  
-	// 현재 경직 게이지 비율
-	UPROPERTY(EditAnywhere, Category = "Output")
-	float StaggerRatio = 0.f;
- 
 	// 플레이어와의 거리
 	UPROPERTY(EditAnywhere, Category = "Output")
 	float DistanceToPlayer = 0.f;
@@ -34,10 +30,6 @@ struct FSTEval_BossPhaseInstanceData
 	// 플레이어가 시야 내에 있는지
 	UPROPERTY(EditAnywhere, Category = "Output")
 	bool bPlayerInSight = false;
- 
-	// 브레인 크래시 가능 상태인지
-	UPROPERTY(EditAnywhere, Category = "Output")
-	bool bBrainCrushAvailable = false;
  
 	// 페이즈 전환 중인지
 	UPROPERTY(EditAnywhere, Category = "Output")
@@ -52,9 +44,9 @@ struct FSTEval_BossPhaseInstanceData
 	TObjectPtr<AActor> ContextActor = nullptr;
 };
  
-// ============================================================
+
 // Boss Phase Evaluator
-// ============================================================
+
 USTRUCT(DisplayName = "Boss phase evaluator")
 struct SCARLETNEXUS_API FSTEval_BossPhase : public FStateTreeEvaluatorCommonBase
 {
@@ -78,3 +70,4 @@ private:
 	// HP 비율에 따른 페이즈 결정
 	EBossPhase DeterminePhase(float HPRatio) const;
 };
+

@@ -5,8 +5,8 @@
 #include "StateTreeExecutionContext.h"
 #include "GameFramework/Character.h"
 #include "Kismet/GameplayStatics.h"
+ 
 #include "Interface/Damageable.h"
-#include "Boss/IStaggerable.h"
  
 void FSTEval_BossPhase::TreeStart(FStateTreeExecutionContext& Context) const
 {
@@ -14,10 +14,8 @@ void FSTEval_BossPhase::TreeStart(FStateTreeExecutionContext& Context) const
 	
 	InstanceData.CurrentPhase = EBossPhase::Phase1;
 	InstanceData.HPRatio = 1.f;
-	InstanceData.StaggerRatio = 0.f;
 	InstanceData.TimeSinceLastAttack = 0.f;
 	InstanceData.bIsPhaseTransitioning = false;
-	InstanceData.bBrainCrushAvailable = false;
 }
  
 void FSTEval_BossPhase::Tick(FStateTreeExecutionContext& Context, const float DeltaTime) const
@@ -31,17 +29,14 @@ void FSTEval_BossPhase::Tick(FStateTreeExecutionContext& Context, const float De
 	}
  
 	// 1. 보스 상태 조회
+	
 	// HP는 IDamageable로 조회
 	if (BossActor->GetClass()->ImplementsInterface(UDamageable::StaticClass()))
 	{
 		InstanceData.HPRatio = IDamageable::Execute_GetHPPercent(BossActor);
 	}
-	// Stagger는 IStaggerable로 조회
-	if (BossActor->GetClass()->ImplementsInterface(UStaggerable::StaticClass()))
-	{
-		InstanceData.StaggerRatio = IStaggerable::Execute_GetStaggerRatio(BossActor);
-	}
  
+	
 	// 2. 플레이어 거리 및 시야 계산
 	
 	if (const ACharacter* PlayerChar = UGameplayStatics::GetPlayerCharacter(BossActor->GetWorld(), 0))
@@ -60,7 +55,7 @@ void FSTEval_BossPhase::Tick(FStateTreeExecutionContext& Context, const float De
  
 	
 	// 3. 페이즈 전환 판정
-
+	
 	const EBossPhase NewPhase = DeterminePhase(InstanceData.HPRatio);
 	if (NewPhase != InstanceData.CurrentPhase)
 	{
@@ -70,12 +65,7 @@ void FSTEval_BossPhase::Tick(FStateTreeExecutionContext& Context, const float De
 	}
 	
 	
-	// 4. 브레인 크래시 가능 여부
-	
-	InstanceData.bBrainCrushAvailable = (InstanceData.StaggerRatio >= 0.8f);
- 
-	
-	// 5. 공격 타이머 갱신
+	// 4. 공격 타이머 갱신
 	
 	InstanceData.TimeSinceLastAttack += DeltaTime;
 }

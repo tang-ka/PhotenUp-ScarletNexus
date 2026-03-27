@@ -4,13 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "StateTreeConditionBase.h"
-#include "BossTypes.h"
 #include "StateTreeExecutionContext.h"
+#include "BossTypes.h"
 #include "STCond_BossConditions.generated.h"
-
-
+ 
 
 // 페이즈 체크 Condition
+
 USTRUCT()
 struct FSTCond_IsPhaseInstanceData
 {
@@ -45,6 +45,7 @@ struct SCARLETNEXUS_API FSTCond_IsPhase : public FStateTreeConditionCommonBase
  
 
 // 거리 체크 Condition
+
 USTRUCT()
 struct FSTCond_DistanceCheckInstanceData
 {
@@ -92,53 +93,6 @@ struct SCARLETNEXUS_API FSTCond_DistanceCheck : public FStateTreeConditionCommon
  
 	UPROPERTY(EditAnywhere, Category = "Config", meta = (EditCondition = "bCheckMaxDistance"))
 	float MaxDistance = 300.f;
-};
- 
-// 경직/브레인 크래시 체크 Condition
-
-USTRUCT()
-struct FSTCond_StaggerCheckInstanceData
-{
-	GENERATED_BODY()
- 
-	UPROPERTY(EditAnywhere, Category = "Input")
-	float StaggerRatio = 0.f;
- 
-	UPROPERTY(EditAnywhere, Category = "Input")
-	bool bBrainCrushAvailable = false;
-};
- 
-USTRUCT(DisplayName = "Boss stagger check")
-struct SCARLETNEXUS_API FSTCond_StaggerCheck : public FStateTreeConditionCommonBase
-{
-	GENERATED_BODY()
- 
-	using FInstanceDataType = FSTCond_StaggerCheckInstanceData;
- 
-	virtual const UStruct* GetInstanceDataType() const override
-	{
-		return FInstanceDataType::StaticStruct();
-	}
- 
-	virtual bool TestCondition(FStateTreeExecutionContext& Context) const override
-	{
-		const FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
- 
-		if (bCheckBrainCrush)
-		{
-			return InstanceData.bBrainCrushAvailable;
-		}
- 
-		return InstanceData.StaggerRatio >= StaggerThreshold;
-	}
- 
-	// 브레인 크래시 가능 여부만 체크
-	UPROPERTY(EditAnywhere, Category = "Config")
-	bool bCheckBrainCrush = false;
- 
-	// 경직 게이지 임계값 (0.0 ~ 1.0)
-	UPROPERTY(EditAnywhere, Category = "Config", meta = (EditCondition = "!bCheckBrainCrush", ClampMin = "0.0", ClampMax = "1.0"))
-	float StaggerThreshold = 0.5f;
 };
  
 
