@@ -18,6 +18,9 @@ EStateTreeRunStatus FSTTask_BossDeath::EnterState(
 	Data.Timer = 0.f;
 	Data.bDeathStarted = true;
  
+	// 시작 위치 저장
+	Data.StartLocation = Boss->GetActorLocation();
+ 
 	// 이동 정지
 	if (UCharacterMovementComponent* MoveComp = Boss->GetCharacterMovement())
 	{
@@ -25,18 +28,15 @@ EStateTreeRunStatus FSTTask_BossDeath::EnterState(
 		MoveComp->DisableMovement();
 	}
  
-	// 콜리전 비활성화
+	// 콜리전 비활성화 (바닥 뚫고 내려가야 하므로)
 	if (UCapsuleComponent* Capsule = Boss->GetCapsuleComponent())
 	{
 		Capsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}
  
-	// 사망 몽타주 추가해야함.
-	
-	// if (DeathMontage) Boss->PlayAnimMontage(DeathMontage);
- 
-	UE_LOG(LogTemp, Warning, TEXT("[BossDeath] 사망 State 진입 — 연출 시작"));
+	UE_LOG(LogTemp, Warning, TEXT("[BossDeath] 사망 State 진입 — 가라앉기 시작"));
 	return EStateTreeRunStatus::Running;
+	
 }
  
 EStateTreeRunStatus FSTTask_BossDeath::Tick(
@@ -45,26 +45,37 @@ EStateTreeRunStatus FSTTask_BossDeath::Tick(
 	FInstanceDataType& Data = Context.GetInstanceData(*this);
 	ACharacter* Boss = Cast<ACharacter>(Data.ContextActor);
 	if (!Boss) return EStateTreeRunStatus::Failed;
- 
+
 	Data.Timer += DeltaTime;
- 
-	// 사망 연출 대기
-	if (Data.Timer >= DeathDuration && Data.Timer < DeathDuration + HideDelay)
+
+	// 1. 잠깐 멈춤 구간 
+	if (Data.Timer < PauseBeforeSink)
 	{
-		// 연출 완료 후 대기 중
+		return EStateTreeRunStatus::Running;
 	}
- 
-	// 숨김 처리
-	if (Data.Timer >= DeathDuration + HideDelay)
+
+	// 2. 가라앉기 연출
+	const float SinkTimer = Data.Timer - PauseBeforeSink;
+    
+	if (SinkTimer < DeathDuration)
+	{
+		const float Alpha = FMath::Clamp(SinkTimer / DeathDuration, 0.f, 1.f);
+		const float EasedAlpha = FMath::InterpEaseIn(0.f, 1.f, Alpha, 2.f);
+		const float NewZ = Data.StartLocation.Z - (SinkDepth * EasedAlpha);
+
+		FVector NewLocation = Data.StartLocation;
+		NewLocation.Z = NewZ;
+		Boss->SetActorLocation(NewLocation);
+	}
+
+	// 3. 완전히 가라앉은 후 숨김 처리
+	if (SinkTimer >= DeathDuration + HideDelay)
 	{
 		Boss->SetActorHiddenInGame(true);
 		UE_LOG(LogTemp, Warning, TEXT("[BossDeath] 사망 완료 — 액터 숨김"));
- 
-		// Succeeded를 반환하지만 Death는 최종 State이므로
-		// StateTree에서 Transition 없이 끝남
 		return EStateTreeRunStatus::Succeeded;
 	}
- 
+
 	return EStateTreeRunStatus::Running;
 }
  
