@@ -3,6 +3,8 @@
 
 #include "Player/PlayerKasane.h"
 
+#include "Player/Component/InputBufferComponent.h"
+
 
 // Sets default values
 APlayerKasane::APlayerKasane()
@@ -39,4 +41,11 @@ void APlayerKasane::Tick(float DeltaTime)
 void APlayerKasane::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
+}
+
+void APlayerKasane::BasicAttack()
+{
+	Super::BasicAttack();
+	
+	GetInputBufferComp()->BufferInput(EAttackType::BasicAttack);
 }

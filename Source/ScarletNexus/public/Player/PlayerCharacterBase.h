@@ -55,6 +55,9 @@ public:
 	FORCEINLINE UPlayerStateComponent* GetStateComp() const { return StateComp; }
 	FORCEINLINE UPlayerPerceptionComponent* GetPerceptionComp() const { return PerceptionComp; }
 	FORCEINLINE UPsychokinesisComponent* GetPsychokinesisComp() const { return PsychokinesisComp; }
+	FORCEINLINE UInputBufferComponent* GetInputBufferComp() const { return InputBufferComp; }
+	FORCEINLINE UActionManagerComponent* GetActionManagerComp() const { return ActionManagerComp; }
+	FORCEINLINE UComboComponent* GetComboComp() const { return ComboComp; }
 #pragma endregion
 	
 protected:
@@ -156,10 +159,10 @@ private:
 	TObjectPtr<UPsychokinesisComponent> PsychokinesisComp;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UActionManagerComponent> ActionManagerComp;
+	TObjectPtr<UInputBufferComponent> InputBufferComp;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UInputBufferComponent> InputBufferComp;
+	TObjectPtr<UActionManagerComponent> ActionManagerComp;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))	
 	TObjectPtr<UComboComponent> ComboComp;

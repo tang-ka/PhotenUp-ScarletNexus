@@ -1,0 +1,148 @@
+Parent = MaterialInstanceConstant'/Game/Character/00_Common/02_Material_i/MI_wp_SWORD_LUT.MI_wp_SWORD_LUT'
+ScalarParameterValues[5] =
+{
+    ScalarParameterValues[0] =
+    {
+        ParameterInfo = { Name=AmbientMapLUTModulate }
+        ParameterValue = 0.2
+        ParameterName = None
+    }
+    ScalarParameterValues[1] =
+    {
+        ParameterInfo = { Name=ReflectionPowerModulate (* ControlMap.a) }
+        ParameterValue = 0.5
+        ParameterName = None
+    }
+    ScalarParameterValues[2] =
+    {
+        ParameterInfo = { Name=SpecularSmooth }
+        ParameterValue = 0.04
+        ParameterName = None
+    }
+    ScalarParameterValues[3] =
+    {
+        ParameterInfo = { Name=RimlightSmoothness }
+        ParameterValue = 0.04
+        ParameterName = None
+    }
+    ScalarParameterValues[4] =
+    {
+        ParameterInfo = { Name=RefractionDepthBias }
+        ParameterValue = 0
+        ParameterName = None
+    }
+}
+TextureParameterValues[5] =
+{
+    TextureParameterValues[0] =
+    {
+        ParameterInfo = { Name=AmbientMap }
+        ParameterValue = Texture2D'/Game/00_Common/03_Texture/T_cm_Fil_Glay.T_cm_Fil_Glay'
+        ParameterName = None
+    }
+    TextureParameterValues[1] =
+    {
+        ParameterInfo = { Name=AmbientMapLUT }
+        ParameterValue = Texture2D'/Game/00_Common/03_Texture/T_DefaultColorGrading.T_DefaultColorGrading'
+        ParameterName = None
+    }
+    TextureParameterValues[2] =
+    {
+        ParameterInfo = { Name=ColorMap }
+        ParameterValue = Texture2D'/Game/Character/wp/wp0200/03_Texture/T_wp0224_Sword_COL.T_wp0224_Sword_COL'
+        ParameterName = None
+    }
+    TextureParameterValues[3] =
+    {
+        ParameterInfo = { Name=ControlMap }
+        ParameterValue = Texture2D'/Game/Character/wp/wp0200/03_Texture/T_wp0224_Sword_CTL.T_wp0224_Sword_CTL'
+        ParameterName = None
+    }
+    TextureParameterValues[4] =
+    {
+        ParameterInfo = { Name=NormalMap }
+        ParameterValue = Texture2D'/Game/Character/wp/wp0200/03_Texture/T_wp0224_Sword_NML.T_wp0224_Sword_NML'
+        ParameterName = None
+    }
+}
+VectorParameterValues[1] =
+{
+    VectorParameterValues[0] =
+    {
+        ParameterInfo = { Name=EmissiveColor }
+        ParameterValue = { R=0.05, G=0.01, B=1, A=1 }
+        ParameterName = None
+    }
+}
+BasePropertyOverrides =
+{
+    bOverride_BlendMode = false
+    BlendMode = BLEND_Masked (1)
+    bOverride_TwoSided = false
+    TwoSided = false
+    bOverride_OpacityMaskClipValue = false
+    OpacityMaskClipValue = 0.3333
+}
+StaticParameters =
+{
+    StaticSwitchParameters[1] =
+    {
+        StaticSwitchParameters[0] =
+        {
+            Value = true
+            ParameterInfo = { Name=UseAmbientMapLUT }
+            bOverride = true
+        }
+    }
+    StaticComponentMaskParameters[0] = {}
+    TerrainLayerWeightParameters[0] = {}
+    MaterialLayersParameters[0] = {}
+}
+RuntimeVirtualTextureParameterValues[0] = {}
+FontParameterValues[0] = {}
+BlendMode = BLEND_Opaque (0)
+TwoSided = false
+OpacityMaskClipValue = 0
+CachedReferencedTextures[0] = {}
+FlattenedTexture = None
+MobileBaseTexture = None
+MobileNormalTexture = None
+bUseMobileSpecular = false
+MobileSpecularPower = 16
+MobileSpecularMask = MSM_Constant (0)
+MobileMaskTexture = None
+ReferencedTextureGuids[0] = {}
+QualityLevelsUsed[0] = {}
+TextureStreamingData[5] =
+{
+    TextureStreamingData[0] =
+    {
+        SamplingScale = 0.09375
+        UVChannelIndex = 0
+        TextureName = T_ch_NoiseMap
+    }
+    TextureStreamingData[1] =
+    {
+        SamplingScale = 1
+        UVChannelIndex = 0
+        TextureName = T_ef_scl_noi_018
+    }
+    TextureStreamingData[2] =
+    {
+        SamplingScale = 1
+        UVChannelIndex = 0
+        TextureName = T_wp0224_Sword_COL
+    }
+    TextureStreamingData[3] =
+    {
+        SamplingScale = 1
+        UVChannelIndex = 0
+        TextureName = T_wp0224_Sword_CTL
+    }
+    TextureStreamingData[4] =
+    {
+        SamplingScale = 1
+        UVChannelIndex = 0
+        TextureName = T_wp0224_Sword_NML
+    }
+}

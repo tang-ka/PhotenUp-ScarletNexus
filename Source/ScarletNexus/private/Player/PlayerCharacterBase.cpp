@@ -117,8 +117,8 @@ APlayerCharacterBase::APlayerCharacterBase()
 	StateComp = CreateDefaultSubobject<UPlayerStateComponent>(TEXT("StateComp"));
 	PerceptionComp = CreateDefaultSubobject<UPlayerPerceptionComponent>(TEXT("PerceptionComp"));
 	PsychokinesisComp = CreateDefaultSubobject<UPsychokinesisComponent>(TEXT("PsychokinesisComp"));
-	ActionManagerComp = CreateDefaultSubobject<UActionManagerComponent>(TEXT("ActionManagerComp"));
 	InputBufferComp = CreateDefaultSubobject<UInputBufferComponent>(TEXT("InputBufferComp"));
+	ActionManagerComp = CreateDefaultSubobject<UActionManagerComponent>(TEXT("ActionManagerComp"));
 	ComboComp = CreateDefaultSubobject<UComboComponent>(TEXT("ComboComp"));
 }
 
