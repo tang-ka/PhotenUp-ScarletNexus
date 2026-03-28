@@ -28,6 +28,10 @@ struct FPCTask_AttackInstanceData
 	// 공격 쿨다운
 	UPROPERTY(EditAnywhere)
 	float AttackCooldown = 1.5f;
+
+	// 재생할 몽타주 - ST 에디터에서 캐릭터별로 할당
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UAnimMontage> AttackMontage = nullptr;
 	
 	// 내부 타이머
 	float ElapsedTime = 0.f;

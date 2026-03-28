@@ -59,6 +59,17 @@ public:
 	// 잔여 쿨타임
 	UFUNCTION(BlueprintCallable, Category = "Cooldown")
 	float GetRemainCooldown(FName SkillName) const;
+
+	// 애니메이션 몽타주 재생 헬퍼
+	UFUNCTION(BlueprintCallable, Category = "Animation")
+	float PlayMontage(UAnimMontage* Montage, float PlayRate = 1.f);
+
+	UFUNCTION(BlueprintCallable, Category = "Animation")
+	void StopMontage(UAnimMontage* Montage, float BlendOutTime = 0.25f);
+
+	// 공격 및 스킬 데미지 전달
+	UFUNCTION(BlueprintCallable, Category = "Attack")
+	void ApplyDamageToHitTarget(AActor* HitTarget, AActor* Causer, int CauserATK);
 	
 protected:
 	// 스킬명 -> 쿨타임 종료 시각 (WorldTime)

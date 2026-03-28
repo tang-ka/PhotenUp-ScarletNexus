@@ -25,7 +25,7 @@ EStateTreeRunStatus FPCTask_Attack::EnterState(FStateTreeExecutionContext& Conte
 	if (!data.Target || !DamageableHelpers::IsDamageable(data.Target)/*Cast<ABossCharacterBase>(data.Target)*/) return EStateTreeRunStatus::Failed;
 	
 	// 타겟 방향으로 회전
-	AActor* owner = Cast<AActor>(data.Target);
+	AActor* owner = Cast<AActor>(Context.GetOwner());
 	if (owner)
 	{
 		FVector dir = (data.Target->GetActorLocation() - owner->GetActorLocation()).GetSafeNormal2D();
@@ -33,6 +33,12 @@ EStateTreeRunStatus FPCTask_Attack::EnterState(FStateTreeExecutionContext& Conte
 		{
 			owner->SetActorRotation(dir.Rotation());
 		}
+	}
+
+	// owner에서 애니 몽타주 재생
+	if (APartyMemberBase* member = Cast<APartyMemberBase>(Context.GetOwner()))
+	{
+		member->PlayMontage(data.AttackMontage);
 	}
 	
 	return EStateTreeRunStatus::Running;
