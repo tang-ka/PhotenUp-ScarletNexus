@@ -56,18 +56,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
 	TObjectPtr<UAnimMontage> AttackA1Montage;
 
-	// PK - 탐색 애니 몽타주
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
-	TObjectPtr<UAnimMontage> PKFindMontage;
-
-	// PK - 집기-움직이기 애니 몽타주
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
-	TObjectPtr<UAnimMontage> PKLiftMontage;
-
-	// PK - 던지기 몽타주
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
-	TObjectPtr<UAnimMontage> PKThrowMontage;
-
 	// 최종 데미지 계산용 랜덤 공격력
 	UFUNCTION(BlueprintCallable)
 	int GetHanabiATK();

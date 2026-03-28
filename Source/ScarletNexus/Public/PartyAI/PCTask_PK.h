@@ -47,6 +47,14 @@ struct FPCTask_PKInstanceData
 	
 	UPROPERTY()
 	EPKPhase Phase = EPKPhase::Find;
+
+	// 재생할 몽타주 - ST 에디터에서 캐릭터별로 할당
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UAnimMontage> FindMontage = nullptr;
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UAnimMontage> LiftMontage = nullptr;
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UAnimMontage> ThrowMontage = nullptr;
 	
 	UPROPERTY()
 	float ElapsedTime = 0.f;

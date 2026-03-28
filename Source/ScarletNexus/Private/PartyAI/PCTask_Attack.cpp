@@ -22,10 +22,14 @@ EStateTreeRunStatus FPCTask_Attack::EnterState(FStateTreeExecutionContext& Conte
 	data.bAttacked = false;
 	
 	// IDamageable 적용 체크
-	if (!data.Target || !DamageableHelpers::IsDamageable(data.Target)/*Cast<ABossCharacterBase>(data.Target)*/) return EStateTreeRunStatus::Failed;
+	bool isDamageable = DamageableHelpers::IsDamageable(data.Target);
+	PRINTLOG_GT(TEXT("Target: %s | IsDamageable: %s"), data.Target ? *data.Target->GetName() : TEXT("NULL"),
+		isDamageable ? TEXT("true") : TEXT("false"));
+	if (!data.Target || !isDamageable) return EStateTreeRunStatus::Failed;
 	
 	// 타겟 방향으로 회전
 	AActor* owner = Cast<AActor>(Context.GetOwner());
+	PRINTLOG_GT(TEXT("Owner: %s"), owner ? *owner->GetClass()->GetName() : TEXT("NULL"));
 	if (owner)
 	{
 		FVector dir = (data.Target->GetActorLocation() - owner->GetActorLocation()).GetSafeNormal2D();
@@ -38,7 +42,10 @@ EStateTreeRunStatus FPCTask_Attack::EnterState(FStateTreeExecutionContext& Conte
 	// owner에서 애니 몽타주 재생
 	if (APartyMemberBase* member = Cast<APartyMemberBase>(Context.GetOwner()))
 	{
-		member->PlayMontage(data.AttackMontage);
+		float duration = member->PlayMontage(data.AttackMontage);
+		PRINTLOG_GT(TEXT("PlayMontage duration: %.2f, Montage: %s"),
+		duration,
+		data.AttackMontage ? *data.AttackMontage->GetName() : TEXT("NULL"));
 	}
 	
 	return EStateTreeRunStatus::Running;

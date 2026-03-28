@@ -4,6 +4,7 @@
 #include "StateTreeExecutionContext.h"
 #include "Engine/OverlapResult.h"
 #include "Interface/PKInteractable.h"
+#include "PartyAI/PartyMemberBase.h"
 #include "PK/PKObject.h"
 
 EStateTreeRunStatus FPCTask_PK::EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const
@@ -17,6 +18,11 @@ EStateTreeRunStatus FPCTask_PK::EnterState(FStateTreeExecutionContext& Context, 
 	if (!owner) return EStateTreeRunStatus::Failed;
 
 	// Find
+	// owner에서 애니 몽타주 재생
+	APartyMemberBase* member = Cast<APartyMemberBase>(owner);
+	if (!member) return EStateTreeRunStatus::Failed;
+	member->PlayMontage(data.FindMontage);
+	
 	TArray<FOverlapResult> overlaps;
 	FCollisionQueryParams params;
 	params.AddIgnoredActor(owner);
@@ -53,6 +59,9 @@ EStateTreeRunStatus FPCTask_PK::EnterState(FStateTreeExecutionContext& Context, 
 	// Lift 시작
 	data.FoundObject->Execute_OnPKPickuped(data.FoundObject);
 	data.Phase = EPKPhase::Lift;
+	// Find -> Lift 몽타주 전환
+	member->StopMontage(data.FindMontage);
+	member->PlayMontage(data.LiftMontage);
 
 #if WITH_EDITOR
 	PRINTLOG_GT(TEXT("Phase: %s | FoundObject: %s"), *UEnum::GetValueAsString(data.Phase), *data.FoundObject.GetName())
@@ -84,6 +93,13 @@ EStateTreeRunStatus FPCTask_PK::Tick(FStateTreeExecutionContext& Context, const 
 		if (data.ElapsedTime >= data.AimReadyTime)
 		{
 			data.Phase = EPKPhase::Throw;
+			// Lift -> Throw 몽타주 전환
+			APartyMemberBase* member = Cast<APartyMemberBase>(owner);
+			if (member)
+			{
+				member->StopMontage(data.LiftMontage);
+				member->PlayMontage(data.ThrowMontage);
+			}
 		}
 		return EStateTreeRunStatus::Running;
 	}
@@ -124,8 +140,15 @@ void FPCTask_PK::ExitState(FStateTreeExecutionContext& Context, const FStateTree
 #if WITH_EDITOR
 	PRINTLOG_GT(TEXT("Phase: %s"), *UEnum::GetValueAsString(data.Phase));
 #endif
+
+	// 중단/실패 시 몽타주 강제 종료
+	AActor* owner = Cast<AActor>(Context.GetOwner());
+	if (APartyMemberBase* member = Cast<APartyMemberBase>(owner))
+	{
+		member->StopMontage(data.LiftMontage);
+		member->StopMontage(data.ThrowMontage);
+	}
 	
 	if (!data.FoundObject) return;
-	
 	data.FoundObject->Execute_OnPKReleased(data.FoundObject);
 }
