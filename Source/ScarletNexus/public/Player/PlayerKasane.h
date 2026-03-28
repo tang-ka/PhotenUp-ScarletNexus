@@ -19,7 +19,8 @@ protected:
 	virtual void BeginPlay() override;
 
 	virtual void BasicAttack() override;
-	
+	virtual void PsychicAttack() override;
+	virtual void BackStepAttack() override;
 public:
 	virtual void Tick(float DeltaTime) override;
 

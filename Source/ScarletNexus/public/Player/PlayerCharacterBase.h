@@ -77,7 +77,8 @@ protected:
 #pragma endregion
 
 	virtual void BasicAttack() {};
-	virtual void BackAttack();
+	virtual void PsychicAttack();
+	virtual void BackStepAttack();
 	
 private:
 	void Move(const FVector2D& Direction);

@@ -272,16 +272,12 @@ void APlayerCharacterBase::OnDodgeInput(const FInputActionValue& Value)
 
 void APlayerCharacterBase::OnBasicAttackInput(const FInputActionValue& Value)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Basic Attack!"));
 	BasicAttack();
 }
 
 void APlayerCharacterBase::OnPsychokinesisInput(const FInputActionValue& Value)
 {
-	PsychokinesisComp->SetTarget(GetPerceptionComp()->GetCurrentTarget());
-	PsychokinesisComp->SetPickedObject(GetPerceptionComp()->GetPsychokinesisTarget());
-	
-	PsychokinesisComp->StartHold();
+	PsychicAttack();
 }
 
 void APlayerCharacterBase::OnCompletePsychokinesisInput(const FInputActionValue& Value)
@@ -291,8 +287,7 @@ void APlayerCharacterBase::OnCompletePsychokinesisInput(const FInputActionValue&
 
 void APlayerCharacterBase::OnBackAttackInput(const FInputActionValue& Value)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Back Attack!"));
-	BackAttack();
+	BackStepAttack();
 }
 
 void APlayerCharacterBase::OnLockOnInput(const FInputActionValue& Value)
@@ -301,7 +296,15 @@ void APlayerCharacterBase::OnLockOnInput(const FInputActionValue& Value)
 }
 #pragma endregion
 
-void APlayerCharacterBase::BackAttack()
+void APlayerCharacterBase::PsychicAttack()
+{
+	PsychokinesisComp->SetTarget(GetPerceptionComp()->GetCurrentTarget());
+	PsychokinesisComp->SetPickedObject(GetPerceptionComp()->GetPsychokinesisTarget());
+	
+	PsychokinesisComp->StartHold();
+}
+
+void APlayerCharacterBase::BackStepAttack()
 {
 	DashDirection = -GetCameraComp()->GetForwardVector();
 	bNeedAdjustLookForward = true;
