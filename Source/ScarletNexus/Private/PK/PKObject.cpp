@@ -5,6 +5,7 @@
 
 #include "ScarletNexus.h"
 #include "Components/BoxComponent.h"
+#include "Interface/DamageableHelper.h"
 
 // Sets default values
 APKObject::APKObject()
@@ -128,4 +129,19 @@ void APKObject::OnBoxHit(UPrimitiveComponent* HitComponent, AActor* OtherActor,
 			bUsedObject = false;
 		}
 	}
+
+#if WITH_EDITOR
+	// 디버그
+	if (DamageableHelpers::IsDamageable(OtherActor))
+	{
+		DrawDebugBox(
+			GetWorld(),
+			BoxComp->GetComponentLocation(),
+			BoxComp->GetScaledBoxExtent(),
+			BoxComp->GetComponentQuat(),
+			FColor::Magenta,
+			true,
+			2.f);
+	}
+#endif
 }
