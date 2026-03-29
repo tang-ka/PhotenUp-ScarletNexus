@@ -16,6 +16,9 @@ struct FSTTask_BossDeathInstanceData
  
 	float Timer = 0.f;
 	bool bDeathStarted = false;
+ 
+	// 사망 시 시작 위치 (자동 저장)
+	FVector StartLocation = FVector::ZeroVector;
 };
  
 USTRUCT(meta = (DisplayName = "Boss Death"))
@@ -34,11 +37,19 @@ struct SCARLETNEXUS_API FSTTask_BossDeath : public FStateTreeTaskCommonBase
 	virtual EStateTreeRunStatus Tick(
 		FStateTreeExecutionContext& Context, float DeltaTime) const override;
  
-	// 사망 시간 (몽타주 없어서 일단 설정함 )
+	// 가라앉는 데 걸리는 시간 (초)
 	UPROPERTY(EditAnywhere, Category = "Death")
-	float DeathDuration = 3.0f;
+	float DeathDuration = 5.0f;
  
-	// 사망 후 액터 숨김까지 대기 시간
+	// 가라앉은 후 숨기기까지 대기 시간
 	UPROPERTY(EditAnywhere, Category = "Death")
-	float HideDelay = 2.0f;
+	float HideDelay = 1.0f;
+ 
+	// 가라앉는 깊이 (cm)
+	UPROPERTY(EditAnywhere, Category = "Death")
+	float SinkDepth = 300.f;
+	
+	// 사망 후 멈춰있는 시간
+	UPROPERTY(EditAnywhere, Category = "Death")
+	float PauseBeforeSink = 1.5f;
 };

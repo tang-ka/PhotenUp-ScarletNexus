@@ -28,7 +28,7 @@ FText UBossHUDWidget::GetHPText() const
  
 	const int32 CurrentHP = IDamageable::Execute_GetHP(BossActor);
  
-	// MaxHP는 BossCharacterBase에서 가져옴
+
 	int32 MaxHP = 10000;
 	if (const ABossCharacterBase* BossChar = Cast<ABossCharacterBase>(BossActor))
 	{

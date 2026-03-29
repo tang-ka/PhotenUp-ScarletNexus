@@ -14,6 +14,8 @@
 #include "Engine/OverlapResult.h"
 #include "NavigationSystem.h"
 #include "DrawDebugHelpers.h"
+#include "Interface/Damageable.h"
+
  
 
 // EnterState
@@ -28,6 +30,13 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::EnterState(
  
 	ACharacter* Boss = Cast<ACharacter>(Data.ContextActor);
 	if (!Boss) return EStateTreeRunStatus::Failed;
+ 
+	// ★ 사망 가드 추가
+	if (IDamageable::Execute_IsDead(Boss))
+	{
+		UE_LOG(LogTemp, Log, TEXT("[AttackExecutor] 보스 사망 상태 — 공격 중지"));
+		return EStateTreeRunStatus::Running;
+	}
  
 	Data.ActiveAttack = SelectAttack(Boss);
  
@@ -52,6 +61,11 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::Tick(
 	ACharacter* Boss = Cast<ACharacter>(Data.ContextActor);
 	if (!Boss) return EStateTreeRunStatus::Failed;
  
+	
+	if (IDamageable::Execute_IsDead(Boss))
+		{
+		return EStateTreeRunStatus::Running;
+		}
 	switch (Data.ActiveAttack)
 	{
 	case EActiveAttackType::TeleportKick:    return TickTeleportKick(Data, Boss, DeltaTime);
