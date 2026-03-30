@@ -77,4 +77,6 @@ void ABossAIController::SendStateTreeEvent(FGameplayTag EventTag)
 	}
 	
 	UE_LOG(LogTemp, Log, TEXT("[BossAI] StateTree 이벤트 전송: %s"), *EventTag.ToString());
+	
+	StateTreeAIComp->SendStateTreeEvent(FStateTreeEvent(EventTag));
 }

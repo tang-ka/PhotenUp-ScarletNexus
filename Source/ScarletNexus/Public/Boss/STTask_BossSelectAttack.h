@@ -14,7 +14,7 @@ struct FSTTask_BossSelectAttackInstanceData
 {
 	GENERATED_BODY()
  
-	// --- 파라미터 (바인딩 선택사항) ---
+	// 파라미터
  
 	UPROPERTY(EditAnywhere, Category = "Parameter")
 	EBossPhase CurrentPhase = EBossPhase::Phase1;
@@ -25,7 +25,6 @@ struct FSTTask_BossSelectAttackInstanceData
 	UPROPERTY(EditAnywhere, Category = "Parameter")
 	bool bPlayerInSight = false;
  
-	// --- 내부 상태 ---
  
 	// 선택된 공격 패턴의 인덱스
 	UPROPERTY()
@@ -70,7 +69,7 @@ struct SCARLETNEXUS_API FSTTask_BossSelectAttack : public FStateTreeTaskCommonBa
 		FStateTreeExecutionContext& Context,
 		const FStateTreeTransitionResult& Transition) const override;
  
-	// --- 설정 (에디터에서 세팅) ---
+	// 설정
  
 	// 보스 설정 Data Asset 참조
 	UPROPERTY(EditAnywhere, Category = "Config")
