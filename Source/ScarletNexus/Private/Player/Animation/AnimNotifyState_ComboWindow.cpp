@@ -21,8 +21,9 @@ void UAnimNotifyState_ComboWindow::NotifyBegin(USkeletalMeshComponent* MeshComp,
 	auto* Player = Cast<APlayerCharacterBase>(MeshComp->GetOwner());
 	if (Player)
 	{
-		Player->GetActionManagerComp()->OpenComboWindow();
 		PRINTLOG_SH(TEXT("[ComboWindow(AnimNotify)] 콤보 윈도우 열림"));
+		Player->GetActionManagerComp()->OpenComboWindow();
+		Player->TryConsumeBufferedAttack();
 	}
 }
 
@@ -40,7 +41,7 @@ void UAnimNotifyState_ComboWindow::NotifyEnd(USkeletalMeshComponent* MeshComp, U
 	auto* Player = Cast<APlayerCharacterBase>(MeshComp->GetOwner());
 	if (Player)
 	{
-		Player->GetActionManagerComp()->CloseComboWindow();
 		PRINTLOG_SH(TEXT("[ComboWindow(AnimNotify)] 콤보 윈도우 닫힘"));
+		Player->GetActionManagerComp()->CloseComboWindow();
 	}
 }

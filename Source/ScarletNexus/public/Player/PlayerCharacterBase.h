@@ -89,6 +89,7 @@ protected:
 	// Attacking 상태에서 몽타주가 끝났을 때만 콤보 리셋 및 상태 변경
 	UFUNCTION()
 	void OnMontageEdnded(UAnimMontage* Montage, bool bInterrupted);
+public:
 	void TryConsumeBufferedAttack();
 #pragma endregion
 

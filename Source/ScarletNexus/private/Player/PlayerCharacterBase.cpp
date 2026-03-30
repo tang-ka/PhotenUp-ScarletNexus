@@ -114,6 +114,8 @@ APlayerCharacterBase::APlayerCharacterBase()
 
 	CameraComp = CreateDefaultSubobject<UCameraComponent>(TEXT("CameraComp"));
 	CameraComp->SetupAttachment(SpringArmComp);
+	
+	GetCharacterMovement()->JumpZVelocity = 600.f;
 
 	StatsComp = CreateDefaultSubobject<UPlayerStatsComponent>(TEXT("StatsComp"));
 	StateComp = CreateDefaultSubobject<UPlayerStateComponent>(TEXT("StateComp"));
@@ -349,7 +351,7 @@ void APlayerCharacterBase::ExecuteAttack(EAttackType AttackType)
 		return;
 	}
 
-	// 4. 코보 진행 시도
+	// 4. 콤보 진행 시도
 	if (!GetComboComp()->TryExecuteCombo(NextAttackType))
 	{
 		return;
@@ -392,6 +394,11 @@ void APlayerCharacterBase::PlayAttackMontage(const UComboAttackDataAsset* Attack
 
 void APlayerCharacterBase::OnMontageEdnded(UAnimMontage* Montage, bool bInterrupted)
 {
+	if (bInterrupted)
+	{
+		return;
+	}
+	
 	if (ActionManagerComp->GetCurrentState() != EActionState::Attacking)
 	{
 		return;
@@ -410,6 +417,11 @@ void APlayerCharacterBase::TryConsumeBufferedAttack()
 	
 	EAttackType BufferedType;
 	if (!InputBufferComp->ConsumeBufferedInput(BufferedType))
+	{
+		return;
+	}
+	
+	if (!GetComboComp()->TryExecuteCombo(BufferedType))
 	{
 		return;
 	}
