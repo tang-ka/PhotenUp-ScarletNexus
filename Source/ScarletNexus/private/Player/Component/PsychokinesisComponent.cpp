@@ -56,6 +56,8 @@ void UPsychokinesisComponent::TickComponent(float DeltaTime, ELevelTick TickType
 
 void UPsychokinesisComponent::SetPickedObject(AActor* NewPickedObject)
 {
+	// TODO 상혁 확인 : 파티 캐릭이 선점했을 때 Null로 들어옴
+	if (!IsValid(NewPickedObject)) return;
 	if (NewPickedObject->GetClass()->ImplementsInterface(UPKInteractable::StaticClass()))
 	{
 		PickedObject = NewPickedObject;
@@ -97,6 +99,9 @@ void UPsychokinesisComponent::StartHold()
 void UPsychokinesisComponent::ReleaseHold()
 {
 	bHolding = false;
+	
+	// TODO 상혁 확인 : 파티 캐릭이 선점했을 때 Null로 들어옴
+	if (!IsValid(PickedObject.Get())) return;
 	
 	IPKInteractable::Execute_OnPKReleased(PickedObject.Get());
 	

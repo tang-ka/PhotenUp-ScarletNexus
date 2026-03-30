@@ -111,7 +111,16 @@ void APKObject::OnPKThrownPS_Implementation(const FVector& ThrowDir, float Throw
 	bUsedObject = true;
 	
 	// 물리 충격
-	BoxComp->AddImpulse(ThrowDir * ThrowForce, NAME_None, true);
+	//BoxComp->AddImpulse(ThrowDir * ThrowForce, NAME_None, true);
+	// 물리 충격 커스텀 구현
+	FVector impulse = ThrowDir * ThrowForce;
+	
+	// 질량 고려 : △V = Impulse / Mass
+	/*float mass = BoxComp->GetMass();
+	if (mass <= KINDA_SMALL_NUMBER) return;
+	
+	FVector deltaV = impulse / mass;*/
+	BoxComp->SetPhysicsLinearVelocity(BoxComp->GetPhysicsLinearVelocity() + impulse);
 }
 
 void APKObject::OnBoxHit(UPrimitiveComponent* HitComponent, AActor* OtherActor,
