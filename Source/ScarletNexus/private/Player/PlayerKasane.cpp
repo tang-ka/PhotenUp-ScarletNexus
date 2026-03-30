@@ -47,21 +47,21 @@ void APlayerKasane::BasicAttack()
 {
 	Super::BasicAttack();
 	
-	GetInputBufferComp()->BufferInput(EAttackType::BasicAttack);
+	// GetInputBufferComp()->BufferInput(EAttackType::BasicAttack);
 }
 
 void APlayerKasane::PsychicAttack()
 {
 	Super::PsychicAttack();
 	
-	GetInputBufferComp()->BufferInput(EAttackType::PsychicAttack);
+	// GetInputBufferComp()->BufferInput(EAttackType::PsychicAttack);
 }
 
 void APlayerKasane::BackStepAttack()
 {
 	Super::BackStepAttack();
 	
-	GetInputBufferComp()->BufferInput(EAttackType::BackStepAttack);
+	// GetInputBufferComp()->BufferInput(EAttackType::BackStepAttack);
 }
 
 

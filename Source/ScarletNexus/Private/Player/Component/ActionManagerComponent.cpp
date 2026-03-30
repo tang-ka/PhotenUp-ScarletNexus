@@ -8,18 +8,7 @@
 
 UActionManagerComponent::UActionManagerComponent()
 {
-	PrimaryComponentTick.bCanEverTick = true;
-}
-
-void UActionManagerComponent::BeginPlay()
-{
-	Super::BeginPlay();
-}
-
-void UActionManagerComponent::TickComponent(float DeltaTime, ELevelTick TickType,
-                                            FActorComponentTickFunction* ThisTickFunction)
-{
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+	PrimaryComponentTick.bCanEverTick = false;
 }
 
 bool UActionManagerComponent::CanAttack() const
@@ -62,13 +51,7 @@ bool UActionManagerComponent::CanJump() const
 }
 
 bool UActionManagerComponent::TrySetState(EActionState NewState)
-{
-	if (CurState == NewState)
-	{
-		PRINTLOG_SH(TEXT("Already in state: %s"), *GetStateName(NewState));
-		return true;
-	}
-	
+{	
 	// 유효한 전이인지 체크
 	if (!IsValidTransition(CurState, NewState))
 	{
@@ -146,9 +129,13 @@ bool UActionManagerComponent::IsValidTransition(EActionState From, EActionState 
 		return true;
 
 	case EActionState::Attacking:
-		// Attacking -> Attacking (콤보 연계)
+		if (To == EActionState::Attacking)
+		{
+			// Attacking -> Attacking은 콤보 윈도우가 열려 있을 때만 허용
+			return bComboWindowOpen;
+		}
 		// Attacking -> Idle (공격 종료)
-		return To == EActionState::Attacking || To == EActionState::Idle;
+		return To == EActionState::Idle;
 
 	case EActionState::Dashing:
 		// Dashing -> Idle (대시 완료)

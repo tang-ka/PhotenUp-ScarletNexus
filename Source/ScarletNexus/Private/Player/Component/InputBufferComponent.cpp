@@ -104,7 +104,7 @@ void UInputBufferComponent::ClearBuffer()
 	InputBuffer.Empty();
 }
 
-bool UInputBufferComponent::WasInputRecent(EAttackType InType, float WithinTime) const
+bool UInputBufferComponent::WasInputRecent(EAttackType InType) const
 {
 	RemoveExpiredInputs();
 	
@@ -114,7 +114,7 @@ bool UInputBufferComponent::WasInputRecent(EAttackType InType, float WithinTime)
 	{
 		float InputAge = CurrentTime - InputBuffer[i].Timestamp;
 
-		if (InputAge > AntiSpamThreshold)
+		if (InputAge > AntiSpamThreshold) // 연타 방지
 		{
 			break;
 		}

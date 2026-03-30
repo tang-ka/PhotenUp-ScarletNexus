@@ -29,13 +29,6 @@ class SCARLETNEXUS_API UActionManagerComponent : public UActorComponent
 public:
 	UActionManagerComponent();
 
-protected:
-	virtual void BeginPlay() override;
-
-public:
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType,
-	                           FActorComponentTickFunction* ThisTickFunction) override;
-	
 public:
 #pragma region State Management
 	// ===== 상태 조회 =====

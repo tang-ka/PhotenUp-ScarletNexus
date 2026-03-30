@@ -3,17 +3,10 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "AttackType.h"
+#include "ScarletNexus.h"
 #include "Engine/DataAsset.h"
 #include "ComboAttackDataAsset.generated.h"
-
-UENUM(BlueprintType)
-enum class EAttackType : uint8
-{
-	None			UMETA(DisplayName = "None"),
-	BasicAttack		UMETA(DisplayName = "Basic Attack"),
-	PsychicAttack	UMETA(DisplayName = "Psychic Attack"),
-	BackStepAttack	UMETA(DisplayName = "Back Step Attack")
-};
 
 USTRUCT(BlueprintType)
 struct FAttackBalanceData : public FTableRowBase
@@ -61,13 +54,16 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Identity")
 	EAttackType AttackType;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Identity");
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Identity")
 	FText AttackDisplayName = FText::FromString("Unnamed Attack");
 	
 	// ===== 애니메이션 =====
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
 	TObjectPtr<UAnimMontage> AttackMontage;
     
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
+	FName MontageSectionName = NAME_None;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
 	float MontagePlayRate = 1.0f;
 	
@@ -93,6 +89,7 @@ public:
 		{
 			return *Data;
 		}
+		PRINTLOG_SH(TEXT("[ComboDataAsset] 밸런스 데이터 못 찾음: %s"), *AttackID.ToString());
 		return FAttackBalanceData(); // 기본값 반환
 	}
 };

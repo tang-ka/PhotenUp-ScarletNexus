@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "Data/ComboAttackDataAsset.h"
+#include "Data/AttackType.h"
 #include "InputBufferComponent.generated.h"
 
 USTRUCT(BlueprintType)
@@ -50,7 +50,7 @@ public:
 	void ClearBuffer();
 
 	UFUNCTION()
-	bool WasInputRecent(EAttackType InType, float WithinTime) const;
+	bool WasInputRecent(EAttackType InType) const;
 
 	UFUNCTION()
 	bool HasBufferedInput() const

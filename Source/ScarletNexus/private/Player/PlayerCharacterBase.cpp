@@ -9,6 +9,8 @@
 #include "InputActionValue.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "ScarletNexus.h"
+#include "Data/ComboAttackDataAsset.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Interface/DamageableHelper.h"
 #include "Player/Component/ActionManagerComponent.h"
@@ -79,7 +81,7 @@ APlayerCharacterBase::APlayerCharacterBase()
 	{
 		IA_Psychokinesis = IA_PsychokinesisAsset.Object;
 	}
-	
+
 	ConstructorHelpers::FObjectFinder<UInputAction> IA_BackAttackAsset(
 		TEXT("'/Game/SSH/Inputs/IA_BackAttack.IA_BackAttack'")
 	);
@@ -87,7 +89,7 @@ APlayerCharacterBase::APlayerCharacterBase()
 	{
 		IA_BackAttack = IA_BackAttackAsset.Object;
 	}
-	
+
 	ConstructorHelpers::FObjectFinder<UInputAction> IA_LockOnAsset(
 		TEXT("'/Game/SSH/Inputs/IA_LockOn.IA_LockOn'")
 	);
@@ -136,6 +138,12 @@ void APlayerCharacterBase::BeginPlay()
 			Subsystem->AddMappingContext(IMC_Player, 0);
 		}
 	}
+
+	auto* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance)
+	{
+		AnimInstance->OnMontageEnded.AddDynamic(this, &APlayerCharacterBase::OnMontageEdnded);
+	}
 }
 
 void APlayerCharacterBase::Tick(float DeltaTime)
@@ -167,7 +175,7 @@ void APlayerCharacterBase::Tick(float DeltaTime)
 			GetCharacterMovement()->Velocity = DashVelocity;
 		}
 	}
-	
+
 	if (bNeedAdjustLookForward)
 	{
 		const FQuat CurQuat = GetActorQuat();
@@ -202,9 +210,11 @@ void APlayerCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 
 		// Skills
 		InputComp->BindAction(IA_BasicAttack, ETriggerEvent::Started, this, &APlayerCharacterBase::OnBasicAttackInput);
-		InputComp->BindAction(IA_Psychokinesis, ETriggerEvent::Started, this, &APlayerCharacterBase::OnPsychokinesisInput);
-		InputComp->BindAction(IA_Psychokinesis, ETriggerEvent::Completed, this, &APlayerCharacterBase::OnCompletePsychokinesisInput);
-		
+		InputComp->BindAction(IA_Psychokinesis, ETriggerEvent::Started, this,
+		                      &APlayerCharacterBase::OnPsychokinesisInput);
+		InputComp->BindAction(IA_Psychokinesis, ETriggerEvent::Completed, this,
+		                      &APlayerCharacterBase::OnCompletePsychokinesisInput);
+
 		InputComp->BindAction(IA_BackAttack, ETriggerEvent::Started, this, &APlayerCharacterBase::OnBackAttackInput);
 		InputComp->BindAction(IA_LockOn, ETriggerEvent::Started, this, &APlayerCharacterBase::OnLockOnInput);
 	}
@@ -258,7 +268,7 @@ void APlayerCharacterBase::OnCompleteJumpInput(const FInputActionValue& Value)
 void APlayerCharacterBase::OnDodgeInput(const FInputActionValue& Value)
 {
 	DashDirection = GetLastMovementInputVector();
-	
+
 	if (DashDirection.IsNearlyZero())
 	{
 		// DodgeDirection = GetMesh()->GetRightVector();
@@ -266,7 +276,7 @@ void APlayerCharacterBase::OnDodgeInput(const FInputActionValue& Value)
 		DashDirection = CameraComp->GetForwardVector();
 		bNeedAdjustLookForward = true;
 	}
-	
+
 	Dash(DashDirection);
 }
 
@@ -296,19 +306,116 @@ void APlayerCharacterBase::OnLockOnInput(const FInputActionValue& Value)
 }
 #pragma endregion
 
+void APlayerCharacterBase::BasicAttack()
+{
+	ExecuteAttack(EAttackType::BasicAttack);
+}
+
 void APlayerCharacterBase::PsychicAttack()
 {
+	ExecuteAttack(EAttackType::PsychicAttack);
+
 	PsychokinesisComp->SetTarget(GetPerceptionComp()->GetCurrentTarget());
 	PsychokinesisComp->SetPickedObject(GetPerceptionComp()->GetPsychokinesisTarget());
-	
 	PsychokinesisComp->StartHold();
 }
 
 void APlayerCharacterBase::BackStepAttack()
 {
+	ExecuteAttack(EAttackType::BackStepAttack);
+
 	DashDirection = -GetCameraComp()->GetForwardVector();
 	bNeedAdjustLookForward = true;
 	Dash(DashDirection);
+}
+
+void APlayerCharacterBase::ExecuteAttack(EAttackType AttackType)
+{
+	// 1. 버퍼에 입력 저장
+	GetInputBufferComp()->BufferInput(AttackType);
+
+	// 2. 공격 가능 여부 확인
+	if (!GetActionManagerComp()->CanAttack())
+	{
+		PRINTLOG_SH(TEXT("공격 불가 상태"));
+		return;
+	}
+
+	// 3. 버퍼에서 입력 소비 시도 
+	EAttackType NextAttackType;
+	if (!GetInputBufferComp()->ConsumeBufferedInput(NextAttackType))
+	{
+		PRINTLOG_SH(TEXT("버퍼에 유효한 입력 없음"));
+		return;
+	}
+
+	// 4. 코보 진행 시도
+	if (!GetComboComp()->TryExecuteCombo(NextAttackType))
+	{
+		return;
+	}
+
+	// 5. 상태 변경
+	GetActionManagerComp()->TrySetState(EActionState::Attacking);
+
+	// 6. 애니메이션 재생
+	PlayCurrentAttackMontage();
+}
+
+void APlayerCharacterBase::PlayCurrentAttackMontage()
+{
+	if (const UComboAttackDataAsset* CurrentAttack = GetComboComp()->GetCurrentAttack())
+	{
+		PlayAttackMontage(CurrentAttack);
+	}
+}
+
+void APlayerCharacterBase::PlayAttackMontage(const UComboAttackDataAsset* AttackDataAsset)
+{
+	if (!AttackDataAsset || !AttackDataAsset->AttackMontage)
+	{
+		PRINTLOG_SH(TEXT("공격 데이터 에셋 또는 몽타주 없음"));
+		return;
+	}
+
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (!AnimInstance)
+	{
+		PRINTLOG_SH(TEXT("애니메이션 인스턴스 없음"));
+		return;
+	}
+
+	PlayAnimMontage(AttackDataAsset->AttackMontage,
+	                AttackDataAsset->MontagePlayRate,
+	                AttackDataAsset->MontageSectionName);
+}
+
+void APlayerCharacterBase::OnMontageEdnded(UAnimMontage* Montage, bool bInterrupted)
+{
+	if (ActionManagerComp->GetCurrentState() != EActionState::Attacking)
+	{
+		return;
+	}
+
+	ComboComp->ResetCombo();
+	ActionManagerComp->ForceSetState(EActionState::Idle);
+}
+
+void APlayerCharacterBase::TryConsumeBufferedAttack()
+{
+	if (!ActionManagerComp->IsComboWindowOpen())
+	{
+		return;
+	}
+	
+	EAttackType BufferedType;
+	if (!InputBufferComp->ConsumeBufferedInput(BufferedType))
+	{
+		return;
+	}
+
+	ActionManagerComp->TrySetState(EActionState::Attacking);
+	PlayCurrentAttackMontage();
 }
 
 void APlayerCharacterBase::Move(const FVector2D& InDirection)
@@ -344,7 +451,7 @@ void APlayerCharacterBase::Dash(FVector& InDashDirection)
 
 	bIsDashing = true;
 	bCanDash = false;
-	
+
 	InDashDirection.Normalize();
 	InDashDirection.Z = 0.f;
 
