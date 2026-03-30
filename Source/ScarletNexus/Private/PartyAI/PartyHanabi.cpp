@@ -4,6 +4,7 @@
 #include "PartyAI/PartyHanabi.h"
 
 #include "StateTree.h"
+#include "Interface/DamageableHelper.h"
 #include "PartyAI/PartyAIComponent.h"
 #include "PK/PKComponent.h"
 
@@ -29,45 +30,53 @@ void APartyHanabi::BeginPlay()
 	Super::BeginPlay();
 	
 	// 무기 붙히기
+	if (WeaponClass)
+	{
+		FActorSpawnParameters spawnParams;
+		spawnParams.Owner = this;
+		spawnParams.Instigator = this;
+
+		WeaponActor = GetWorld()->SpawnActor<AActor>(WeaponClass, FVector::ZeroVector, FRotator::ZeroRotator, spawnParams);
+
+		if (WeaponActor)
+		{
+			WeaponActor->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, WeaponSocketName);
+			WeaponActor->SetActorRelativeLocation(WeaponLocationOffset);
+			WeaponActor->SetActorRelativeRotation(WeaponRotationOffset);
+		}
+	}
 }
 
 void APartyHanabi::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 	
-	// 잡고 있는 PK오브젝트가 있으면 매 프레임 위치 갱신
-	if (PKComp->IsHoldingPKObject())
-	{
-		
-	}
 }
 
 // 기본 공격 : 근거리 창 공격
 void APartyHanabi::Attack()
 {
 	if (!IsSkillReady(SK_SpearAttack)) return;
+
+	// 애니메이션 몽타주 재생
+	// TODO A2, A3 랜덤 재생 추가 예정
+	float montageDuration = PlayMontage(AttackA1Montage);
+	float cooldown = montageDuration > 0.f ? montageDuration : SpearAttackCooldown;
 	
-	TArray<FHitResult> hitResults;
-	PerformSpearTrace(hitResults);
-	
-	bool bHitAny = false;
-	for (const FHitResult& hit : hitResults)
-	{
-		AActor* actor = hit.GetActor();
-		if (!actor || actor == this) continue;
-		
-		// 데미지 적용
-		
-		bHitAny = true;
-	}
+	// Hit 판정은 AnimNotify_SpearHit에서 처리
 	
 	// 쿨타임 시작
-	SetCooldown(SK_SpearAttack, SpearAttackCooldown);
-	// -> 애니메이션 재생
+	SetCooldown(SK_SpearAttack, cooldown);
 }
 
-void APartyHanabi::SkillPK()
+int APartyHanabi::GetHanabiATK()
 {
+	int min = HanabiATK - 10;
+	min = FMath::Clamp(min, 0, HanabiATK);
+	int max = HanabiATK + 10;
+	max = FMath::Clamp(max, 0, HanabiATK);
+	int randATK = FMath::RandRange(min, max);
+	return randATK;
 }
 
 void APartyHanabi::PerformSpearTrace(TArray<FHitResult> hitResults)

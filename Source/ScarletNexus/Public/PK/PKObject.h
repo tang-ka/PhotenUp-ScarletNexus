@@ -79,6 +79,7 @@ public:
 	virtual void OnPKPickuped_Implementation() override;
 	virtual void OnPKReleased_Implementation() override;
 	virtual void OnPKThrown_Implementation(const FVector& ThrowDir, float ThrowForce) override;
+	virtual void OnPKThrownPS_Implementation(const FVector& ThrowDir, float ThrowForce) override;
 
 private:
 	// 충돌 감지 → 땅에 닿으면 CanBePickedUp으로 복귀

@@ -34,4 +34,7 @@ public:
 	// 집혀졌을 때 던져지기
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category=PK)
 	void OnPKThrown(const FVector& ThrowDir, float ThrowForce);
+	// 잡혀졌을 때 던져지기 (Physics Simulated On)
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category=PK)
+	void OnPKThrownPS(const FVector& ThrowDir, float ThrowForce);
 };

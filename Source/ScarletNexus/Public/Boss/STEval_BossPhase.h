@@ -8,7 +8,7 @@
 #include "STEval_BossPhase.generated.h"
  
 
-// StateTree가 관리하는 런타임 데이터
+// Evaluator Instance Data
 
 USTRUCT()
 struct FSTEval_BossPhaseInstanceData
@@ -42,6 +42,10 @@ struct FSTEval_BossPhaseInstanceData
 	// Context Actor (보스 캐릭터) - StateTree에서 자동 바인딩
 	UPROPERTY(EditAnywhere, Category = "Context")
 	TObjectPtr<AActor> ContextActor = nullptr;
+ 
+	// 사망 이벤트 전송 여부 (중복 방지)
+	UPROPERTY()
+	bool bDeathEventSent = false;
 };
  
 
@@ -70,4 +74,3 @@ private:
 	// HP 비율에 따른 페이즈 결정
 	EBossPhase DeterminePhase(float HPRatio) const;
 };
-

@@ -3,6 +3,7 @@
 
 #include "Boss/BossCharacterBase.h"
 #include "Boss/BossAIController.h"
+#include "BrainComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Components/CapsuleComponent.h"
  
@@ -38,12 +39,15 @@ void ABossCharacterBase::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 }
  
+ 
 
 // IDamageable 구현
 
  
 bool ABossCharacterBase::ReceiveDamage_Implementation(FDamageInfo DamageInfo)
 {
+	if (IDamageable::Execute_IsDead(this)) return false;
+ 
 	if (CurrentHPValue <= 0.f)
 	{
 		return false;
@@ -83,6 +87,7 @@ bool ABossCharacterBase::IsDead_Implementation() const
 	return CurrentHPValue <= 0.f;
 }
  
+ 
 
 // ICombatState 구현
 
@@ -98,6 +103,7 @@ bool ABossCharacterBase::HasSuperArmor_Implementation() const
 {
 	return false;
 }
+ 
  
 
 // 보스 전용
@@ -119,8 +125,10 @@ void ABossCharacterBase::InitializeWithConfig(UBossConfigDataAsset* Config)
 	UE_LOG(LogTemp, Log, TEXT("[Boss] 초기화 완료 - HP: %.0f"), MaxHPValue);
 }
  
+ 
 
 // 내부 메서드
+
  
 void ABossCharacterBase::CheckPhaseTransition()
 {
@@ -160,22 +168,14 @@ void ABossCharacterBase::CheckPhaseTransition()
 void ABossCharacterBase::HandleDeath()
 {
 	UE_LOG(LogTemp, Log, TEXT("[Boss] 사망 처리 시작"));
- 
-	CurrentCombatState = EBossCombatState::Death;
- 
+
+	// 이벤트만 전송 — 나머지는 Death State에서 처리
 	if (ABossAIController* BossAI = Cast<ABossAIController>(GetController()))
 	{
 		BossAI->SendStateTreeEvent(
 			FGameplayTag::RequestGameplayTag(FName("Boss.Event.Death")));
 	}
- 
-	if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
-	{
-		MoveComp->StopMovementImmediately();
-		MoveComp->DisableMovement();
-	}
- 
-	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	// ★ 여기서 AI 정지, 이동 정지, 콜리전 비활성화 하지 않기!
+	// Death State의 EnterState에서 처리함
 }
-
-

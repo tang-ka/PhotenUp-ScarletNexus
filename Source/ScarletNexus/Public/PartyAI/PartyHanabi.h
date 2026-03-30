@@ -18,8 +18,24 @@ public:
 
 	virtual void BeginPlay() override;
 	virtual void Tick( float DeltaSeconds ) override;
+
+	// 하나비 스탯
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Status")
+	int HanabiATK = 35;
 	
+	// 무기 소켓
 	const FName WeaponSocketName = FName("Weapon");
+
+	// 무기 부착 오프셋 (에디터에서 조정)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
+	FVector WeaponLocationOffset = FVector::ZeroVector;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
+	FRotator WeaponRotationOffset = FRotator::ZeroRotator;
+	
+	// 무기 블루프린트 클래스
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
+	TSubclassOf<AActor> WeaponClass;
 	
 	// 근거리 창 기본 공격
 	UFUNCTION(BlueprintCallable, Category = Attack)
@@ -31,22 +47,19 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Attack)
 	float SpearAttackCooldown = 1.2f;
 	
-	// 염력 스킬 
-	// 염력 스킬 사용 (집기 -> 던지기)
-	UFUNCTION(BlueprintCallable, Category = PK)
-	void SkillPK();
-	// 염력 던지는 힘
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PK")
-	float PKForce = 2000.f;
-	// 염력 쿨타임
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PK")
-	float PKCooldown = 3.f;
-	
 	// PK 콤포넌트
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "PK")
 	TObjectPtr<class UPKComponent> PKComp;
 
-private:
+	// 애니메이션
+	// 창 공격 A1 애니메이션 몽타주
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
+	TObjectPtr<UAnimMontage> AttackA1Montage;
+
+	// 최종 데미지 계산용 랜덤 공격력
+	UFUNCTION(BlueprintCallable)
+	int GetHanabiATK();
+	
 	// 기본공격 : BoxTrace로 창 앞 범위 내 적 감지
 	void PerformSpearTrace(TArray<FHitResult> hitResults);
 };

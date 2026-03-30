@@ -4,6 +4,7 @@
 #include "PartyAI/PartyMemberBase.h"
 
 #include "ScarletNexus.h"
+#include "Interface/DamageableHelper.h"
 #include "PartyAI/PartyAIComponent.h"
 #include "PartyAI/PartyAIController.h"
 
@@ -84,4 +85,25 @@ float APartyMemberBase::GetRemainCooldown(FName SkillName) const
 	
 	float now = GetWorld()->GetTimeSeconds();
 	return FMath::Max(0, *endTime - now);
+}
+
+float APartyMemberBase::PlayMontage(UAnimMontage* Montage, float PlayRate)
+{
+	if (!Montage) return 0.f;
+	UAnimInstance* anim = GetMesh()->GetAnimInstance();
+	if (!anim) return 0.f;
+	return anim->Montage_Play(Montage, PlayRate);
+}
+
+void APartyMemberBase::StopMontage(UAnimMontage* Montage, float BlendOutTime)
+{
+	UAnimInstance* anim = GetMesh()->GetAnimInstance();
+	if (anim) anim->Montage_Stop(BlendOutTime, Montage);
+}
+
+// 데미지 전달
+void APartyMemberBase::ApplyDamageToHitTarget(AActor* HitTarget, AActor* Causer, int CauserATK)
+{
+	int finalATK = ATK + CauserATK;
+	DamageableHelpers::ApplyDamage(HitTarget, Causer, finalATK);
 }
