@@ -1,0 +1,13 @@
+Normal=T_cm_Fil_Normal
+Other[0]=Good64x64TilingNoiseHighFreq
+Other[1]=RD_T_FX_Stripe
+Other[2]=T_cm_Fil_Glay
+Other[3]=T_cm_Fil_GlayLinear
+Other[4]=T_cm_Fil_White
+Other[5]=T_ch_NoiseMap
+Other[6]=T_em0000_vanish_noise
+Other[7]=T_PatternMap
+Other[8]=T_ef_scl_noi_010
+Other[9]=T_ef_scl_noi_012
+Other[10]=T_ef_scl_noi_017
+Other[11]=T_ef_scl_noi_018

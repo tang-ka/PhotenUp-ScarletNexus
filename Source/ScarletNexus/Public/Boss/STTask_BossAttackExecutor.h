@@ -67,6 +67,12 @@ struct FSTTask_BossAttackExecutorInstanceData
  
 	UPROPERTY()
 	bool bDamageApplied = false;
+	
+	UPROPERTY()
+	int32 SeletedPatternIndex = INDEX_NONE;
+	
+	UPROPERTY(EditAnywhere, Category = "Config")
+	TObjectPtr<UBossConfigDataAsset> BossConfig = nullptr;
  
 	// 텔레포트 킥 
 	UPROPERTY()

@@ -3,6 +3,8 @@
 
 #include "Player/PlayerKasane.h"
 
+#include "Player/Component/InputBufferComponent.h"
+
 
 // Sets default values
 APlayerKasane::APlayerKasane()
@@ -40,3 +42,26 @@ void APlayerKasane::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 }
+
+void APlayerKasane::BasicAttack()
+{
+	Super::BasicAttack();
+	
+	// GetInputBufferComp()->BufferInput(EAttackType::BasicAttack);
+}
+
+void APlayerKasane::PsychicAttack()
+{
+	Super::PsychicAttack();
+	
+	// GetInputBufferComp()->BufferInput(EAttackType::PsychicAttack);
+}
+
+void APlayerKasane::BackStepAttack()
+{
+	Super::BackStepAttack();
+	
+	// GetInputBufferComp()->BufferInput(EAttackType::BackStepAttack);
+}
+
+
