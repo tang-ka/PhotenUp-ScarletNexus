@@ -69,10 +69,8 @@ struct FSTTask_BossAttackExecutorInstanceData
 	bool bDamageApplied = false;
 	
 	UPROPERTY()
-	int32 SeletedPatternIndex = INDEX_NONE;
+	int32 SelectedPatternIndex = INDEX_NONE;
 	
-	UPROPERTY(EditAnywhere, Category = "Config")
-	TObjectPtr<UBossConfigDataAsset> BossConfig = nullptr;
  
 	// 텔레포트 킥 
 	UPROPERTY()
@@ -133,7 +131,7 @@ struct FSTTask_BossAttackExecutorInstanceData
 	UPROPERTY()
 	TArray<bool> OOOrbHit;
  
-	// --- 염동력 투척 ---
+	// 염동력 투척
 	UPROPERTY()
 	ETTPhase TTPhase = ETTPhase::Gathering;
 	UPROPERTY()
@@ -159,6 +157,9 @@ struct SCARLETNEXUS_API FSTTask_BossAttackExecutor : public FStateTreeTaskCommon
 	virtual EStateTreeRunStatus Tick(FStateTreeExecutionContext& Context, const float DeltaTime) const override;
 	virtual void ExitState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const override;
  
+	UPROPERTY(EditAnywhere, Category = "Config")
+	TObjectPtr<UBossConfigDataAsset> BossConfig = nullptr;
+	
 	// 텔레포트 킥
 	UPROPERTY(EditAnywhere, Category = "TeleportKick") float TK_VanishDuration = 0.2f;
 	UPROPERTY(EditAnywhere, Category = "TeleportKick") float TK_AppearDelay = 0.1f;
@@ -253,4 +254,7 @@ private:
  
 	void ApplyDamageInRadius(AActor* BossActor, const FVector& Center, float Radius,
 		float Damage, float Knockback, const FVector& KnockbackDir) const;
+	
+	static EActiveAttackType ToActiveType(EBossAttackType Type);
+	static EBossAttackType ToDataAssetType(EActiveAttackType Type);
 };

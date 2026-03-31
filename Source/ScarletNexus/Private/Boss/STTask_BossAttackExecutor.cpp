@@ -21,34 +21,75 @@
 // EnterState
 
 EStateTreeRunStatus FSTTask_BossAttackExecutor::EnterState(
-	FStateTreeExecutionContext& Context,
-	const FStateTreeTransitionResult& Transition) const
+    FStateTreeExecutionContext& Context,
+    const FStateTreeTransitionResult& Transition) const
 {
-	FInstanceDataType& Data = Context.GetInstanceData(*this);
-	Data.PhaseTimer = 0.f;
-	Data.bDamageApplied = false;
- 
-	ACharacter* Boss = Cast<ACharacter>(Data.ContextActor);
-	if (!Boss) return EStateTreeRunStatus::Failed;
- 
-	// ★ 사망 가드 추가
-	if (IDamageable::Execute_IsDead(Boss))
+    FInstanceDataType& Data = Context.GetInstanceData(*this);
+    Data.PhaseTimer = 0.f;
+    Data.bDamageApplied = false;
+
+    ACharacter* Boss = Cast<ACharacter>(Data.ContextActor);
+    if (!Boss) return EStateTreeRunStatus::Failed;
+
+    if (IDamageable::Execute_IsDead(Boss))
+    {
+        UE_LOG(LogTemp, Log, TEXT("[AttackExecutor] 보스 사망 상태 — 공격 중지"));
+        return EStateTreeRunStatus::Running;
+    }
+
+    Data.ActiveAttack = SelectAttack(Boss);
+	
+	if (BossConfig)
 	{
-		UE_LOG(LogTemp, Log, TEXT("[AttackExecutor] 보스 사망 상태 — 공격 중지"));
-		return EStateTreeRunStatus::Running;
+		const ABossCharacterBase* BossChar = Cast<ABossCharacterBase>(Boss);
+		const EBossPhase Phase = BossChar ? BossChar->GetCurrentPhase() : EBossPhase::Phase1;
+		TArray<FBossAttackPattern> Patterns = BossConfig->GetAvailablePatterns(Phase);
+    
+		for (int32 i = 0; i < Patterns.Num(); i++)
+		{
+			if (Patterns[i].AttackType == ToDataAssetType(Data.ActiveAttack))
+			{
+				Data.SelectedPatternIndex = i;
+				if (Patterns[i].AttackMontage)
+				{
+					Boss->PlayAnimMontage(Patterns[i].AttackMontage);
+				}
+				break;
+			}
+		}
 	}
- 
-	Data.ActiveAttack = SelectAttack(Boss);
- 
-	switch (Data.ActiveAttack)
-	{
-	case EActiveAttackType::TeleportKick:    return EnterTeleportKick(Data, Boss);
-	case EActiveAttackType::CloneRush:       return EnterCloneRush(Data, Boss);
-	case EActiveAttackType::AerialElectric:  return EnterAerialElectric(Data, Boss);
-	case EActiveAttackType::IceSpikes:       return EnterIceSpikes(Data, Boss);
-	case EActiveAttackType::ElectricOrbs:    return EnterElectricOrbs(Data, Boss);
-	default: return EStateTreeRunStatus::Failed;
-	}
+
+    // ★ DataAsset 몽타주 재생
+    if (BossConfig)
+    {
+        const ABossCharacterBase* BossChar = Cast<ABossCharacterBase>(Boss);
+        const EBossPhase Phase = BossChar ? BossChar->GetCurrentPhase() : EBossPhase::Phase1;
+        TArray<FBossAttackPattern> Patterns = BossConfig->GetAvailablePatterns(Phase);
+        
+        // 현재 선택된 공격 타입에 맞는 패턴 찾기
+        for (int32 i = 0; i < Patterns.Num(); i++)
+        {
+            if (Patterns[i].AttackType == ToDataAssetType(Data.ActiveAttack))
+            {
+                Data.SelectedPatternIndex = i;
+                if (Patterns[i].AttackMontage)
+                {
+                    Boss->PlayAnimMontage(Patterns[i].AttackMontage);
+                }
+                break;
+            }
+        }
+    }
+
+    switch (Data.ActiveAttack)
+    {
+    case EActiveAttackType::TeleportKick:    return EnterTeleportKick(Data, Boss);
+    case EActiveAttackType::CloneRush:       return EnterCloneRush(Data, Boss);
+    case EActiveAttackType::AerialElectric:  return EnterAerialElectric(Data, Boss);
+    case EActiveAttackType::IceSpikes:       return EnterIceSpikes(Data, Boss);
+    case EActiveAttackType::ElectricOrbs:    return EnterElectricOrbs(Data, Boss);
+    default: return EStateTreeRunStatus::Failed;
+    }
 }
  
 
@@ -96,42 +137,92 @@ void FSTTask_BossAttackExecutor::ExitState(
 	Data.RightClone = nullptr;
 }
  
+EActiveAttackType FSTTask_BossAttackExecutor::ToActiveType(EBossAttackType Type)
+{
+	switch (Type)
+	{
+	case EBossAttackType::TeleportKick:    return EActiveAttackType::TeleportKick;
+	case EBossAttackType::CloneRush:       return EActiveAttackType::CloneRush;
+	case EBossAttackType::AerialElectric:  return EActiveAttackType::AerialElectric;
+	case EBossAttackType::IceSpikes:       return EActiveAttackType::IceSpikes;
+	case EBossAttackType::ElectricOrbs:    return EActiveAttackType::ElectricOrbs;
+	case EBossAttackType::TelekinesisThrow:return EActiveAttackType::TelekinesisThrow;
+	default:                               return EActiveAttackType::None;
+	}
+}
+
+EBossAttackType FSTTask_BossAttackExecutor::ToDataAssetType(EActiveAttackType Type)
+{
+	switch (Type)
+	{
+	case EActiveAttackType::TeleportKick:    return EBossAttackType::TeleportKick;
+	case EActiveAttackType::CloneRush:       return EBossAttackType::CloneRush;
+	case EActiveAttackType::AerialElectric:  return EBossAttackType::AerialElectric;
+	case EActiveAttackType::IceSpikes:       return EBossAttackType::IceSpikes;
+	case EActiveAttackType::ElectricOrbs:    return EBossAttackType::ElectricOrbs;
+	case EActiveAttackType::TelekinesisThrow:return EBossAttackType::TelekinesisThrow;
+	default:                                 return EBossAttackType::TeleportKick;
+	}
+}
+
 
 // 공격 선택 (페이즈별)
 
 EActiveAttackType FSTTask_BossAttackExecutor::SelectAttack(const ACharacter* Boss) const
 {
-	TArray<EActiveAttackType> Pool;
-	// Phase1 기본
-	Pool.Add(EActiveAttackType::TeleportKick);
-	Pool.Add(EActiveAttackType::CloneRush);
-	Pool.Add(EActiveAttackType::AerialElectric);
-	Pool.Add(EActiveAttackType::IceSpikes);
- 
-	// 페이즈별 추가
-	if (const ABossCharacterBase* BossChar = Cast<ABossCharacterBase>(Boss))
-	{
-		const EBossPhase Phase = BossChar->GetCurrentPhase();
- 
-		if (Phase >= EBossPhase::Phase2)
-		{
-			Pool.Add(EActiveAttackType::ElectricOrbs);
-		}
-		// TelekinesisThrow는 나중에 맵 액터 연동 시 추가 예정
-	}
- 
-	const int32 Roll = FMath::RandRange(0, Pool.Num() - 1);
-	const EActiveAttackType Selected = Pool[Roll];
- 
-	const TCHAR* Names[] = {
-		TEXT("None"), TEXT("텔레포트 킥"), TEXT("분신 돌진"),
-		TEXT("공중 전류"), TEXT("얼음가시"), TEXT("전류구"), TEXT("염동력 투척") };
-	UE_LOG(LogTemp, Log, TEXT("[AttackExecutor] 선택: %s (풀: %d개)"),
-		Names[static_cast<int32>(Selected)], Pool.Num());
- 
-	return Selected;
+    const ABossCharacterBase* BossChar = Cast<ABossCharacterBase>(Boss);
+    const EBossPhase Phase = BossChar ? BossChar->GetCurrentPhase() : EBossPhase::Phase1;
+
+    // DataAsset 가중치 기반
+    if (BossConfig)
+    {
+        TArray<FBossAttackPattern> Patterns = BossConfig->GetAvailablePatterns(Phase);
+        if (Patterns.Num() > 0)
+        {
+            float DistToPlayer = 0.f;
+            if (const ACharacter* Player = UGameplayStatics::GetPlayerCharacter(
+                    Boss->GetWorld(), 0))
+            {
+                DistToPlayer = FVector::Dist(Boss->GetActorLocation(),
+                    Player->GetActorLocation());
+            }
+
+            TArray<float> Weights;
+            float TotalWeight = 0.f;
+            for (const FBossAttackPattern& P : Patterns)
+            {
+                float W = P.SelectionWeight;
+                if (P.AttackRange <= 300.f)
+                    W *= (DistToPlayer <= P.AttackRange * 1.2f) ? 2.f : 0.2f;
+                else if (DistToPlayer > 400.f)
+                    W *= 1.5f;
+                Weights.Add(W);
+                TotalWeight += W;
+            }
+
+            float Roll = FMath::FRandRange(0.f, TotalWeight);
+            float Acc = 0.f;
+            for (int32 i = 0; i < Weights.Num(); i++)
+            {
+                Acc += Weights[i];
+                if (Roll <= Acc)
+                    return ToActiveType(Patterns[i].AttackType);
+            }
+            return ToActiveType(Patterns.Last().AttackType);
+        }
+    }
+
+    // Fallback: DataAsset 없으면 기존 균등 랜덤
+    TArray<EActiveAttackType> Pool;
+    Pool.Add(EActiveAttackType::TeleportKick);
+    Pool.Add(EActiveAttackType::CloneRush);
+    Pool.Add(EActiveAttackType::AerialElectric);
+    Pool.Add(EActiveAttackType::IceSpikes);
+    if (Phase >= EBossPhase::Phase2)
+        Pool.Add(EActiveAttackType::ElectricOrbs);
+
+    return Pool[FMath::RandRange(0, Pool.Num() - 1)];
 }
- 
 
 // 텔레포트 킥
 
