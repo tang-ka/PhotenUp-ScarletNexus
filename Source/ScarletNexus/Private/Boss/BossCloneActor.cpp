@@ -42,6 +42,12 @@ void ABossCloneActor::InitRush(const FVector& InDirection, float InSpeed, float 
 	bDamageApplied = false;
 
 	SetActorRotation(RushDirection.Rotation());
+	
+	if (RushMontage && MeshComp && MeshComp->GetAnimInstance())
+	{
+		MeshComp->GetAnimInstance()->Montage_Play(RushMontage);
+		MeshComp->GetAnimInstance()->Montage_JumpToSection(FName("WindUp"), RushMontage);
+	}
 
 	UE_LOG(LogTemp, Log, TEXT("[BossClone] 분신 스폰 완료 - 위치: %s"),
 		*GetActorLocation().ToString());
@@ -52,10 +58,11 @@ void ABossCloneActor::StartRush()
 	bRushing = true;
 	StartLocation = GetActorLocation();
 
-	// ★ 돌진 몽타주 재생
+	// 돌진 몽타주 재생
 	if (RushMontage && MeshComp && MeshComp->GetAnimInstance())
 	{
 		MeshComp->GetAnimInstance()->Montage_Play(RushMontage);
+		MeshComp->GetAnimInstance()->Montage_JumpToSection(FName("Rush"), RushMontage);
 	}
 
 	UE_LOG(LogTemp, Log, TEXT("[BossClone] 분신 돌진 시작!"));

@@ -21,7 +21,7 @@ enum class EActiveAttackType : uint8
 	TelekinesisThrow,  // Phase2_Enhanced+
 };
  
-// === 내부 상태 Enums ===
+
 UENUM()
 enum class ETKPhase : uint8 { Vanishing, Teleporting, Appearing, Kicking, Done };
  
