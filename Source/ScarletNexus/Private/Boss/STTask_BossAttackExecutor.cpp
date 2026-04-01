@@ -73,9 +73,9 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::EnterState(
 }
  
  
-// ============================================================
+
 // Tick
-// ============================================================
+
 EStateTreeRunStatus FSTTask_BossAttackExecutor::Tick(
 	FStateTreeExecutionContext& Context, const float DeltaTime) const
 {
@@ -350,10 +350,7 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::EnterCloneRush(
 	const FVector LL = Data.CRStartLocation - RV * CR_CloneSpacing;
 	if (ABossCloneActor* LC = Boss->GetWorld()->SpawnActor<ABossCloneActor>(ABossCloneActor::StaticClass(), LL, FRotator::ZeroRotator, SP))
 	{
-		FVector LD = FVector(Player->GetActorLocation().X - LL.X, Player->GetActorLocation().Y - LL.Y, 0.f).GetSafeNormal();
-		float LDist = FVector::Dist2D(LL, Player->GetActorLocation()) + 200.f;
-		LC->InitRush(LD, CR_RushSpeed, LDist, CR_Damage, CR_RushWidth, CR_KnockbackForce, CloneRushMontage);
- 
+		
 		if (auto* BM = Boss->GetMesh())
 		{
 			if (auto* CM = LC->FindComponentByClass<USkeletalMeshComponent>())
@@ -368,6 +365,11 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::EnterCloneRush(
 			CC->SetCapsuleSize(BossCapsuleRadius, BossCapsuleHalfHeight);
 		}
 		LC->SetActorScale3D(Boss->GetActorScale3D());
+		
+		FVector LD = FVector(Player->GetActorLocation().X - LL.X, Player->GetActorLocation().Y - LL.Y, 0.f).GetSafeNormal();
+		float LDist = FVector::Dist2D(LL, Player->GetActorLocation()) + 200.f;
+		LC->InitRush(LD, CR_RushSpeed, LDist, CR_Damage, CR_RushWidth, CR_KnockbackForce, CloneRushMontage);
+		
 		Data.LeftClone = LC;
 	}
  
@@ -375,10 +377,6 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::EnterCloneRush(
 	const FVector RL = Data.CRStartLocation + RV * CR_CloneSpacing;
 	if (ABossCloneActor* RC = Boss->GetWorld()->SpawnActor<ABossCloneActor>(ABossCloneActor::StaticClass(), RL, FRotator::ZeroRotator, SP))
 	{
-		FVector RD = FVector(Player->GetActorLocation().X - RL.X, Player->GetActorLocation().Y - RL.Y, 0.f).GetSafeNormal();
-		float RDist = FVector::Dist2D(RL, Player->GetActorLocation()) + 200.f;
-		RC->InitRush(RD, CR_RushSpeed, RDist, CR_Damage, CR_RushWidth, CR_KnockbackForce, CloneRushMontage);
- 
 		if (auto* BM = Boss->GetMesh())
 		{
 			if (auto* CM = RC->FindComponentByClass<USkeletalMeshComponent>())
@@ -393,6 +391,11 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::EnterCloneRush(
 			CC->SetCapsuleSize(BossCapsuleRadius, BossCapsuleHalfHeight);
 		}
 		RC->SetActorScale3D(Boss->GetActorScale3D());
+		
+		FVector RD = FVector(Player->GetActorLocation().X - RL.X, Player->GetActorLocation().Y - RL.Y, 0.f).GetSafeNormal();
+		float RDist = FVector::Dist2D(RL, Player->GetActorLocation()) + 200.f;
+		RC->InitRush(RD, CR_RushSpeed, RDist, CR_Damage, CR_RushWidth, CR_KnockbackForce, CloneRushMontage);
+		
 		Data.RightClone = RC;
 	}
  
