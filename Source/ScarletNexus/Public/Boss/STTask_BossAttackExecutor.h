@@ -177,7 +177,7 @@ struct SCARLETNEXUS_API FSTTask_BossAttackExecutor : public FStateTreeTaskCommon
 	UPROPERTY(EditAnywhere, Category = "CloneRush") float CR_Damage = 200.f;
 	UPROPERTY(EditAnywhere, Category = "CloneRush") float CR_RushWidth = 150.f;
 	UPROPERTY(EditAnywhere, Category = "CloneRush") float CR_KnockbackForce = 50.f;
-	UPROPERTY(EditAnywhere, Category = "CloneRush") float CR_CloneSpacing = 200.f;
+	UPROPERTY(EditAnywhere, Category = "CloneRush") float CR_CloneSpacing = 500.f;
 	UPROPERTY(EditAnywhere, Category = "CloneRush") float CR_SequenceDelay = 0.2f;
  
 	// 공중 전류
@@ -187,7 +187,7 @@ struct SCARLETNEXUS_API FSTTask_BossAttackExecutor : public FStateTreeTaskCommon
 	UPROPERTY(EditAnywhere, Category = "AerialElectric") float AE_DischargeDuration = 0.6f;
 	UPROPERTY(EditAnywhere, Category = "AerialElectric") float AE_DamageRadius = 400.f;
 	UPROPERTY(EditAnywhere, Category = "AerialElectric") float AE_Damage = 180.f;
-	UPROPERTY(EditAnywhere, Category = "AerialElectric") float AE_LandingDuration = 0.3f;
+	UPROPERTY(EditAnywhere, Category = "AerialElectric") float AE_LandingDuration = 1.2f;
 	UPROPERTY(EditAnywhere, Category = "AerialElectric") float AE_KnockbackForce = 50.f;
  
 	// 얼음가시

@@ -114,7 +114,7 @@ struct SCARLETNEXUS_API FSTTask_BossIdle : public FStateTreeTaskCommonBase
     float PatrolMinDistance = 300.f;
 
     UPROPERTY(EditAnywhere, Category = "PatrolTeleport")
-    float PatrolMaxDistance = 600.f;
+    float PatrolMaxDistance = 800.f;
 
     UPROPERTY(EditAnywhere, Category = "PatrolTeleport")
     float PatrolVanishDuration = 0.15f;

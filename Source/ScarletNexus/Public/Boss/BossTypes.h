@@ -99,9 +99,15 @@ struct FBossAttackPattern
  
 	// 공격 타입
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	EBossAttackType AttackType = EBossAttackType::TeleportKick;
+	EBossAttackType AttackType = EBossAttackType::TeleportKick;\
+	
+	
+	// 준비 동작 몽타주 (CloneRush WindUp 등)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TObjectPtr<UAnimMontage> WindUpMontage = nullptr;
+	
  
-	// 사용할 애니메이션 몽타주
+	// 공격몽타주
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	TObjectPtr<UAnimMontage> AttackMontage = nullptr;
  

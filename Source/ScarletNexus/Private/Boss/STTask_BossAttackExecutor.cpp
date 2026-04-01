@@ -50,7 +50,7 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::EnterState(
 			if (Patterns[i].AttackType == ToDataAssetType(Data.ActiveAttack))
 			{
 				Data.SelectedPatternIndex = i;
-				if (Patterns[i].AttackMontage)
+				if (Patterns[i].AttackMontage && Data.ActiveAttack != EActiveAttackType::CloneRush)
 				{
 					Boss->PlayAnimMontage(Patterns[i].AttackMontage);
 				}
@@ -322,6 +322,23 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::EnterCloneRush(
 	const FVector RV = FVector(-Data.CRDirection.Y, Data.CRDirection.X, 0.f);
 	FActorSpawnParameters SP; SP.Owner = Boss; SP.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
  
+	// EnterCloneRush 함수 상단, Data.CRDirection 설정 후에 추가
+	UAnimMontage* CloneRushMontage = nullptr;
+	if (BossConfig)
+	{
+		const ABossCharacterBase* BossChar = Cast<ABossCharacterBase>(Boss);
+		const EBossPhase Phase = BossChar ? BossChar->GetCurrentPhase() : EBossPhase::Phase1;
+		TArray<FBossAttackPattern> Patterns = BossConfig->GetAvailablePatterns(Phase);
+		for (const FBossAttackPattern& P : Patterns)
+		{
+			if (P.AttackType == EBossAttackType::CloneRush)
+			{
+				CloneRushMontage = P.AttackMontage;
+				break;
+			}
+		}
+	}
+	
 	// 보스 캡슐/메시 정보 캐싱
 	float BossCapsuleRadius = 42.f, BossCapsuleHalfHeight = 96.f;
 	if (const UCapsuleComponent* BossCapsule = Boss->GetCapsuleComponent())
@@ -334,8 +351,7 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::EnterCloneRush(
 	{
 		FVector LD = FVector(Player->GetActorLocation().X-LL.X, Player->GetActorLocation().Y-LL.Y, 0.f).GetSafeNormal();
 		float LDist = FVector::Dist2D(LL, Player->GetActorLocation()) + 200.f;
-		LC->InitRush(LD, CR_RushSpeed, LDist, CR_Damage, CR_RushWidth, CR_KnockbackForce);
- 
+		LC->InitRush(LD, CR_RushSpeed, LDist, CR_Damage, CR_RushWidth, CR_KnockbackForce, CloneRushMontage); 
 		// 보스 외형 복사 (메시 + 스케일 + 캡슐)
 		if (auto* BM = Boss->GetMesh())
 		{
@@ -343,7 +359,7 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::EnterCloneRush(
 			{
 				CM->SetSkeletalMesh(BM->GetSkeletalMeshAsset());
 				CM->SetRelativeTransform(BM->GetRelativeTransform());
-				CM->SetAnimInstanceClass(BM->GetAnimInstance() ? BM->GetAnimInstance()->GetClass() : nullptr);
+				CM->SetAnimClass(BM->GetAnimClass());
 			}
 		}
 		if (auto* CC = LC->FindComponentByClass<UCapsuleComponent>())
@@ -359,8 +375,7 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::EnterCloneRush(
 	{
 		FVector RD = FVector(Player->GetActorLocation().X-RL.X, Player->GetActorLocation().Y-RL.Y, 0.f).GetSafeNormal();
 		float RDist = FVector::Dist2D(RL, Player->GetActorLocation()) + 200.f;
-		RC->InitRush(RD, CR_RushSpeed, RDist, CR_Damage, CR_RushWidth, CR_KnockbackForce);
- 
+		RC->InitRush(RD, CR_RushSpeed, RDist, CR_Damage, CR_RushWidth, CR_KnockbackForce, CloneRushMontage); 
 		// 보스 외형 복사
 		if (auto* BM = Boss->GetMesh())
 		{
@@ -368,7 +383,7 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::EnterCloneRush(
 			{
 				CM->SetSkeletalMesh(BM->GetSkeletalMeshAsset());
 				CM->SetRelativeTransform(BM->GetRelativeTransform());
-				CM->SetAnimInstanceClass(BM->GetAnimInstance() ? BM->GetAnimInstance()->GetClass() : nullptr);
+				CM->SetAnimClass(BM->GetAnimClass());
 			}
 		}
 		if (auto* CC = RC->FindComponentByClass<UCapsuleComponent>())
@@ -399,18 +414,65 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickCloneRush(
 	case ECRPhase::RightRush:
 		{ auto* RC = Cast<ABossCloneActor>(Data.RightClone); if (!RC || RC->IsRushComplete()) { Data.CRPhase = ECRPhase::RightDelay; Data.PhaseTimer = 0.f; } } break;
 	case ECRPhase::RightDelay:
-		if (Data.PhaseTimer >= CR_SequenceDelay) { Data.CRPhase = ECRPhase::BossRush; Data.PhaseTimer = 0.f; } break;
+		if (Data.PhaseTimer >= CR_SequenceDelay)
+		{
+			if (BossConfig)
+			{
+				const ABossCharacterBase* BossChar = Cast<ABossCharacterBase>(Boss);
+				const EBossPhase Phase = BossChar ? BossChar->GetCurrentPhase() : EBossPhase::Phase1;
+				TArray<FBossAttackPattern> Patterns = BossConfig->GetAvailablePatterns(Phase);
+				for (const FBossAttackPattern& P : Patterns)
+				{
+					if (P.AttackType == EBossAttackType::CloneRush && P.AttackMontage)
+					{
+						Boss->PlayAnimMontage(P.AttackMontage);
+						break;
+					}
+				}
+			}
+			Data.CRPhase = ECRPhase::BossRush;
+			Data.PhaseTimer = 0.f;
+		}
+		break;
+		
 	case ECRPhase::BossRush:
 		{
+			// 본체도 플레이어 방향으로 약간 보정
+			if (const ACharacter* Player = UGameplayStatics::GetPlayerCharacter(Boss->GetWorld(), 0))
+			{
+				FVector DesiredDir = (Player->GetActorLocation() - Boss->GetActorLocation()).GetSafeNormal2D();
+				Data.CRDirection = FMath::VInterpNormalRotationTo(
+					Data.CRDirection, DesiredDir, DeltaTime, 30.f);
+				Boss->SetActorRotation(Data.CRDirection.Rotation());
+			}
 			const FVector NL = Boss->GetActorLocation() + Data.CRDirection * CR_RushSpeed * DeltaTime;
 			const float TD = FVector::Dist2D(Data.CRStartLocation, Data.CRTargetLocation);
 			if (FVector::Dist2D(Data.CRStartLocation, NL) >= TD) { Boss->SetActorLocation(Data.CRTargetLocation); Data.CRPhase = ECRPhase::Recovery; Data.PhaseTimer = 0.f; }
 			else { Boss->SetActorLocation(NL); if (!Data.bBossRushDamageApplied) { ApplyDamageInRadius(Boss, Boss->GetActorLocation(), CR_RushWidth, CR_Damage, CR_KnockbackForce, Data.CRDirection); TArray<FOverlapResult> O; FCollisionQueryParams Q; Q.AddIgnoredActor(Boss); Boss->GetWorld()->OverlapMultiByChannel(O,Boss->GetActorLocation(),FQuat::Identity,ECC_Pawn,FCollisionShape::MakeSphere(CR_RushWidth),Q); for(auto&R:O) if(Cast<ACharacter>(R.GetActor())&&R.GetActor()!=Boss){Data.bBossRushDamageApplied=true;break;} } }
 		} break;
+		
 	case ECRPhase::Recovery:
 		if (Data.PhaseTimer >= CR_RecoveryDuration) return EStateTreeRunStatus::Succeeded; break;
 	default: return EStateTreeRunStatus::Succeeded;
 	}
+	
+	// WindUp 몽타주 재생
+	if (BossConfig)
+	{
+		const ABossCharacterBase* BossChar = Cast<ABossCharacterBase>(Boss);
+		const EBossPhase Phase = BossChar ? BossChar->GetCurrentPhase() : EBossPhase::Phase1;
+		TArray<FBossAttackPattern> Patterns = BossConfig->GetAvailablePatterns(Phase);
+		for (const FBossAttackPattern& P : Patterns)
+		{
+			if (P.AttackType == EBossAttackType::CloneRush && P.WindUpMontage)
+			{
+				Boss->PlayAnimMontage(P.WindUpMontage);
+				break;
+			}
+		}
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("[CloneRush] 3체 준비 완료"));
 	return EStateTreeRunStatus::Running;
 }
  
