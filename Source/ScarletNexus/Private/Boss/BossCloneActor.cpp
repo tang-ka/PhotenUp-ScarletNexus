@@ -48,6 +48,7 @@ void ABossCloneActor::InitRush(const FVector& InDirection, float InSpeed, float 
 		MeshComp->GetAnimInstance()->Montage_Play(RushMontage);
 		MeshComp->GetAnimInstance()->Montage_JumpToSection(FName("WindUp"), RushMontage);
 	}
+	
 
 	UE_LOG(LogTemp, Log, TEXT("[BossClone] 분신 스폰 완료 - 위치: %s"),
 		*GetActorLocation().ToString());
