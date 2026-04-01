@@ -99,7 +99,7 @@ struct FBossAttackPattern
  
 	// 공격 타입
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	EBossAttackType AttackType = EBossAttackType::TeleportKick;\
+	EBossAttackType AttackType = EBossAttackType::TeleportKick;
 	
 	
 	// 준비 동작 몽타주 (CloneRush WindUp 등)

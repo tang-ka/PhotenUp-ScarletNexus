@@ -59,28 +59,6 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::EnterState(
 		}
 	}
 
-    //  DataAsset 몽타주 재생
-    if (BossConfig)
-    {
-        const ABossCharacterBase* BossChar = Cast<ABossCharacterBase>(Boss);
-        const EBossPhase Phase = BossChar ? BossChar->GetCurrentPhase() : EBossPhase::Phase1;
-        TArray<FBossAttackPattern> Patterns = BossConfig->GetAvailablePatterns(Phase);
-        
-        // 현재 선택된 공격 타입에 맞는 패턴 찾기
-        for (int32 i = 0; i < Patterns.Num(); i++)
-        {
-            if (Patterns[i].AttackType == ToDataAssetType(Data.ActiveAttack))
-            {
-                Data.SelectedPatternIndex = i;
-                if (Patterns[i].AttackMontage)
-                {
-                    Boss->PlayAnimMontage(Patterns[i].AttackMontage);
-                }
-                break;
-            }
-        }
-    }
-
     switch (Data.ActiveAttack)
     {
     case EActiveAttackType::TeleportKick:    return EnterTeleportKick(Data, Boss);
@@ -394,6 +372,20 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::EnterCloneRush(
  
 		Data.RightClone = RC;
 	}
+	if (BossConfig)
+	{
+		const ABossCharacterBase* BossChar = Cast<ABossCharacterBase>(Boss);
+		const EBossPhase Phase = BossChar ? BossChar->GetCurrentPhase() : EBossPhase::Phase1;
+		TArray<FBossAttackPattern> Patterns = BossConfig->GetAvailablePatterns(Phase);
+		for (const FBossAttackPattern& P : Patterns)
+		{
+			if (P.AttackType == EBossAttackType::CloneRush && P.WindUpMontage)
+			{
+				Boss->PlayAnimMontage(P.WindUpMontage);
+				break;
+			}
+		}
+	}
 	UE_LOG(LogTemp, Log, TEXT("[CloneRush] 3체 준비 완료"));
 	return EStateTreeRunStatus::Running;
 }
@@ -416,20 +408,6 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickCloneRush(
 	case ECRPhase::RightDelay:
 		if (Data.PhaseTimer >= CR_SequenceDelay)
 		{
-			if (BossConfig)
-			{
-				const ABossCharacterBase* BossChar = Cast<ABossCharacterBase>(Boss);
-				const EBossPhase Phase = BossChar ? BossChar->GetCurrentPhase() : EBossPhase::Phase1;
-				TArray<FBossAttackPattern> Patterns = BossConfig->GetAvailablePatterns(Phase);
-				for (const FBossAttackPattern& P : Patterns)
-				{
-					if (P.AttackType == EBossAttackType::CloneRush && P.AttackMontage)
-					{
-						Boss->PlayAnimMontage(P.AttackMontage);
-						break;
-					}
-				}
-			}
 			Data.CRPhase = ECRPhase::BossRush;
 			Data.PhaseTimer = 0.f;
 		}
