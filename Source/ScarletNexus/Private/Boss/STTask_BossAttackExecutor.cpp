@@ -59,7 +59,7 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::EnterState(
 		}
 	}
 
-    // ★ DataAsset 몽타주 재생
+    //  DataAsset 몽타주 재생
     if (BossConfig)
     {
         const ABossCharacterBase* BossChar = Cast<ABossCharacterBase>(Boss);
@@ -104,18 +104,35 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::Tick(
  
 	
 	if (IDamageable::Execute_IsDead(Boss))
-		{
-		return EStateTreeRunStatus::Running;
-		}
-	switch (Data.ActiveAttack)
-	{
-	case EActiveAttackType::TeleportKick:    return TickTeleportKick(Data, Boss, DeltaTime);
-	case EActiveAttackType::CloneRush:       return TickCloneRush(Data, Boss, DeltaTime);
-	case EActiveAttackType::AerialElectric:  return TickAerialElectric(Data, Boss, DeltaTime);
-	case EActiveAttackType::IceSpikes:       return TickIceSpikes(Data, Boss, DeltaTime);
-	case EActiveAttackType::ElectricOrbs:    return TickElectricOrbs(Data, Boss, DeltaTime);
-	default: return EStateTreeRunStatus::Failed;
-	}
+{
+    return EStateTreeRunStatus::Running;
+}
+
+// 각 공격 패턴 Tick 실행
+EStateTreeRunStatus Result = EStateTreeRunStatus::Running;
+switch (Data.ActiveAttack)
+{
+case EActiveAttackType::TeleportKick:    Result = TickTeleportKick(Data, Boss, DeltaTime); break;
+case EActiveAttackType::CloneRush:       Result = TickCloneRush(Data, Boss, DeltaTime); break;
+case EActiveAttackType::AerialElectric:  Result = TickAerialElectric(Data, Boss, DeltaTime); break;
+case EActiveAttackType::IceSpikes:       Result = TickIceSpikes(Data, Boss, DeltaTime); break;
+case EActiveAttackType::ElectricOrbs:    Result = TickElectricOrbs(Data, Boss, DeltaTime); break;
+default: return EStateTreeRunStatus::Failed;
+}
+
+// 공격 로직은 끝났지만 몽타주가 아직 재생 중이면 대기
+if (Result == EStateTreeRunStatus::Succeeded)
+{
+    if (const UAnimInstance* AnimInst = Boss->GetMesh()->GetAnimInstance())
+    {
+        if (AnimInst->IsAnyMontagePlaying())
+        {
+            return EStateTreeRunStatus::Running;
+        }
+    }
+}
+
+return Result;
 }
  
 
@@ -126,10 +143,16 @@ void FSTTask_BossAttackExecutor::ExitState(
 	const FStateTreeTransitionResult& Transition) const
 {
 	FInstanceDataType& Data = Context.GetInstanceData(*this);
-	if (AActor* Boss = Data.ContextActor)
+	if (ACharacter* Boss = Cast<ACharacter>(Data.ContextActor))
 	{
 		Boss->SetActorHiddenInGame(false);
 		Boss->SetActorEnableCollision(true);
+
+		// 몽타주 정지 — Slot 해제되어야 Walk로 돌아감
+		if (UAnimInstance* AnimInst = Boss->GetMesh()->GetAnimInstance())
+		{
+			AnimInst->StopAllMontages(0.25f);  // 0.25초 블렌드아웃
+		}
 	}
 	if (Data.LeftClone && !Data.LeftClone->IsActorBeingDestroyed()) Data.LeftClone->Destroy();
 	if (Data.RightClone && !Data.RightClone->IsActorBeingDestroyed()) Data.RightClone->Destroy();
