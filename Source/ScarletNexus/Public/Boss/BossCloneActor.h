@@ -21,7 +21,8 @@ public:
  
 	// 돌진 초기화 (스폰 후 호출)
 	void InitRush(const FVector& InDirection, float InSpeed, float InDistance,
-		float InDamage, float InDamageRadius, float InKnockback);
+   float InDamage, float InDamageRadius, float InKnockback,
+   UAnimMontage* InRushMontage = nullptr);
  
 	// 돌진 시작 (준비 완료 후 호출)
 	void StartRush();
@@ -47,6 +48,9 @@ private:
 	float Damage = 200.f;
 	float DamageRadius = 150.f;
 	float KnockbackForce = 50.f;
+	
+	UPROPERTY()
+	TObjectPtr<UAnimMontage> RushMontage = nullptr;
  
 	// 상태
 	bool bRushing = false;
