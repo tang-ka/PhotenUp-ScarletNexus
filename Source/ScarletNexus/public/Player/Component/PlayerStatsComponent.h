@@ -6,7 +6,7 @@
 #include "Components/ActorComponent.h"
 #include "PlayerStatsComponent.generated.h"
 
-
+DECLARE_MULTICAST_DELEGATE_TwoParams(FOnHPChangedDelegate, float, float); 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class SCARLETNEXUS_API UPlayerStatsComponent : public UActorComponent
 {
@@ -24,14 +24,17 @@ public:
 	
 public:
 	UFUNCTION(BlueprintCallable)
-	float GetHPPercentage() const { return static_cast<float>(CurrentHP) / MaxHP; }
-	
+	float GetHPPercentage() const;
+
 	UFUNCTION(BlueprintCallable)
-	void Heal(int32 HealAmount) { SetCurrentHP(CurrentHP + HealAmount); }
-	
+	void HealAmount(int32 HealAmount);
+
 	UFUNCTION(BlueprintCallable)
-	void ReceiveDamage(int32 DamageAmount) { SetCurrentHP(CurrentHP - DamageAmount); }
-	
+	void HealPercent(float HealPercent);
+
+	UFUNCTION(BlueprintCallable)
+	void ReceiveDamage(int32 DamageAmount);
+
 #pragma region Getters & Setters
 	UFUNCTION(BlueprintCallable)
 	int32 GetMaxHP() const { return MaxHP; }
@@ -54,14 +57,14 @@ public:
 	
 private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Stats", meta=(AllowPrivateAccess=true))
-	int32 MaxHP{100};
+	int32 MaxHP{800};
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Stats", meta=(AllowPrivateAccess=true))
-	int32 CurrentHP{100};
+	int32 CurrentHP{0};
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Stats", meta=(AllowPrivateAccess=true))
 	int32 MaxMP{100};
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Stats", meta=(AllowPrivateAccess=true))
-	int32 CurrentMP{100};
+	int32 CurrentMP{0};
 };
