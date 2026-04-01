@@ -367,7 +367,7 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::EnterCloneRush(
 		LC->SetActorScale3D(Boss->GetActorScale3D());
 		
 		FVector LD = FVector(Player->GetActorLocation().X - LL.X, Player->GetActorLocation().Y - LL.Y, 0.f).GetSafeNormal();
-		float LDist = FVector::Dist2D(LL, Player->GetActorLocation()) + 200.f;
+		float LDist = CR_RushDistance;
 		LC->InitRush(LD, CR_RushSpeed, LDist, CR_Damage, CR_RushWidth, CR_KnockbackForce, CloneRushMontage);
 		
 		Data.LeftClone = LC;
@@ -393,7 +393,7 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::EnterCloneRush(
 		RC->SetActorScale3D(Boss->GetActorScale3D());
 		
 		FVector RD = FVector(Player->GetActorLocation().X - RL.X, Player->GetActorLocation().Y - RL.Y, 0.f).GetSafeNormal();
-		float RDist = FVector::Dist2D(RL, Player->GetActorLocation()) + 200.f;
+		float RDist = CR_RushDistance;
 		RC->InitRush(RD, CR_RushSpeed, RDist, CR_Damage, CR_RushWidth, CR_KnockbackForce, CloneRushMontage);
 		
 		Data.RightClone = RC;
@@ -434,7 +434,7 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickCloneRush(
 		Data.CRPhase = ECRPhase::WindUp;
 		Data.PhaseTimer = 0.f;
 		break;
- 
+
 	case ECRPhase::WindUp:
 		if (Data.PhaseTimer >= CR_WindUpDuration)
 		{
@@ -443,33 +443,44 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickCloneRush(
 			Data.PhaseTimer = 0.f;
 		}
 		break;
- 
+
 	case ECRPhase::LeftRush:
 		{
 			auto* LC = Cast<ABossCloneActor>(Data.LeftClone);
 			if (!LC || LC->IsRushComplete())
 			{
-				Data.CRPhase = ECRPhase::LeftDelay;
+				// 좌분신 끝나면 바로 우분신 돌진
+				if (auto* RC = Cast<ABossCloneActor>(Data.RightClone)) RC->StartRush();
+				Data.CRPhase = ECRPhase::RightRush;
 				Data.PhaseTimer = 0.f;
 			}
 		}
 		break;
- 
-	case ECRPhase::LeftDelay:
-		if (Data.PhaseTimer >= CR_SequenceDelay)
-		{
-			if (auto* RC = Cast<ABossCloneActor>(Data.RightClone)) RC->StartRush();
-			Data.CRPhase = ECRPhase::RightRush;
-			Data.PhaseTimer = 0.f;
-		}
-		break;
- 
+
 	case ECRPhase::RightRush:
 		{
 			auto* RC = Cast<ABossCloneActor>(Data.RightClone);
 			if (!RC || RC->IsRushComplete())
 			{
-				Data.CRPhase = ECRPhase::RightDelay;
+				// 우분신 끝나면 바로 본체 돌진
+				Data.CRStartLocation = Boss->GetActorLocation();
+				Data.CRTargetLocation = Data.CRStartLocation + Data.CRDirection * CR_RushDistance;
+
+				if (BossConfig)
+				{
+					const ABossCharacterBase* BossChar = Cast<ABossCharacterBase>(Boss);
+					const EBossPhase Phase = BossChar ? BossChar->GetCurrentPhase() : EBossPhase::Phase1;
+					TArray<FBossAttackPattern> Patterns = BossConfig->GetAvailablePatterns(Phase);
+					for (const FBossAttackPattern& P : Patterns)
+					{
+						if (P.AttackType == EBossAttackType::CloneRush && P.AttackMontage)
+						{
+							Boss->PlayAnimMontage(P.AttackMontage, 1.0f, FName("Rush"));
+							break;
+						}
+					}
+				}
+				Data.CRPhase = ECRPhase::BossRush;
 				Data.PhaseTimer = 0.f;
 			}
 		}
@@ -478,7 +489,10 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickCloneRush(
 	case ECRPhase::RightDelay:
 		if (Data.PhaseTimer >= CR_SequenceDelay)
 		{
-			// 본체 돌진 시작 — AttackMontage 재생
+			// 최소 돌진 거리 보장
+			Data.CRStartLocation = Boss->GetActorLocation();
+			Data.CRTargetLocation = Data.CRStartLocation + Data.CRDirection * CR_RushDistance;
+
 			if (BossConfig)
 			{
 				const ABossCharacterBase* BossChar = Cast<ABossCharacterBase>(Boss);
