@@ -297,9 +297,9 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickTeleportKick(
 }
  
  
-// ============================================================
+
 // 분신 돌진
-// ============================================================
+
 EStateTreeRunStatus FSTTask_BossAttackExecutor::EnterCloneRush(
 	FInstanceDataType& Data, ACharacter* Boss) const
 {
@@ -397,16 +397,21 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::EnterCloneRush(
 	}
  
 	//  WindUp 몽타주 재생 (본체 준비 동작)
+	UE_LOG(LogTemp, Warning, TEXT("[CloneRush] BossConfig: %s"), BossConfig ? TEXT("있음") : TEXT("없음"));
+
 	if (BossConfig)
 	{
 		const ABossCharacterBase* BossChar = Cast<ABossCharacterBase>(Boss);
 		const EBossPhase Phase = BossChar ? BossChar->GetCurrentPhase() : EBossPhase::Phase1;
 		TArray<FBossAttackPattern> Patterns = BossConfig->GetAvailablePatterns(Phase);
+		UE_LOG(LogTemp, Warning, TEXT("[CloneRush] 패턴 수: %d"), Patterns.Num());
 		for (const FBossAttackPattern& P : Patterns)
 		{
-			if (P.AttackType == EBossAttackType::CloneRush && P.WindUpMontage)
+			if (P.AttackType == EBossAttackType::CloneRush && P.AttackMontage)
+				
 			{
 				Boss->PlayAnimMontage(P.AttackMontage, 1.0f, FName("WindUp"));
+				UE_LOG(LogTemp, Warning, TEXT("[CloneRush] WindUp 몽타주 재생!"));
 				break;
 			}
 		}
@@ -492,7 +497,7 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickCloneRush(
  
 	case ECRPhase::BossRush:
 		{
-			// ★ 본체도 플레이어 방향으로 약간 보정
+			// 본체도 플레이어 방향으로 약간 보정
 			if (const ACharacter* Player = UGameplayStatics::GetPlayerCharacter(Boss->GetWorld(), 0))
 			{
 				FVector DesiredDir = (Player->GetActorLocation() - Boss->GetActorLocation()).GetSafeNormal2D();
@@ -542,9 +547,9 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickCloneRush(
 }
  
  
-// ============================================================
+
 // 공중 전류
-// ============================================================
+
 EStateTreeRunStatus FSTTask_BossAttackExecutor::EnterAerialElectric(
 	FInstanceDataType& Data, ACharacter* Boss) const
 {
