@@ -13,15 +13,18 @@
 #include "Data/ComboAttackDataAsset.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Interface/DamageableHelper.h"
+#include "Player/Animation/KasaneAnimInstance.h"
 #include "Player/Component/ActionManagerComponent.h"
 #include "Player/Component/ComboComponent.h"
 #include "Player/Component/InputBufferComponent.h"
+#include "Player/Component/PlayerCharacterMovementComponent.h"
 #include "Player/Component/PlayerPerceptionComponent.h"
 #include "Player/Component/PlayerStateComponent.h"
 #include "Player/Component/PlayerStatsComponent.h"
 #include "Player/Component/PsychokinesisComponent.h"
 
-APlayerCharacterBase::APlayerCharacterBase()
+APlayerCharacterBase::APlayerCharacterBase(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer.SetDefaultSubobjectClass<UPlayerCharacterMovementComponent>(ACharacter::CharacterMovementComponentName))
 {
 	PrimaryActorTick.bCanEverTick = true;
 
@@ -212,10 +215,8 @@ void APlayerCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 
 		// Skills
 		InputComp->BindAction(IA_BasicAttack, ETriggerEvent::Started, this, &APlayerCharacterBase::OnBasicAttackInput);
-		InputComp->BindAction(IA_Psychokinesis, ETriggerEvent::Started, this,
-		                      &APlayerCharacterBase::OnPsychokinesisInput);
-		InputComp->BindAction(IA_Psychokinesis, ETriggerEvent::Completed, this,
-		                      &APlayerCharacterBase::OnCompletePsychokinesisInput);
+		InputComp->BindAction(IA_Psychokinesis, ETriggerEvent::Started, this, &APlayerCharacterBase::OnPsychokinesisInput);
+		InputComp->BindAction(IA_Psychokinesis, ETriggerEvent::Completed, this, &APlayerCharacterBase::OnCompletePsychokinesisInput);
 
 		InputComp->BindAction(IA_BackAttack, ETriggerEvent::Started, this, &APlayerCharacterBase::OnBackAttackInput);
 		InputComp->BindAction(IA_LockOn, ETriggerEvent::Started, this, &APlayerCharacterBase::OnLockOnInput);
@@ -406,6 +407,22 @@ void APlayerCharacterBase::OnMontageEdnded(UAnimMontage* Montage, bool bInterrup
 
 	ComboComp->ResetCombo();
 	ActionManagerComp->ForceSetState(EActionState::Idle);
+}
+
+void APlayerCharacterBase::OnMovementUpdated(float DeltaSeconds, const FVector& OldLocation, const FVector& OldVelocity)
+{
+	if (UKasaneAnimInstance* AnimInstance = Cast<UKasaneAnimInstance>(GetMesh()->GetAnimInstance()))
+	{
+		AnimInstance->SetSpeed(GetVelocity().Size2D());
+
+		const bool bInAir = GetCharacterMovement()->IsFalling();
+		const bool bFalling = bInAir && GetVelocity().Z < 0.f;
+
+		AnimInstance->SetIsInAir(bInAir);
+		AnimInstance->SetIsFalling(bFalling);
+		
+		PRINTLOG_SH(TEXT("IsInAir: %d, IsFalling: %d, IsJumpEnd: %d"), bInAir, bFalling, AnimInstance->IsJumEnd());
+	}
 }
 
 void APlayerCharacterBase::TryConsumeBufferedAttack()

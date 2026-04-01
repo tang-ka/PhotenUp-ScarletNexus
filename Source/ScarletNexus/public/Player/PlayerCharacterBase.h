@@ -33,8 +33,8 @@ class SCARLETNEXUS_API APlayerCharacterBase : public ACharacter, public IDamagea
 	GENERATED_BODY()
 
 public:
-	APlayerCharacterBase();
-
+	APlayerCharacterBase(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
+	
 protected:
 	virtual void BeginPlay() override;
 
@@ -42,6 +42,8 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+	virtual void OnMovementUpdated(float DeltaSeconds, const FVector& OldLocation, const FVector& OldVelocity);
 
 #pragma region IDamageable Interface
 	virtual bool ReceiveDamage_Implementation(FDamageInfo DamageInfo) override;
