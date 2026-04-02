@@ -17,9 +17,9 @@
 #include "Interface/Damageable.h"
  
  
-// ============================================================
+
 // EnterState
-// ============================================================
+
 EStateTreeRunStatus FSTTask_BossAttackExecutor::EnterState(
 	FStateTreeExecutionContext& Context,
 	const FStateTreeTransitionResult& Transition) const
@@ -395,7 +395,7 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::EnterCloneRush(
 		Data.RightClone = RC;
 	}
  
-	//  WindUp 몽타주 재생 (본체 준비 동작)
+	//  WindUp 몽타주
 	UE_LOG(LogTemp, Warning, TEXT("[CloneRush] BossConfig: %s"), BossConfig ? TEXT("있음") : TEXT("없음"));
 
 	if (BossConfig)
@@ -643,9 +643,9 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickAerialElectric(
 }
  
  
-// ============================================================
+
 // 얼음가시
-// ============================================================
+
 EStateTreeRunStatus FSTTask_BossAttackExecutor::EnterIceSpikes(
 	FInstanceDataType& Data, ACharacter* Boss) const
 {
@@ -727,9 +727,9 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickIceSpikes(
 }
  
  
-// ============================================================
+
 // 전류구 (ElectricOrbs) — Phase2+
-// ============================================================
+
 EStateTreeRunStatus FSTTask_BossAttackExecutor::EnterElectricOrbs(
 	FInstanceDataType& Data, ACharacter* Boss) const
 {
@@ -742,139 +742,177 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::EnterElectricOrbs(
 	Data.OOOrbPositions.Empty();
 	Data.OOOrbDirections.Empty();
 	Data.OOOrbHit.Empty();
- 
-	const FVector BossLoc = Boss->GetActorLocation();
-	const FVector FwdDir = Boss->GetActorForwardVector();
-	const FVector RightDir = FVector(-FwdDir.Y, FwdDir.X, 0.f);
- 
-	const float ForwardOffset = 200.f;
-	const float HeightOffset = 80.f;
-	const FVector LineCenter = BossLoc + FwdDir * ForwardOffset + FVector(0, 0, HeightOffset);
- 
-	for (int32 i = 0; i < OO_OrbCount; i++)
-	{
-		const float HalfCount = (OO_OrbCount - 1) * 0.5f;
-		const float Offset = (i - HalfCount) * OO_OrbitRadius;
-		const FVector OrbPos = LineCenter + RightDir * Offset;
- 
-		Data.OOOrbPositions.Add(OrbPos);
-		Data.OOOrbDirections.Add(FVector::ZeroVector);
-		Data.OOOrbHit.Add(false);
-	}
- 
-	Boss->SetActorRotation((Player->GetActorLocation() - BossLoc).GetSafeNormal2D().Rotation());
- 
-	UE_LOG(LogTemp, Log, TEXT("[ElectricOrbs] 전류구 %d개 충전 시작"), OO_OrbCount);
+	
+	Boss->SetActorRotation((Player->GetActorLocation() - Boss->GetActorLocation()).GetSafeNormal2D().Rotation());
+	
+	UE_LOG(LogTemp, Log, TEXT("[ElectricOrbs] 전류구 순차 생성 시작"));
 	return EStateTreeRunStatus::Running;
 }
  
 EStateTreeRunStatus FSTTask_BossAttackExecutor::TickElectricOrbs(
-	FInstanceDataType& Data, ACharacter* Boss, float DeltaTime) const
+    FInstanceDataType& Data, ACharacter* Boss, float DeltaTime) const
 {
-	Data.PhaseTimer += DeltaTime;
- 
-	switch (Data.OOPhase)
-	{
-	case EOOPhase::Charging:
-		{
+    Data.PhaseTimer += DeltaTime;
+
+    switch (Data.OOPhase)
+    {
+    case EOOPhase::Charging:
+        {
+            Data.OOLaunchTimer += DeltaTime;
+
+            // 순차 생성 + 즉시 발사
+            if (Data.OOLaunchedCount < OO_OrbCount && Data.OOLaunchTimer >= OO_SpawnInterval)
+            {
+                Data.OOLaunchTimer = 0.f;
+
+                const FVector BossLoc = Boss->GetActorLocation();
+                const FVector FwdDir = Boss->GetActorForwardVector();
+                const float ForwardOffset = 200.f;
+                const float BaseHeight = 80.f;
+
+                // Z축 지그재그 = 짝수는 위, 홀수는 아래
+                const float ZOffset = (Data.OOLaunchedCount % 2 == 0)
+                    ? BaseHeight + OO_ZigZagHeight * 0.5f
+                    : BaseHeight - OO_ZigZagHeight * 0.5f;
+
+                const FVector OrbPos = BossLoc + FwdDir * ForwardOffset + FVector(0, 0, ZOffset);
+
+                // 플레이어 방향 계산
+                FVector Dir = FVector::ZeroVector;
+                if (const ACharacter* Player = UGameplayStatics::GetPlayerCharacter(Boss->GetWorld(), 0))
+                {
+                    Dir = (Player->GetActorLocation() - OrbPos).GetSafeNormal2D();
+                }
+
+                Data.OOOrbPositions.Add(OrbPos);
+                Data.OOOrbDirections.Add(Dir);
+                Data.OOOrbHit.Add(false);
+
+                Data.OOLaunchedCount++;
+                UE_LOG(LogTemp, Log, TEXT("[ElectricOrbs] 전류구 %d/%d 발사!"), Data.OOLaunchedCount, OO_OrbCount);
+            }
+
+            // 전부 생성 완료에서 플라잉전환
+            if (Data.OOLaunchedCount >= OO_OrbCount)
+            {
+                Data.OOPhase = EOOPhase::Flying;
+                Data.PhaseTimer = 0.f;
+            }
+
+            // 전류구 이동
+            for (int32 i = 0; i < Data.OOOrbPositions.Num(); i++)
+            {
+                if (Data.OOOrbHit[i]) continue;
+
+                // 플레이어 추적
+                if (const ACharacter* Player = UGameplayStatics::GetPlayerCharacter(Boss->GetWorld(), 0))
+                {
+                    FVector DesiredDir = (Player->GetActorLocation() - Data.OOOrbPositions[i]).GetSafeNormal2D();
+                    Data.OOOrbDirections[i] = FMath::VInterpNormalRotationTo(
+                        Data.OOOrbDirections[i], DesiredDir, DeltaTime, OO_TrackingStrength);
+                }
+
+                Data.OOOrbPositions[i] += Data.OOOrbDirections[i] * OO_OrbSpeed * DeltaTime;
+
+                // 히트 판정
+                TArray<FOverlapResult> Overlaps;
+                FCollisionQueryParams QP;
+                QP.AddIgnoredActor(Boss);
+                Boss->GetWorld()->OverlapMultiByChannel(Overlaps, Data.OOOrbPositions[i],
+                    FQuat::Identity, ECC_Pawn, FCollisionShape::MakeSphere(OO_OrbRadius), QP);
+                for (auto& O : Overlaps)
+                {
+                    AActor* HitActor = O.GetActor();
+                    if (HitActor && HitActor != Boss && DamageableHelpers::IsDamageable(HitActor))
+                    {
+                        DamageableHelpers::ApplyDamage(HitActor, Boss, static_cast<int>(OO_Damage));
+                        if (ACharacter* HitChar = Cast<ACharacter>(HitActor))
+                            if (auto* M = HitChar->GetCharacterMovement())
+                                M->AddImpulse(Data.OOOrbDirections[i] * OO_KnockbackForce, true);
+                        UE_LOG(LogTemp, Log, TEXT("[ElectricOrbs] %s 히트! %.0f 데미지"), *HitActor->GetName(), OO_Damage);
+                        Data.OOOrbHit[i] = true;
+                        break;
+                    }
+                }
+
 #if ENABLE_DRAW_DEBUG
-			for (const FVector& Pos : Data.OOOrbPositions)
-				DrawDebugSphere(Boss->GetWorld(), Pos, OO_OrbRadius, 8, FColor::Purple, false, DeltaTime * 2.f, 0, 2.f);
+                if (!Data.OOOrbHit[i])
+                    DrawDebugSphere(Boss->GetWorld(), Data.OOOrbPositions[i], OO_OrbRadius,
+                        8, FColor::Purple, false, DeltaTime * 2.f, 0, 2.f);
 #endif
-			if (Data.PhaseTimer >= OO_ChargeDuration)
-			{
-				const ACharacter* Player = UGameplayStatics::GetPlayerCharacter(Boss->GetWorld(), 0);
-				for (int32 i = 0; i < OO_OrbCount; i++)
-				{
-					if (Player)
-					{
-						FVector Dir = Player->GetActorLocation() - Data.OOOrbPositions[i];
-						Dir.Z = 0.f;
-						Data.OOOrbDirections[i] = Dir.GetSafeNormal();
-					}
-				}
-				Data.OOPhase = EOOPhase::Flying;
-				Data.PhaseTimer = 0.f;
-				UE_LOG(LogTemp, Log, TEXT("[ElectricOrbs] 전류구 %d개 일제 발사!"), OO_OrbCount);
-			}
-		}
-		break;
- 
-	case EOOPhase::Flying:
-		{
-			const ACharacter* Player = UGameplayStatics::GetPlayerCharacter(Boss->GetWorld(), 0);
-			const FVector PlayerLoc = Player ? Player->GetActorLocation() : FVector::ZeroVector;
- 
-			bool bAllDone = true;
-			for (int32 i = 0; i < OO_OrbCount; i++)
-			{
-				if (Data.OOOrbHit[i]) continue;
-				bAllDone = false;
- 
-				if (Player)
-				{
-					FVector DesiredDir = PlayerLoc - Data.OOOrbPositions[i];
-					DesiredDir.Z = 0.f;
-					DesiredDir = DesiredDir.GetSafeNormal();
- 
-					Data.OOOrbDirections[i] = FMath::VInterpNormalRotationTo(
-						Data.OOOrbDirections[i], DesiredDir,
-						DeltaTime, OO_TrackingStrength);
-				}
- 
-				Data.OOOrbPositions[i] += Data.OOOrbDirections[i] * OO_OrbSpeed * DeltaTime;
- 
-				if (Data.PhaseTimer >= OO_MaxLifetime)
-				{
-					Data.OOOrbHit[i] = true;
-					continue;
-				}
- 
-				TArray<FOverlapResult> Overlaps;
-				FCollisionQueryParams QP;
-				QP.AddIgnoredActor(Boss);
-				Boss->GetWorld()->OverlapMultiByChannel(Overlaps, Data.OOOrbPositions[i],
-					FQuat::Identity, ECC_Pawn, FCollisionShape::MakeSphere(OO_OrbRadius), QP);
-				for (auto& O : Overlaps)
-				{
-					AActor* HitActor = O.GetActor();
-					if (HitActor && HitActor != Boss && DamageableHelpers::IsDamageable(HitActor))
-					{
-						DamageableHelpers::ApplyDamage(HitActor, Boss, static_cast<int>(OO_Damage));
-						if (ACharacter* HitChar = Cast<ACharacter>(HitActor))
-							if (auto* M = HitChar->GetCharacterMovement())
-								M->AddImpulse(Data.OOOrbDirections[i] * OO_KnockbackForce, true);
-						UE_LOG(LogTemp, Log, TEXT("[ElectricOrbs] %s 히트! %.0f 데미지"),
-							*HitActor->GetName(), OO_Damage);
-						Data.OOOrbHit[i] = true;
-						break;
-					}
-				}
- 
+            }
+        }
+        break;
+
+    case EOOPhase::Flying:
+        {
+            bool bAllDone = true;
+            for (int32 i = 0; i < OO_OrbCount; i++)
+            {
+                if (Data.OOOrbHit[i]) continue;
+                bAllDone = false;
+
+                // 추적
+                if (const ACharacter* Player = UGameplayStatics::GetPlayerCharacter(Boss->GetWorld(), 0))
+                {
+                    FVector DesiredDir = (Player->GetActorLocation() - Data.OOOrbPositions[i]).GetSafeNormal2D();
+                    Data.OOOrbDirections[i] = FMath::VInterpNormalRotationTo(
+                        Data.OOOrbDirections[i], DesiredDir, DeltaTime, OO_TrackingStrength);
+                }
+
+                Data.OOOrbPositions[i] += Data.OOOrbDirections[i] * OO_OrbSpeed * DeltaTime;
+
+                // 수명 초과
+                if (Data.PhaseTimer >= OO_MaxLifetime)
+                {
+                    Data.OOOrbHit[i] = true;
+                    continue;
+                }
+
+                // 히트 판정
+                TArray<FOverlapResult> Overlaps;
+                FCollisionQueryParams QP;
+                QP.AddIgnoredActor(Boss);
+                Boss->GetWorld()->OverlapMultiByChannel(Overlaps, Data.OOOrbPositions[i],
+                    FQuat::Identity, ECC_Pawn, FCollisionShape::MakeSphere(OO_OrbRadius), QP);
+                for (auto& O : Overlaps)
+                {
+                    AActor* HitActor = O.GetActor();
+                    if (HitActor && HitActor != Boss && DamageableHelpers::IsDamageable(HitActor))
+                    {
+                        DamageableHelpers::ApplyDamage(HitActor, Boss, static_cast<int>(OO_Damage));
+                        if (ACharacter* HitChar = Cast<ACharacter>(HitActor))
+                            if (auto* M = HitChar->GetCharacterMovement())
+                                M->AddImpulse(Data.OOOrbDirections[i] * OO_KnockbackForce, true);
+                        UE_LOG(LogTemp, Log, TEXT("[ElectricOrbs] %s 히트! %.0f 데미지"), *HitActor->GetName(), OO_Damage);
+                        Data.OOOrbHit[i] = true;
+                        break;
+                    }
+                }
+
 #if ENABLE_DRAW_DEBUG
-				if (!Data.OOOrbHit[i])
-					DrawDebugSphere(Boss->GetWorld(), Data.OOOrbPositions[i], OO_OrbRadius,
-						8, FColor::Purple, false, DeltaTime * 2.f, 0, 2.f);
+                if (!Data.OOOrbHit[i])
+                    DrawDebugSphere(Boss->GetWorld(), Data.OOOrbPositions[i], OO_OrbRadius,
+                        8, FColor::Purple, false, DeltaTime * 2.f, 0, 2.f);
 #endif
-			}
- 
-			if (bAllDone)
-			{
-				UE_LOG(LogTemp, Log, TEXT("[ElectricOrbs] 완료"));
-				return EStateTreeRunStatus::Succeeded;
-			}
-		}
-		break;
- 
-	default: return EStateTreeRunStatus::Succeeded;
-	}
-	return EStateTreeRunStatus::Running;
+            }
+
+            if (bAllDone)
+            {
+                UE_LOG(LogTemp, Log, TEXT("[ElectricOrbs] 완료"));
+                return EStateTreeRunStatus::Succeeded;
+            }
+        }
+        break;
+
+    default: return EStateTreeRunStatus::Succeeded;
+    }
+    return EStateTreeRunStatus::Running;
 }
  
- 
-// ============================================================
+
 // 공통 데미지
-// ============================================================
+
 void FSTTask_BossAttackExecutor::ApplyDamageInRadius(
 	AActor* BossActor, const FVector& Center, float Radius,
 	float Damage, float Knockback, const FVector& KnockbackDir) const
