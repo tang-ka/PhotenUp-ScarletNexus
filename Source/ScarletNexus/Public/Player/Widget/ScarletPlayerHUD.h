@@ -6,6 +6,9 @@
 #include "GameFramework/HUD.h"
 #include "ScarletPlayerHUD.generated.h"
 
+class UPlayerStatWidget;
+class UPlayerHUDViewModel;
+
 /**
  * 
  */
@@ -13,4 +16,18 @@ UCLASS()
 class SCARLETNEXUS_API AScarletPlayerHUD : public AHUD
 {
 	GENERATED_BODY()
+	
+public:
+	virtual void BeginPlay() override;
+
+protected:
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UPlayerStatWidget> PlayerStatWidgetClass;
+
+private:
+	UPROPERTY(Transient)
+	TObjectPtr<UPlayerStatWidget> PlayerStatWidget;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UPlayerHUDViewModel> HUDViewModel;
 };

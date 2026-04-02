@@ -6,7 +6,8 @@
 #include "Components/ActorComponent.h"
 #include "PlayerStatsComponent.generated.h"
 
-DECLARE_MULTICAST_DELEGATE_TwoParams(FOnHPChangedDelegate, float, float); 
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnStatChangedDelegate, int32);
+
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class SCARLETNEXUS_API UPlayerStatsComponent : public UActorComponent
 {
@@ -35,6 +36,11 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void ReceiveDamage(int32 DamageAmount);
 
+public:
+	FOnStatChangedDelegate OnHPChanged;
+	FOnStatChangedDelegate OnMaxHPChanged;
+	FOnStatChangedDelegate OnMPChanged;
+
 #pragma region Getters & Setters
 	UFUNCTION(BlueprintCallable)
 	int32 GetMaxHP() const { return MaxHP; }
@@ -49,10 +55,16 @@ public:
 	int32 GetCurrentMP() const { return CurrentMP; }
 	
 	UFUNCTION(BlueprintCallable)
-	void SetCurrentHP(int32 NewHP) { CurrentHP = FMath::Clamp(NewHP, 0, MaxHP); }
-	
+	void SetCurrentHP(int32 NewHP);
+
 	UFUNCTION(BlueprintCallable)
-	void SetCurrentMP(int32 NewMP) { CurrentMP = FMath::Clamp(NewMP, 0, MaxMP); }
+	void SetMaxHP(int32 NewMaxHP);
+
+	UFUNCTION(BlueprintCallable)
+	void SetCurrentMP(int32 NewMP);
+
+	UFUNCTION(BlueprintCallable)
+	void SetMaxMP(int32 NewMaxMP);
 #pragma endregion 
 	
 private:

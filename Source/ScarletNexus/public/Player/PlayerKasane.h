@@ -7,6 +7,8 @@
 #include "PlayerKasane.generated.h"
 
 
+class UBladeHandlerComponent;
+
 UCLASS()
 class SCARLETNEXUS_API APlayerKasane : public APlayerCharacterBase
 {
@@ -27,4 +29,8 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 private:
+#pragma region Components
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UBladeHandlerComponent> BladeHandlerComp;
+#pragma endregion
 };
