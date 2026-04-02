@@ -84,7 +84,7 @@ private:
     
 	// 연타 방지 시간 (같은 입력이 이 시간 내에 들어오면 무시)
 	UPROPERTY(EditAnywhere, Category = "Input Buffer", meta = (ClampMin = "0.0", ClampMax = "0.5"))
-	float AntiSpamThreshold = 0.1f;
+	float AntiSpamThreshold = 0.2f;
 	
 	// 디버그 로그 활성화
 	UPROPERTY(EditAnywhere, Category = "Input Buffer")

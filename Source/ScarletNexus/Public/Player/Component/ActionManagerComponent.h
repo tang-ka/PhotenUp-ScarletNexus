@@ -28,6 +28,8 @@ class SCARLETNEXUS_API UActionManagerComponent : public UActorComponent
 
 public:
 	UActionManagerComponent();
+	
+	virtual void BeginPlay() override;
 
 public:
 #pragma region State Management
@@ -37,6 +39,9 @@ public:
 	// ===== 행동 허가 판단 =====
 	UFUNCTION(BlueprintCallable, Category = "Action Manager")
 	bool CanAttack() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Action Manager")
+	bool CanMove() const;
 	
 	UFUNCTION(BlueprintCallable, Category = "Action Manager")
 	bool CanDash() const;

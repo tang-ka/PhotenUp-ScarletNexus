@@ -3,34 +3,67 @@
 
 #include "Player/Component/PlayerStatsComponent.h"
 
-
-// Sets default values for this component's properties
 UPlayerStatsComponent::UPlayerStatsComponent()
 {
-	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
-	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
-
-	// ...
 }
 
-
-// Called when the game starts
 void UPlayerStatsComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// ...
-	
+	SetCurrentHP(MaxHP);
+	SetCurrentMP(MaxMP);
 }
 
-
-// Called every frame
 void UPlayerStatsComponent::TickComponent(float DeltaTime, ELevelTick TickType,
                                           FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	// ...
 }
 
+float UPlayerStatsComponent::GetHPPercentage() const
+{
+	return static_cast<float>(CurrentHP) / MaxHP;
+}
+
+void UPlayerStatsComponent::HealAmount(int32 HealAmount)
+{
+	SetCurrentHP(CurrentHP + HealAmount);
+}
+
+void UPlayerStatsComponent::HealPercent(float HealPercent)
+{
+	SetCurrentHP(CurrentHP * (1 + HealPercent));
+}
+
+void UPlayerStatsComponent::ReceiveDamage(int32 DamageAmount)
+{
+	SetCurrentHP(CurrentHP - DamageAmount);
+}
+
+void UPlayerStatsComponent::SetCurrentHP(int32 NewHP)
+{ 
+	CurrentHP = FMath::Clamp(NewHP, 0, MaxHP);
+	OnHPChanged.Broadcast(CurrentHP);
+}
+
+void UPlayerStatsComponent::SetMaxHP(int32 NewMaxHP)
+{
+	MaxHP = FMath::Max(1, NewMaxHP);
+	OnMaxHPChanged.Broadcast(MaxHP);
+	SetCurrentHP(CurrentHP);
+}
+
+void UPlayerStatsComponent::SetCurrentMP(int32 NewMP)
+{ 
+	CurrentMP = FMath::Clamp(NewMP, 0, MaxMP); 
+	OnMPChanged.Broadcast(CurrentMP);
+}
+
+void UPlayerStatsComponent::SetMaxMP(int32 NewMaxMP)
+{
+	MaxMP = FMath::Max(1, NewMaxMP);
+	SetCurrentMP(CurrentMP);
+}

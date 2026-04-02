@@ -6,6 +6,7 @@
 #include "Components/ActorComponent.h"
 #include "PlayerStatsComponent.generated.h"
 
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnStatChangedDelegate, int32);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class SCARLETNEXUS_API UPlayerStatsComponent : public UActorComponent
@@ -24,14 +25,22 @@ public:
 	
 public:
 	UFUNCTION(BlueprintCallable)
-	float GetHPPercentage() const { return static_cast<float>(CurrentHP) / MaxHP; }
-	
+	float GetHPPercentage() const;
+
 	UFUNCTION(BlueprintCallable)
-	void Heal(int32 HealAmount) { SetCurrentHP(CurrentHP + HealAmount); }
-	
+	void HealAmount(int32 HealAmount);
+
 	UFUNCTION(BlueprintCallable)
-	void ReceiveDamage(int32 DamageAmount) { SetCurrentHP(CurrentHP - DamageAmount); }
-	
+	void HealPercent(float HealPercent);
+
+	UFUNCTION(BlueprintCallable)
+	void ReceiveDamage(int32 DamageAmount);
+
+public:
+	FOnStatChangedDelegate OnHPChanged;
+	FOnStatChangedDelegate OnMaxHPChanged;
+	FOnStatChangedDelegate OnMPChanged;
+
 #pragma region Getters & Setters
 	UFUNCTION(BlueprintCallable)
 	int32 GetMaxHP() const { return MaxHP; }
@@ -46,22 +55,28 @@ public:
 	int32 GetCurrentMP() const { return CurrentMP; }
 	
 	UFUNCTION(BlueprintCallable)
-	void SetCurrentHP(int32 NewHP) { CurrentHP = FMath::Clamp(NewHP, 0, MaxHP); }
-	
+	void SetCurrentHP(int32 NewHP);
+
 	UFUNCTION(BlueprintCallable)
-	void SetCurrentMP(int32 NewMP) { CurrentMP = FMath::Clamp(NewMP, 0, MaxMP); }
+	void SetMaxHP(int32 NewMaxHP);
+
+	UFUNCTION(BlueprintCallable)
+	void SetCurrentMP(int32 NewMP);
+
+	UFUNCTION(BlueprintCallable)
+	void SetMaxMP(int32 NewMaxMP);
 #pragma endregion 
 	
 private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Stats", meta=(AllowPrivateAccess=true))
-	int32 MaxHP{100};
+	int32 MaxHP{800};
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Stats", meta=(AllowPrivateAccess=true))
-	int32 CurrentHP{100};
+	int32 CurrentHP{0};
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Stats", meta=(AllowPrivateAccess=true))
 	int32 MaxMP{100};
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Stats", meta=(AllowPrivateAccess=true))
-	int32 CurrentMP{100};
+	int32 CurrentMP{0};
 };

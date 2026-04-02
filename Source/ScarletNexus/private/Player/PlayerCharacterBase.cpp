@@ -13,15 +13,19 @@
 #include "Data/ComboAttackDataAsset.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Interface/DamageableHelper.h"
+#include "Player/Animation/KasaneAnimInstance.h"
 #include "Player/Component/ActionManagerComponent.h"
 #include "Player/Component/ComboComponent.h"
 #include "Player/Component/InputBufferComponent.h"
+#include "Player/Component/PlayerCharacterMovementComponent.h"
 #include "Player/Component/PlayerPerceptionComponent.h"
 #include "Player/Component/PlayerStateComponent.h"
 #include "Player/Component/PlayerStatsComponent.h"
 #include "Player/Component/PsychokinesisComponent.h"
+#include "Player/Component/DashSkillComponent.h"
 
-APlayerCharacterBase::APlayerCharacterBase()
+APlayerCharacterBase::APlayerCharacterBase(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer.SetDefaultSubobjectClass<UPlayerCharacterMovementComponent>(ACharacter::CharacterMovementComponentName))
 {
 	PrimaryActorTick.bCanEverTick = true;
 
@@ -124,6 +128,7 @@ APlayerCharacterBase::APlayerCharacterBase()
 	InputBufferComp = CreateDefaultSubobject<UInputBufferComponent>(TEXT("InputBufferComp"));
 	ActionManagerComp = CreateDefaultSubobject<UActionManagerComponent>(TEXT("ActionManagerComp"));
 	ComboComp = CreateDefaultSubobject<UComboComponent>(TEXT("ComboComp"));
+	DashSkillComp = CreateDefaultSubobject<UDashSkillComponent>(TEXT("DashSkillComp"));
 }
 
 void APlayerCharacterBase::BeginPlay()
@@ -151,49 +156,6 @@ void APlayerCharacterBase::BeginPlay()
 void APlayerCharacterBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-	if (bIsDashing)
-	{
-		DashTimeRemaining -= DeltaTime;
-
-		if (DashTimeRemaining <= 0.f)
-		{
-			bIsDashing = false;
-
-			// 대쉬 직후 속도 감쇠 (선택)
-			GetCharacterMovement()->Velocity *= DashDampingFactor;
-
-			GetWorldTimerManager().SetTimer(
-				DashCooldownTimer,
-				this,
-				&APlayerCharacterBase::ResetDash,
-				DashCooldown,
-				false
-			);
-		}
-		else
-		{
-			// 대쉬 속도 강제 적용
-			GetCharacterMovement()->Velocity = DashVelocity;
-		}
-	}
-
-	if (bNeedAdjustLookForward)
-	{
-		const FQuat CurQuat = GetActorQuat();
-		// const FQuat TargetQuat = DashDirection.ToOrientationQuat();
-		FVector CameraForwardXYPlane = GetCameraComp()->GetForwardVector();
-		CameraForwardXYPlane.Z = 0.f;
-		CameraForwardXYPlane.Normalize();
-		const FQuat TargetQuat = CameraForwardXYPlane.ToOrientationQuat();
-		const FQuat NewQuat = FQuat::Slerp(CurQuat, TargetQuat, 0.5f);
-		SetActorRotation(NewQuat);
-		if (FQuat::ErrorAutoNormalize(NewQuat, TargetQuat) < 0.01f)
-		{
-			SetActorRotation(TargetQuat);
-			bNeedAdjustLookForward = false;
-		}
-	}
 }
 
 void APlayerCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -212,10 +174,8 @@ void APlayerCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 
 		// Skills
 		InputComp->BindAction(IA_BasicAttack, ETriggerEvent::Started, this, &APlayerCharacterBase::OnBasicAttackInput);
-		InputComp->BindAction(IA_Psychokinesis, ETriggerEvent::Started, this,
-		                      &APlayerCharacterBase::OnPsychokinesisInput);
-		InputComp->BindAction(IA_Psychokinesis, ETriggerEvent::Completed, this,
-		                      &APlayerCharacterBase::OnCompletePsychokinesisInput);
+		InputComp->BindAction(IA_Psychokinesis, ETriggerEvent::Started, this, &APlayerCharacterBase::OnPsychokinesisInput);
+		InputComp->BindAction(IA_Psychokinesis, ETriggerEvent::Completed, this, &APlayerCharacterBase::OnCompletePsychokinesisInput);
 
 		InputComp->BindAction(IA_BackAttack, ETriggerEvent::Started, this, &APlayerCharacterBase::OnBackAttackInput);
 		InputComp->BindAction(IA_LockOn, ETriggerEvent::Started, this, &APlayerCharacterBase::OnLockOnInput);
@@ -269,17 +229,16 @@ void APlayerCharacterBase::OnCompleteJumpInput(const FInputActionValue& Value)
 
 void APlayerCharacterBase::OnDodgeInput(const FInputActionValue& Value)
 {
-	DashDirection = GetLastMovementInputVector();
+	FVector NextDashDirection = GetLastMovementInputVector();
+	bool bAdjustLook = false;
 
-	if (DashDirection.IsNearlyZero())
+	if (NextDashDirection.IsNearlyZero())
 	{
-		// DodgeDirection = GetMesh()->GetRightVector();
-		// Camera 방향으로 대쉬하도록 변경
-		DashDirection = CameraComp->GetForwardVector();
-		bNeedAdjustLookForward = true;
+		NextDashDirection = CameraComp->GetForwardVector();
+		bAdjustLook = true;
 	}
 
-	Dash(DashDirection);
+	DashSkillComp->StartDash(NextDashDirection, bAdjustLook);
 }
 
 void APlayerCharacterBase::OnBasicAttackInput(const FInputActionValue& Value)
@@ -326,9 +285,8 @@ void APlayerCharacterBase::BackStepAttack()
 {
 	ExecuteAttack(EAttackType::BackStepAttack);
 
-	DashDirection = -GetCameraComp()->GetForwardVector();
-	bNeedAdjustLookForward = true;
-	Dash(DashDirection);
+	FVector NextDashDirection = -GetCameraComp()->GetForwardVector();
+	DashSkillComp->StartDash(NextDashDirection, true);
 }
 
 void APlayerCharacterBase::ExecuteAttack(EAttackType AttackType)
@@ -408,6 +366,22 @@ void APlayerCharacterBase::OnMontageEdnded(UAnimMontage* Montage, bool bInterrup
 	ActionManagerComp->ForceSetState(EActionState::Idle);
 }
 
+void APlayerCharacterBase::OnMovementUpdated(float DeltaSeconds, const FVector& OldLocation, const FVector& OldVelocity)
+{
+	if (UKasaneAnimInstance* AnimInstance = Cast<UKasaneAnimInstance>(GetMesh()->GetAnimInstance()))
+	{
+		AnimInstance->SetSpeed(GetVelocity().Size2D());
+
+		const bool bInAir = GetCharacterMovement()->IsFalling();
+		const bool bFalling = bInAir && GetVelocity().Z < 0.f;
+
+		AnimInstance->SetIsInAir(bInAir);
+		AnimInstance->SetIsFalling(bFalling);
+		
+		// PRINTLOG_SH(TEXT("IsInAir: %d, IsFalling: %d, IsJumpEnd: %d"), bInAir, bFalling, AnimInstance->IsJumEnd());
+	}
+}
+
 void APlayerCharacterBase::TryConsumeBufferedAttack()
 {
 	if (!ActionManagerComp->IsComboWindowOpen())
@@ -436,6 +410,11 @@ void APlayerCharacterBase::Move(const FVector2D& InDirection)
 	{
 		return;
 	}
+	
+	if (!ActionManagerComp->CanMove())
+	{
+		return;
+	}
 
 	const FRotator ControlRotation = Controller->GetControlRotation();
 	const FRotator YawRotation(0.0f, ControlRotation.Yaw, 0.0f);
@@ -452,31 +431,6 @@ void APlayerCharacterBase::Look(const FVector2D& LookVector)
 {
 	AddControllerYawInput(LookVector.X);
 	AddControllerPitchInput(-LookVector.Y);
-}
-
-void APlayerCharacterBase::Dash(FVector& InDashDirection)
-{
-	if (!bCanDash || GetCharacterMovement()->IsFalling())
-	{
-		return;
-	}
-
-	bIsDashing = true;
-	bCanDash = false;
-
-	InDashDirection.Normalize();
-	InDashDirection.Z = 0.f;
-
-	DashVelocity = InDashDirection * (DashDistance / DashDuration);
-	DashTimeRemaining = DashDuration;
-
-	GetCharacterMovement()->Velocity.Z = 0;
-}
-
-void APlayerCharacterBase::ResetDash()
-{
-	bIsDashing = false;
-	bCanDash = true;
 }
 
 void APlayerCharacterBase::LockOnToggle()
