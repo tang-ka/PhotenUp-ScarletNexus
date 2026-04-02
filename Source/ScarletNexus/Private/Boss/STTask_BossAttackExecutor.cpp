@@ -283,14 +283,10 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickTeleportKick(
 		}
 		break;
 	case ETKPhase::Kicking:
-		if (!Data.bDamageApplied)
-		{
-			ApplyDamageInRadius(Boss, Boss->GetActorLocation() + Boss->GetActorForwardVector() * (TK_KickRadius * 0.5f),
-				TK_KickRadius, TK_Damage, TK_KnockbackForce, Boss->GetActorForwardVector());
-			Data.bDamageApplied = true;
-		}
+		
 		if (Data.PhaseTimer >= TK_KickDuration) return EStateTreeRunStatus::Succeeded;
 		break;
+		
 	default: return EStateTreeRunStatus::Succeeded;
 	}
 	return EStateTreeRunStatus::Running;
