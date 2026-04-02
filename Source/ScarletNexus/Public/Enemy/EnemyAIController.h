@@ -19,7 +19,7 @@ public:
 	
 protected:
 	virtual void BeginPlay() override;
-	virtual void OnPossess(APawn* Pawn) override;
+	virtual void OnPossess(APawn* InPawn) override;
 	virtual void OnUnPossess() override;
 	
 private:

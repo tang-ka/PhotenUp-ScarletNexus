@@ -38,9 +38,9 @@ void AEnemyAIController::BeginPlay()
 	Super::BeginPlay();
 }
 
-void AEnemyAIController::OnPossess(APawn* Pawn)
+void AEnemyAIController::OnPossess(APawn* InPawn)
 {
-	Super::OnPossess(Pawn);
+	Super::OnPossess(InPawn);
 	
 	if (EnemyStateTree && StateTreeComp)
 	{
