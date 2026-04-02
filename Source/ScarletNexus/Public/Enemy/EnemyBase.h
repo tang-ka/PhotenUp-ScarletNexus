@@ -4,16 +4,17 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
-#include "Enemy.generated.h"
+#include "Interface/Damageable.h"
+#include "EnemyBase.generated.h"
 
 UCLASS()
-class SCARLETNEXUS_API AEnemy : public ACharacter
+class SCARLETNEXUS_API AEnemyBase : public ACharacter, public IDamageable
 {
 	GENERATED_BODY()
 
 public:
 	// Sets default values for this character's properties
-	AEnemy();
+	AEnemyBase();
 
 protected:
 	// Called when the game starts or when spawned
@@ -47,12 +48,16 @@ public:
 	// 피격
 	UFUNCTION()
 	virtual void OnHit();
-	// HP 처리
-	UFUNCTION()
-	void TakeDamage(int DamageValue);
 	// 스턴
 	void Stun(float Duration);
 	// Die
 	UFUNCTION()
 	virtual void OnDie();
+
+#pragma region IDamageable
+	bool ReceiveDamage_Implementation(FDamageInfo DamageInfo) override;
+	int GetHP_Implementation() const override;
+	float GetHPPercent_Implementation() const override;
+	bool IsDead_Implementation() const override;
+#pragma endregion 
 };
