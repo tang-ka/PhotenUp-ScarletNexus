@@ -19,9 +19,6 @@ UBladeHandlerComponent::UBladeHandlerComponent()
 void UBladeHandlerComponent::BeginPlay()
 {
 	Super::BeginPlay();
-
-	// ...
-	
 }
 
 

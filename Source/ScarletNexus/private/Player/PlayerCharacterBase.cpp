@@ -378,7 +378,7 @@ void APlayerCharacterBase::OnMovementUpdated(float DeltaSeconds, const FVector& 
 		AnimInstance->SetIsInAir(bInAir);
 		AnimInstance->SetIsFalling(bFalling);
 		
-		PRINTLOG_SH(TEXT("IsInAir: %d, IsFalling: %d, IsJumpEnd: %d"), bInAir, bFalling, AnimInstance->IsJumEnd());
+		// PRINTLOG_SH(TEXT("IsInAir: %d, IsFalling: %d, IsJumpEnd: %d"), bInAir, bFalling, AnimInstance->IsJumEnd());
 	}
 }
 
@@ -407,6 +407,11 @@ void APlayerCharacterBase::TryConsumeBufferedAttack()
 void APlayerCharacterBase::Move(const FVector2D& InDirection)
 {
 	if (Controller == nullptr)
+	{
+		return;
+	}
+	
+	if (!ActionManagerComp->CanMove())
 	{
 		return;
 	}

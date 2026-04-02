@@ -11,6 +11,13 @@ UActionManagerComponent::UActionManagerComponent()
 	PrimaryComponentTick.bCanEverTick = false;
 }
 
+void UActionManagerComponent::BeginPlay()
+{
+	Super::BeginPlay();
+	
+	ForceSetState(EActionState::Idle);
+}
+
 bool UActionManagerComponent::CanAttack() const
 {
 	switch (CurState)
@@ -38,6 +45,14 @@ bool UActionManagerComponent::CanAttack() const
 	default:
 		return false;
 	}
+}
+
+bool UActionManagerComponent::CanMove() const
+{
+	 // Attack, Staggered, Dead 상태에서는 이동 불가
+	return CurState != EActionState::Attacking &&
+		   CurState != EActionState::Staggered &&
+		   CurState != EActionState::Dead;
 }
 
 bool UActionManagerComponent::CanDash() const
@@ -70,11 +85,7 @@ void UActionManagerComponent::ForceSetState(EActionState NewState)
 	EActionState OldState = CurState;
 	CurState = NewState;
 
-	// 상태가 바뀌면 콤보 윈도우 닫기
-	if (NewState != EActionState::Attacking)
-	{
-		CloseComboWindow();
-	}
+	CloseComboWindow();
 
 	PRINTLOG_SH(TEXT("[ActionManager] 상태 전이: %s -> %s"),
 				*GetStateName(OldState),

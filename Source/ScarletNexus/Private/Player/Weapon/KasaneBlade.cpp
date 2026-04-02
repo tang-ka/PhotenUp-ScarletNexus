@@ -12,9 +12,11 @@ AKasaneBlade::AKasaneBlade()
 	
 	SphereComp = CreateDefaultSubobject<USphereComponent>(TEXT("SphereComp"));
 	SphereComp->SetupAttachment(RootComponent);
+	SphereComp->SetCollisionProfileName(TEXT("PlayerWeapon"));
 	
 	BladeMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("BladeMesh"));
 	RootComponent = BladeMesh;
+	BladeMesh->SetCollisionProfileName(TEXT("NoCollision"));
 }
 
 void AKasaneBlade::BeginPlay()

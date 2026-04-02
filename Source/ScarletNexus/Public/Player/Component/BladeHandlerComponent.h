@@ -7,6 +7,8 @@
 #include "BladeHandlerComponent.generated.h"
 
 
+class AKasaneBlade;
+
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class SCARLETNEXUS_API UBladeHandlerComponent : public UActorComponent
 {
@@ -24,4 +26,8 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType,
 	                           FActorComponentTickFunction* ThisTickFunction) override;
+
+private:
+	UPROPERTY(EditDefaultsOnly, Category = "Blade")
+	TArray<TObjectPtr<AKasaneBlade>> BladePool;
 };
