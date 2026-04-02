@@ -132,6 +132,12 @@ struct FSTTask_BossAttackExecutorInstanceData
 	TArray<FVector> OOOrbDirections;
 	UPROPERTY()
 	TArray<bool> OOOrbHit;
+	UPROPERTY()
+	TArray<float> OOOrbSpawnTime;
+	UPROPERTY()
+	FVector OOSpawnOrigin = FVector::ZeroVector;
+	UPROPERTY()
+	FVector OOSpawnForward = FVector::ZeroVector;
 	
 	// 염동력 투척
 	UPROPERTY()
