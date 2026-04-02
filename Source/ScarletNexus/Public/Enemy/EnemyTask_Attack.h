@@ -37,7 +37,7 @@ struct FEnemyTask_AttackInstanceData
 };
 
 USTRUCT(DisplayName="Enemy: Attack")
-struct FEnemyTask_Attack : public FStateTreeTaskBase
+struct FEnemyTask_Attack : public FStateTreeTaskCommonBase
 {
 	GENERATED_BODY()
 	using FInstanceDataType = FEnemyTask_AttackInstanceData;

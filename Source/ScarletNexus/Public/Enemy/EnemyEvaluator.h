@@ -30,10 +30,18 @@ struct FEnemyEvaluatorInstanceData
 	// 타겟까지 거리
 	UPROPERTY(EditAnywhere, meta=(Output))
 	float DistanceToTarget = 0.f;
+	
+	// 피격 스턴 상태
+	UPROPERTY(EditAnywhere, meta=(Output))
+	bool bIsStunned = false;
+	
+	// 사망 상태
+	UPROPERTY(EditAnywhere, meta=(Output))
+	bool bIsDie = false;
 };
 
 USTRUCT(DisplayName="Enemy Evaluator")
-struct FEnemyEvaluator : public FStateTreeEvaluatorBase
+struct FEnemyEvaluator : public FStateTreeEvaluatorCommonBase
 {
 	GENERATED_BODY()
 	using FInstanceDataType = FEnemyEvaluatorInstanceData;

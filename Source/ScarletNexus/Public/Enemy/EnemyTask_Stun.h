@@ -4,32 +4,24 @@
 
 #include "CoreMinimal.h"
 #include "StateTreeTaskBase.h"
-#include "EnemyTask_Chase.generated.h"
+#include "EnemyTask_Stun.generated.h"
 
 USTRUCT()
-struct FEnemyTask_ChaseInstanceData
+struct FEnemyTask_StunInstanceData
 {
 	GENERATED_BODY()
 	
-	// Evaluator에서 받아온 추적 대상
-	UPROPERTY(EditAnywhere, meta = (Input))
-	TObjectPtr<AActor> ChaseTarget = nullptr;
-	
-	// 도착 판정 거리
+	// 스턴 시간
 	UPROPERTY(EditAnywhere)
-	float AcceptanceRadius = 150.f;
-	
-	// MoveTo 갱신 주기 (초) : 갱신 딜레이
-	UPROPERTY(EditAnywhere)
-	float RepathInterval = 0.3f;
-	float ElapsedSinceRepath = 0.f;
+	float StunDuration = 0.3f;
+	float ElapsedTime = 0.f;
 };
 
-USTRUCT(DisplayName="Enemy: Chase Target")
-struct FEnemyTask_Chase : public FStateTreeTaskCommonBase
+USTRUCT(DisplayName="Enemy: Stun")
+struct FEnemyTask_Stun : public FStateTreeTaskCommonBase
 {
 	GENERATED_BODY()
-	using FInstanceDataType = FEnemyTask_ChaseInstanceData;
+	using FInstanceDataType = FEnemyTask_StunInstanceData;
 	
 	virtual const UStruct* GetInstanceDataType() const override
 	{
