@@ -26,7 +26,8 @@ ABossCloneActor::ABossCloneActor()
  
 
 void ABossCloneActor::InitRush(const FVector& InDirection, float InSpeed, float InDistance,
-	float InDamage, float InDamageRadius, float InKnockback)
+	float InDamage, float InDamageRadius, float InKnockback,
+	UAnimMontage* InRushMontage)
 {
 	RushDirection = InDirection.GetSafeNormal2D();
 	RushSpeed = InSpeed;
@@ -34,14 +35,21 @@ void ABossCloneActor::InitRush(const FVector& InDirection, float InSpeed, float 
 	Damage = InDamage;
 	DamageRadius = InDamageRadius;
 	KnockbackForce = InKnockback;
+	RushMontage = InRushMontage;
 	StartLocation = GetActorLocation();
 	bRushing = false;
 	bRushComplete = false;
 	bDamageApplied = false;
- 
-	// 돌진 방향으로 회전
+
 	SetActorRotation(RushDirection.Rotation());
- 
+	
+	if (RushMontage && MeshComp && MeshComp->GetAnimInstance())
+	{
+		MeshComp->GetAnimInstance()->Montage_Play(RushMontage);
+		MeshComp->GetAnimInstance()->Montage_JumpToSection(FName("WindUp"), RushMontage);
+	}
+	
+
 	UE_LOG(LogTemp, Log, TEXT("[BossClone] 분신 스폰 완료 - 위치: %s"),
 		*GetActorLocation().ToString());
 }
@@ -50,49 +58,80 @@ void ABossCloneActor::StartRush()
 {
 	bRushing = true;
 	StartLocation = GetActorLocation();
+
+	// 돌진 몽타주 재생
+	if (RushMontage && MeshComp && MeshComp->GetAnimInstance())
+	{
+		MeshComp->GetAnimInstance()->Montage_Play(RushMontage);
+		MeshComp->GetAnimInstance()->Montage_JumpToSection(FName("Rush"), RushMontage);
+	}
+
 	UE_LOG(LogTemp, Log, TEXT("[BossClone] 분신 돌진 시작!"));
 }
  
 void ABossCloneActor::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
- 
+
+	// 돌진 완료 후 대기 → 몽타주 끝나면 소멸
 	if (bRushComplete)
 	{
-		// 돌진 완료 후 대기
+		DestroyTimer += DeltaTime;
+
+		if (DestroyTimer >= DestroyDelay)
+		{
+			if (MeshComp && MeshComp->GetAnimInstance() && MeshComp->GetAnimInstance()->IsAnyMontagePlaying())
+			{
+				return;
+			}
+			UE_LOG(LogTemp, Log, TEXT("[BossClone] 소멸"));
+			Destroy();
+		}
 		return;
 	}
- 
+
+	// 돌진 시작 전이면 대기 (WindUp 중)
 	if (!bRushing)
 	{
 		return;
 	}
- 
+
 	// 돌진 이동
 	const FVector CurrentLoc = GetActorLocation();
+
+	// 플레이어 방향으로 약간 보정
+	if (const APlayerController* PC = GetWorld()->GetFirstPlayerController())
+	{
+		if (const APawn* Player = PC->GetPawn())
+		{
+			FVector DesiredDir = (Player->GetActorLocation() - CurrentLoc).GetSafeNormal2D();
+			RushDirection = FMath::VInterpNormalRotationTo(
+				RushDirection, DesiredDir, DeltaTime, 30.f);
+			SetActorRotation(RushDirection.Rotation());
+		}
+	}
+
 	const FVector NewLoc = CurrentLoc + RushDirection * RushSpeed * DeltaTime;
 	const float DistanceTraveled = FVector::Dist2D(StartLocation, NewLoc);
- 
+
 	if (DistanceTraveled >= RushDistance)
 	{
-		// 돌진 완
 		SetActorLocation(StartLocation + RushDirection * RushDistance);
 		bRushing = false;
 		bRushComplete = true;
+		DestroyTimer = 0.f;
 		UE_LOG(LogTemp, Log, TEXT("[BossClone] 분신 돌진 완료"));
 	}
 	else
 	{
 		SetActorLocation(NewLoc);
- 
-		// 돌진 중 데미지 판정
-		if (!bDamageApplied)
-		{
-			ApplyRushDamage();
-		}
+
+		// 돌진 중 매 프레임 데미지 판정
+		ApplyRushDamage();
 	}
 }
- 
+
+
 void ABossCloneActor::ApplyRushDamage()
 {
 	TArray<FOverlapResult> Overlaps;

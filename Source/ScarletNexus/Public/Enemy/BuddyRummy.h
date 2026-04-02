@@ -3,14 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Enemy.h"
+#include "EnemyBase.h"
 #include "BuddyRummy.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class SCARLETNEXUS_API ABuddyRummy : public AEnemy
+class SCARLETNEXUS_API ABuddyRummy : public AEnemyBase
 {
 	GENERATED_BODY()
 	

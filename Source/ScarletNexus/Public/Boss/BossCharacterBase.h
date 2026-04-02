@@ -11,6 +11,7 @@
 #include "BossCharacterBase.generated.h"
  
 class UBossConfigDataAsset;
+class UBossAttackCollisionComponent;
  
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(
 	FOnBossPhaseChanged,
@@ -80,6 +81,19 @@ protected:
  
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Boss|State")
 	EBossCombatState CurrentCombatState = EBossCombatState::Idle;
+	
+	// 공격 콜리전 컴포넌트 (본에 부착)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Boss|Combat")
+	TObjectPtr<UBossAttackCollisionComponent> RightFootCollision;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Boss|Combat")
+	TObjectPtr<UBossAttackCollisionComponent> LeftFootCollision;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Boss|Combat")
+	TObjectPtr<UBossAttackCollisionComponent> RightHandCollision;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Boss|Combat")
+	TObjectPtr<UBossAttackCollisionComponent> LeftHandCollision;
  
 	void CheckPhaseTransition();
  

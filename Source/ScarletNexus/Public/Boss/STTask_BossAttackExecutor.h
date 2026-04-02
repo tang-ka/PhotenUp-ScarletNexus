@@ -21,7 +21,7 @@ enum class EActiveAttackType : uint8
 	TelekinesisThrow,  // Phase2_Enhanced+
 };
  
-// === 내부 상태 Enums ===
+
 UENUM()
 enum class ETKPhase : uint8 { Vanishing, Teleporting, Appearing, Kicking, Done };
  
@@ -69,10 +69,8 @@ struct FSTTask_BossAttackExecutorInstanceData
 	bool bDamageApplied = false;
 	
 	UPROPERTY()
-	int32 SeletedPatternIndex = INDEX_NONE;
+	int32 SelectedPatternIndex = INDEX_NONE;
 	
-	UPROPERTY(EditAnywhere, Category = "Config")
-	TObjectPtr<UBossConfigDataAsset> BossConfig = nullptr;
  
 	// 텔레포트 킥 
 	UPROPERTY()
@@ -101,6 +99,8 @@ struct FSTTask_BossAttackExecutorInstanceData
 	EAEPhase AEPhase = EAEPhase::Vanishing;
 	UPROPERTY()
 	FVector AEHoverLocation = FVector::ZeroVector;
+	
+	
 	UPROPERTY()
 	FVector AEGroundTarget = FVector::ZeroVector;
 	UPROPERTY()
@@ -133,7 +133,7 @@ struct FSTTask_BossAttackExecutorInstanceData
 	UPROPERTY()
 	TArray<bool> OOOrbHit;
  
-	// --- 염동력 투척 ---
+	// 염동력 투척
 	UPROPERTY()
 	ETTPhase TTPhase = ETTPhase::Gathering;
 	UPROPERTY()
@@ -159,6 +159,9 @@ struct SCARLETNEXUS_API FSTTask_BossAttackExecutor : public FStateTreeTaskCommon
 	virtual EStateTreeRunStatus Tick(FStateTreeExecutionContext& Context, const float DeltaTime) const override;
 	virtual void ExitState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const override;
  
+	UPROPERTY(EditAnywhere, Category = "Config")
+	TObjectPtr<UBossConfigDataAsset> BossConfig = nullptr;
+	
 	// 텔레포트 킥
 	UPROPERTY(EditAnywhere, Category = "TeleportKick") float TK_VanishDuration = 0.2f;
 	UPROPERTY(EditAnywhere, Category = "TeleportKick") float TK_AppearDelay = 0.1f;
@@ -176,7 +179,7 @@ struct SCARLETNEXUS_API FSTTask_BossAttackExecutor : public FStateTreeTaskCommon
 	UPROPERTY(EditAnywhere, Category = "CloneRush") float CR_Damage = 200.f;
 	UPROPERTY(EditAnywhere, Category = "CloneRush") float CR_RushWidth = 150.f;
 	UPROPERTY(EditAnywhere, Category = "CloneRush") float CR_KnockbackForce = 50.f;
-	UPROPERTY(EditAnywhere, Category = "CloneRush") float CR_CloneSpacing = 200.f;
+	UPROPERTY(EditAnywhere, Category = "CloneRush") float CR_CloneSpacing = 500.f;
 	UPROPERTY(EditAnywhere, Category = "CloneRush") float CR_SequenceDelay = 0.2f;
  
 	// 공중 전류
@@ -186,7 +189,7 @@ struct SCARLETNEXUS_API FSTTask_BossAttackExecutor : public FStateTreeTaskCommon
 	UPROPERTY(EditAnywhere, Category = "AerialElectric") float AE_DischargeDuration = 0.6f;
 	UPROPERTY(EditAnywhere, Category = "AerialElectric") float AE_DamageRadius = 400.f;
 	UPROPERTY(EditAnywhere, Category = "AerialElectric") float AE_Damage = 180.f;
-	UPROPERTY(EditAnywhere, Category = "AerialElectric") float AE_LandingDuration = 0.3f;
+	UPROPERTY(EditAnywhere, Category = "AerialElectric") float AE_LandingDuration = 1.2f;
 	UPROPERTY(EditAnywhere, Category = "AerialElectric") float AE_KnockbackForce = 50.f;
  
 	// 얼음가시
@@ -253,4 +256,7 @@ private:
  
 	void ApplyDamageInRadius(AActor* BossActor, const FVector& Center, float Radius,
 		float Damage, float Knockback, const FVector& KnockbackDir) const;
+	
+	static EActiveAttackType ToActiveType(EBossAttackType Type);
+	static EBossAttackType ToDataAssetType(EActiveAttackType Type);
 };

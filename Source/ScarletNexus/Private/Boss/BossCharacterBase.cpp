@@ -6,6 +6,7 @@
 #include "BrainComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Boss/BossAttackCollisionComponent.h"
  
 ABossCharacterBase::ABossCharacterBase()
 {
@@ -22,6 +23,26 @@ ABossCharacterBase::ABossCharacterBase()
 	}
  
 	bUseControllerRotationYaw = false;
+	
+	// 오른발 콜리전
+	RightFootCollision = CreateDefaultSubobject<UBossAttackCollisionComponent>(TEXT("RightFootCollision"));
+	RightFootCollision->SetupAttachment(GetMesh(), FName("RightFoot"));
+	RightFootCollision->SetSphereRadius(25.f);
+
+	// 왼발 콜리전
+	LeftFootCollision = CreateDefaultSubobject<UBossAttackCollisionComponent>(TEXT("LeftFootCollision"));
+	LeftFootCollision->SetupAttachment(GetMesh(), FName("LeftFoot"));
+	LeftFootCollision->SetSphereRadius(25.f);
+
+	// 오른손 콜리전
+	RightHandCollision = CreateDefaultSubobject<UBossAttackCollisionComponent>(TEXT("RightHandCollision"));
+	RightHandCollision->SetupAttachment(GetMesh(), FName("RightHand"));
+	RightHandCollision->SetSphereRadius(20.f);
+
+	// 왼손 콜리전
+	LeftHandCollision = CreateDefaultSubobject<UBossAttackCollisionComponent>(TEXT("LeftHandCollision"));
+	LeftHandCollision->SetupAttachment(GetMesh(), FName("LeftHand"));
+	LeftHandCollision->SetSphereRadius(20.f);
 }
  
 void ABossCharacterBase::BeginPlay()
