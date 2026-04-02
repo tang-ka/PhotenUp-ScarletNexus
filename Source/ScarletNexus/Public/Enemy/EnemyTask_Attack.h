@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "StateTreeTaskBase.h"
+#include "EnemyTask_Attack.generated.h"
 
 USTRUCT()
 struct FEnemyTask_AttackInstanceData

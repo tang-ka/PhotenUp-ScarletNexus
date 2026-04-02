@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "StateTreeTaskBase.h"
+#include "EnemyTask_Chase.generated.h"
 
 USTRUCT()
 struct FEnemyTask_ChaseInstanceData
@@ -11,7 +12,7 @@ struct FEnemyTask_ChaseInstanceData
 	GENERATED_BODY()
 	
 	// Evaluator에서 받아온 추적 대상
-	UPROPERTY(EditAnywhere, mata = (Input))
+	UPROPERTY(EditAnywhere, meta = (Input))
 	TObjectPtr<AActor> ChaseTarget = nullptr;
 	
 	// 도착 판정 거리

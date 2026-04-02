@@ -18,7 +18,7 @@ EStateTreeRunStatus FEnemyTask_Chase::EnterState(FStateTreeExecutionContext& Con
 	APawn* pawn = Cast<APawn>(Context.GetOwner());
 	if (!pawn) return EStateTreeRunStatus::Failed;
 	
-	AAIController* aic = Cast<AIController>(pawn->GetController());
+	AAIController* aic = Cast<AAIController>(pawn->GetController());
 	if (!aic) return EStateTreeRunStatus::Failed;
 	
 	aic->MoveToActor(data.ChaseTarget, data.AcceptanceRadius);

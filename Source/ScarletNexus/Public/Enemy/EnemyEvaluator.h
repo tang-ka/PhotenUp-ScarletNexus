@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "StateTreeEvaluatorBase.h"
+#include "EnemyEvaluator.generated.h"
 
 USTRUCT()
 struct FEnemyEvaluatorInstanceData
