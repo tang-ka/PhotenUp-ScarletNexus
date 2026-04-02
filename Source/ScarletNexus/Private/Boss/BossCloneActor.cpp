@@ -72,13 +72,25 @@ void ABossCloneActor::StartRush()
 void ABossCloneActor::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
- 
+
+	// 돌진 완료 후 대기 → 몽타주 끝나면 소멸
 	if (bRushComplete)
 	{
-		// 돌진 완료 후 대기
+		DestroyTimer += DeltaTime;
+
+		if (DestroyTimer >= DestroyDelay)
+		{
+			if (MeshComp && MeshComp->GetAnimInstance() && MeshComp->GetAnimInstance()->IsAnyMontagePlaying())
+			{
+				return;
+			}
+			UE_LOG(LogTemp, Log, TEXT("[BossClone] 소멸"));
+			Destroy();
+		}
 		return;
 	}
- 
+
+	// 돌진 시작 전이면 대기 (WindUp 중)
 	if (!bRushing)
 	{
 		return;
@@ -101,27 +113,25 @@ void ABossCloneActor::Tick(float DeltaTime)
 
 	const FVector NewLoc = CurrentLoc + RushDirection * RushSpeed * DeltaTime;
 	const float DistanceTraveled = FVector::Dist2D(StartLocation, NewLoc);
- 
+
 	if (DistanceTraveled >= RushDistance)
 	{
-		// 돌진 완
 		SetActorLocation(StartLocation + RushDirection * RushDistance);
 		bRushing = false;
 		bRushComplete = true;
+		DestroyTimer = 0.f;
 		UE_LOG(LogTemp, Log, TEXT("[BossClone] 분신 돌진 완료"));
 	}
 	else
 	{
 		SetActorLocation(NewLoc);
- 
-		// 돌진 중 데미지 판정
-		if (!bDamageApplied)
-		{
-			ApplyRushDamage();
-		}
+
+		// 돌진 중 매 프레임 데미지 판정
+		ApplyRushDamage();
 	}
 }
- 
+
+
 void ABossCloneActor::ApplyRushDamage()
 {
 	TArray<FOverlapResult> Overlaps;

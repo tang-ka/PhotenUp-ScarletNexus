@@ -59,7 +59,7 @@ private:
  
 	// 소멸 타이머
 	float DestroyTimer = 0.f;
-	float DestroyDelay = 0.2f;
+	float DestroyDelay = 1.0f;
  
 	void ApplyRushDamage();
 };

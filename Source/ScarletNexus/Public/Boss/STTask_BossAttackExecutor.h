@@ -99,6 +99,8 @@ struct FSTTask_BossAttackExecutorInstanceData
 	EAEPhase AEPhase = EAEPhase::Vanishing;
 	UPROPERTY()
 	FVector AEHoverLocation = FVector::ZeroVector;
+	
+	
 	UPROPERTY()
 	FVector AEGroundTarget = FVector::ZeroVector;
 	UPROPERTY()
