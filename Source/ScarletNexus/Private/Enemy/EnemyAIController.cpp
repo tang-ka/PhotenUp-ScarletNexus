@@ -3,3 +3,67 @@
 
 #include "Enemy/EnemyAIController.h"
 
+#include "Components/StateTreeComponent.h"
+#include "Enemy/EnemyBase.h"
+#include "Perception/AIPerceptionComponent.h"
+#include "Perception/AIPerceptionTypes.h"
+#include "Perception/AISenseConfig_Sight.h"
+
+AEnemyAIController::AEnemyAIController()
+{
+	// Perception 설정
+	AIPerceptionComp = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("AIPerceptionComp"));
+	SetPerceptionComponent(*AIPerceptionComp);
+	
+	SightConfig = CreateDefaultSubobject<UAISenseConfig_Sight>(TEXT("SightConfig"));
+	SightConfig->SightRadius = 1500.f;
+	SightConfig->LoseSightRadius = 2000.f;
+	SightConfig->PeripheralVisionAngleDegrees = 90.f;
+	SightConfig->SetMaxAge(5.f);
+	
+	// 적 입장에서 플레이어 감지
+	SightConfig->DetectionByAffiliation.bDetectEnemies = true;
+	SightConfig->DetectionByAffiliation.bDetectNeutrals = true;
+	SightConfig->DetectionByAffiliation.bDetectFriendlies = false;
+	
+	AIPerceptionComp->ConfigureSense(*SightConfig);
+	AIPerceptionComp->SetDominantSense(SightConfig->GetSenseImplementation());
+	AIPerceptionComp->OnTargetPerceptionUpdated.AddDynamic(this, &AEnemyAIController::OnTargetPerceptionUpdated);
+	
+	// State Tree 콤포넌트
+	StateTreeComp = CreateDefaultSubobject<UStateTreeComponent>(TEXT("StateTreeComp"));
+}
+
+void AEnemyAIController::BeginPlay()
+{
+	Super::BeginPlay();
+}
+
+void AEnemyAIController::OnPossess(APawn* InPawn)
+{
+	Super::OnPossess(InPawn);
+	
+	// Pawn(EnemyBase)에서 StateTree 에셋 가져오기
+	if (AEnemyBase* enemy = Cast<AEnemyBase>(InPawn))
+	{
+		if (enemy->EnemyStateTree && StateTreeComp)
+		{
+			StateTreeComp->SetStateTree(enemy->EnemyStateTree);
+			StateTreeComp->StartLogic();
+		}
+	}
+}
+
+void AEnemyAIController::OnUnPossess()
+{
+	if (StateTreeComp)
+	{
+		StateTreeComp->StopLogic(TEXT("UnPossess"));
+	}
+	Super::OnUnPossess();
+}
+
+void AEnemyAIController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
+{
+	
+}

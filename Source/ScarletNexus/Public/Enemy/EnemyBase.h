@@ -7,6 +7,8 @@
 #include "Interface/Damageable.h"
 #include "EnemyBase.generated.h"
 
+class UWidgetComponent;
+
 UCLASS()
 class SCARLETNEXUS_API AEnemyBase : public ACharacter, public IDamageable
 {
@@ -28,36 +30,87 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	// 스테이터스
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Status")
 	int MaxHP = 250;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	int CurrHP = MaxHP;
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
-	float DetectRange = 300.f;
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
-	float AttackRange = 100.f;
 	
 	// 타겟
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<AActor> TargetActor;
 	
-	// **행동 트리
-	// 공격
-	UFUNCTION()
-	virtual void OnAttack();
-	// 피격
-	UFUNCTION()
-	virtual void OnHit();
-	// 스턴
-	void Stun(float Duration);
-	// Die
-	UFUNCTION()
-	virtual void OnDie();
-
+	// **히트 리액션
+	// 경직 시간 (초)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Hit")
+	float HitStunDuration = 0.3f;
+	
+	// 현재 경직 상태인지 체크
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Hit")
+	bool bIsStunned = false;
+	
+	// 피격 시 호출 : 경직 + 선택적 히트 몽타주
+	UFUNCTION(BlueprintCallable, Category="Hit")
+	void ApplyHitReaction(AActor* DamageCauser);
+	
+	// 블루프린트에서 히트 몽타주 할당
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Hit")
+	TObjectPtr<UAnimMontage> HitReactionMontage;
+	
+	//**사망
+	// 사망 후 Destroy까지 딜레이
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Die")
+	float DestroyDelay = 5.f;
+	
+	// Ragdoll 활성화 체크
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Die")
+	bool bEnableRagdollOnDeath = true;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Die")
+	bool bIsDie = false;
+	
+	//**체력 바 위젯
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="UI")
+	TObjectPtr<UWidgetComponent> HealthBarComp;
+	
+	// 블루프린트 위젯 클래스 할당
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="UI")
+	TSubclassOf<UUserWidget> HPBarWidgetClass;
+	
+	UFUNCTION(BlueprintCallable, Category="Status")
+	bool IsAlive() const { return CurrHP > 0; }
+	
+	//**AI
+	// StateTree 에셋
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="AI")
+	TObjectPtr<class UStateTree> EnemyStateTree;
+	
+	// 소속 EnemyManager
+	UPROPERTY()
+	TObjectPtr<class AEnemyManager> OwningManager;
+	
+	// HP 비율 (0~1) : 체력바 위젯 바인딩용
+	UFUNCTION(BlueprintCallable, Category="Status")
+	float GetHPRatio() const;
+	
+	// 사망 처리 (ST Die Task에서 호출)
+	UFUNCTION(BlueprintCallable, Category="Die")
+	virtual void Die();
+	
 #pragma region IDamageable
 	bool ReceiveDamage_Implementation(FDamageInfo DamageInfo) override;
 	int GetHP_Implementation() const override;
 	float GetHPPercent_Implementation() const override;
 	bool IsDead_Implementation() const override;
 #pragma endregion 
+	
+protected:
+	// Ragdoll 전환
+	void EnableRagdoll();
+	
+	// 경직 타이머 완료 콜백
+	void OnHitStunEnd();
+	
+private:
+	FTimerHandle DestroyTimerHandle;
+	FTimerHandle StunTimerHandle;
 };

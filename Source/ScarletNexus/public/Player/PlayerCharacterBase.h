@@ -12,6 +12,7 @@ class UComboAttackDataAsset;
 class UComboComponent;
 class UInputBufferComponent;
 class UActionManagerComponent;
+class UDashSkillComponent;
 class UPsychokinesisComponent;
 class UPlayerPerceptionComponent;
 class UPlayerStateComponent;
@@ -33,8 +34,8 @@ class SCARLETNEXUS_API APlayerCharacterBase : public ACharacter, public IDamagea
 	GENERATED_BODY()
 
 public:
-	APlayerCharacterBase();
-
+	APlayerCharacterBase(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
+	
 protected:
 	virtual void BeginPlay() override;
 
@@ -42,6 +43,8 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+	virtual void OnMovementUpdated(float DeltaSeconds, const FVector& OldLocation, const FVector& OldVelocity);
 
 #pragma region IDamageable Interface
 	virtual bool ReceiveDamage_Implementation(FDamageInfo DamageInfo) override;
@@ -60,6 +63,7 @@ public:
 	FORCEINLINE UInputBufferComponent* GetInputBufferComp() const { return InputBufferComp; }
 	FORCEINLINE UActionManagerComponent* GetActionManagerComp() const { return ActionManagerComp; }
 	FORCEINLINE UComboComponent* GetComboComp() const { return ComboComp; }
+	FORCEINLINE UDashSkillComponent* GetDashSkillComp() const { return DashSkillComp; }
 #pragma endregion
 
 protected:
@@ -96,8 +100,6 @@ public:
 private:
 	void Move(const FVector2D& Direction);
 	void Look(const FVector2D& LookVector);
-	void Dash(FVector& InDashDirection);
-	void ResetDash();
 	void LockOnToggle();
 
 protected:
@@ -130,29 +132,6 @@ protected:
 	TObjectPtr<UInputAction> IA_LockOn;
 #pragma endregion
 
-private:
-#pragma region Dash Properties
-	bool bIsDashing{false}; // 상태 중심
-	bool bCanDash{true}; // 상태 및 쿨타임 중심
-	bool bNeedAdjustLookForward{false}; // 대쉬 방향이 이동 방향과 다를 때 true
-	FVector DashDirection{};
-	FVector DashVelocity{};
-	float DashTimeRemaining{0.f};
-	FTimerHandle DashCooldownTimer;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Dash")
-	float DashDistance{600.f};
-
-	UPROPERTY(EditDefaultsOnly, Category = "Dash")
-	float DashDuration{0.2f};
-
-	UPROPERTY(EditDefaultsOnly, Category = "Dash")
-	float DashCooldown{0.2f};
-
-	UPROPERTY(EditDefaultsOnly, Category = "Dash")
-	float DashDampingFactor{0.5f};
-#pragma endregion
-
 #pragma region Component
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<USpringArmComponent> SpringArmComp;
@@ -180,5 +159,8 @@ private:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UComboComponent> ComboComp;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UDashSkillComponent> DashSkillComp;
 #pragma endregion
 };

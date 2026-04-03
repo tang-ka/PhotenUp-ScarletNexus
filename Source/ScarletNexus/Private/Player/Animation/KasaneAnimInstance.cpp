@@ -2,3 +2,13 @@
 
 
 #include "Player/Animation/KasaneAnimInstance.h"
+
+void UKasaneAnimInstance::AnimNotify_JumpStart()
+{
+	bIsJumpEnd = false;
+}
+
+void UKasaneAnimInstance::AnimNotify_JumpEnd()
+{
+	bIsJumpEnd = true;
+}

@@ -3,6 +3,7 @@
 
 #include "Player/PlayerKasane.h"
 
+#include "Player/Component/BladeHandlerComponent.h"
 #include "Player/Component/InputBufferComponent.h"
 
 
@@ -23,6 +24,8 @@ APlayerKasane::APlayerKasane()
 		GetMesh()->SetRelativeRotation(FRotator(0.0f, -90.0f, 0.0f));
 		GetMesh()->SetRelativeScale3D(FVector(0.42f, 0.42f, 0.42f));
 	}
+	
+	BladeHandlerComp = CreateDefaultSubobject<UBladeHandlerComponent>(TEXT("BladeHandlerComp"));
 }
 
 // Called when the game starts or when spawned
@@ -32,7 +35,7 @@ void APlayerKasane::BeginPlay()
 }
 
 // Called every frame
-void APlayerKasane::Tick(float DeltaTime)
+void APlayerKasane::Tick(float DeltaTime) 
 {
 	Super::Tick(DeltaTime);
 }
