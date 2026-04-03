@@ -58,9 +58,32 @@ void ABossCharacterBase::BeginPlay()
 void ABossCharacterBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	if (bDissolving)
+	{
+		DissolveTimer += DeltaTime;
+		float Alpha = FMath::Clamp(DissolveTimer / DissolveDuration, 0.f, 1.f);
+        
+		// 사라지면 1->0, 나타나면 0->1
+		float Opacity = bDissolveOut ? (1.f - Alpha) : Alpha;
+		
+		GetMesh()->SetScalarParameterValueOnMaterials(FName("Opacity"), Opacity);
+		
+		if (Alpha >= 1.f)
+		{
+			bDissolving = false;
+		}
+	}
 }
  
  
+void ABossCharacterBase::StartDissolve(float Duration, bool bOut)
+{
+	DissolveDuration = Duration;
+	DissolveTimer = 0.f;
+	bDissolving = true;
+	bDissolveOut = bOut;
+}
 
 // IDamageable 구현
 
@@ -196,7 +219,6 @@ void ABossCharacterBase::HandleDeath()
 		BossAI->SendStateTreeEvent(
 			FGameplayTag::RequestGameplayTag(FName("Boss.Event.Death")));
 	}
-
-	// ★ 여기서 AI 정지, 이동 정지, 콜리전 비활성화 하지 않기!
-	// Death State의 EnterState에서 처리함
+	
 }
+

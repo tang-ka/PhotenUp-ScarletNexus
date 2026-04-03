@@ -65,6 +65,19 @@ public:
  
 	UPROPERTY(BlueprintAssignable, Category = "Boss|Events")
 	FOnBossHPChanged OnHPChanged;
+	
+	// 머티리얼
+	void StartDissolve(float Duration, bool bDissolveOut);
+	
+private:
+	UPROPERTY()
+	TArray<TObjectPtr<UMaterialInstanceDynamic>> DissolveMIDs;
+    
+	float DissolveTimer = 0.f;
+	float DissolveDuration = 0.f;
+	bool bDissolving = false;
+	bool bDissolveOut = true;  // true = 사라짐, false = 나타남
+
  
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Boss|Config")

@@ -100,7 +100,7 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::Tick(
 	default: return EStateTreeRunStatus::Failed;
 	}
  
-	// ★ 공격 로직은 끝났지만 몽타주가 아직 재생 중이면 대기
+	// 몽타주가 아직 재생 중이면 대기
 	if (Result == EStateTreeRunStatus::Succeeded)
 	{
 		if (const UAnimInstance* AnimInst = Boss->GetMesh()->GetAnimInstance())
@@ -116,9 +116,9 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::Tick(
 }
  
  
-// ============================================================
+
 // ExitState
-// ============================================================
+
 void FSTTask_BossAttackExecutor::ExitState(
 	FStateTreeExecutionContext& Context,
 	const FStateTreeTransitionResult& Transition) const
@@ -142,9 +142,9 @@ void FSTTask_BossAttackExecutor::ExitState(
 }
  
  
-// ============================================================
+
 // 타입 변환
-// ============================================================
+
 EActiveAttackType FSTTask_BossAttackExecutor::ToActiveType(EBossAttackType Type)
 {
 	switch (Type)
@@ -174,9 +174,9 @@ EBossAttackType FSTTask_BossAttackExecutor::ToDataAssetType(EActiveAttackType Ty
 }
  
  
-// ============================================================
+
 // 공격 선택 (페이즈별 가중치)
-// ============================================================
+
 EActiveAttackType FSTTask_BossAttackExecutor::SelectAttack(const ACharacter* Boss) const
 {
 	const ABossCharacterBase* BossChar = Cast<ABossCharacterBase>(Boss);
@@ -231,9 +231,9 @@ EActiveAttackType FSTTask_BossAttackExecutor::SelectAttack(const ACharacter* Bos
 }
  
  
-// ============================================================
+
 // 텔레포트 킥
-// ============================================================
+
 EStateTreeRunStatus FSTTask_BossAttackExecutor::EnterTeleportKick(
 	FInstanceDataType& Data, ACharacter* Boss) const
 {
@@ -248,12 +248,10 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::EnterTeleportKick(
 		if (NavSys->ProjectPointToNavigation(Target, NavLoc, FVector(300.f))) Target = NavLoc.Location;
 	}
 	Data.TKTarget = Target;
-	Boss->SetActorHiddenInGame(true);
-	Boss->SetActorEnableCollision(false);
 	UE_LOG(LogTemp, Log, TEXT("[TeleportKick] 시작"));
 	return EStateTreeRunStatus::Running;
 }
- 
+
 EStateTreeRunStatus FSTTask_BossAttackExecutor::TickTeleportKick(
 	FInstanceDataType& Data, ACharacter* Boss, float DeltaTime) const
 {
@@ -261,8 +259,11 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickTeleportKick(
 	switch (Data.TKPhase)
 	{
 	case ETKPhase::Vanishing:
+		// 준비 동작 시간 후 사라짐
 		if (Data.PhaseTimer >= TK_VanishDuration)
 		{
+			Boss->SetActorHiddenInGame(true);
+			Boss->SetActorEnableCollision(false);
 			Boss->SetActorLocation(Data.TKTarget);
 			if (const ACharacter* P = UGameplayStatics::GetPlayerCharacter(Boss->GetWorld(), 0))
 			{
@@ -283,15 +284,12 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickTeleportKick(
 		}
 		break;
 	case ETKPhase::Kicking:
-		
 		if (Data.PhaseTimer >= TK_KickDuration) return EStateTreeRunStatus::Succeeded;
 		break;
-		
 	default: return EStateTreeRunStatus::Succeeded;
 	}
 	return EStateTreeRunStatus::Running;
 }
- 
  
 
 // 분신 돌진
