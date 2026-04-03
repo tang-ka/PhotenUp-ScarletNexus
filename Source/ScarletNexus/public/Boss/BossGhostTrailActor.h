@@ -29,6 +29,6 @@ private:
 	
 	float FadeTimer = 0.f;
 	float FadeDuration = 2.0f;
-	float InitialOpacity = 0.5f;
-	
+	float InitialOpacity = 0.5f;	
+	int32 FreezeCountdown = -1;  // -1이면 비활성
 };

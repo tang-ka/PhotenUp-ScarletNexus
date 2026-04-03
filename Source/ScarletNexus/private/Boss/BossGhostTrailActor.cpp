@@ -5,78 +5,82 @@
 
 ABossGhostTrailActor::ABossGhostTrailActor()
 {
-	PrimaryActorTick.bCanEverTick = true;
+    PrimaryActorTick.bCanEverTick = true;
 
-	GhostMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("GhostMesh"));
-	SetRootComponent(GhostMesh);
-
-	// 물리/콜리전 비활성화
-	GhostMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	GhostMesh->SetSimulatePhysics(false);
-	GhostMesh->bNoSkeletonUpdate = true;  // 애니메이션 업데이트 안 함 (포즈 고정)
+    GhostMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("GhostMesh"));
+    RootComponent = GhostMesh;
+    GhostMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    GhostMesh->SetCastShadow(false);
+    GhostMesh->bNoSkeletonUpdate = true;
 }
 
 void ABossGhostTrailActor::InitGhost(USkeletalMeshComponent* SourceMesh, UMaterialInterface* GhostMaterial, float Lifetime)
 {
-	if (!SourceMesh || !GhostMaterial) return;
+    if (!SourceMesh || !GhostMaterial || !SourceMesh->GetSkeletalMeshAsset())
+    {
+        UE_LOG(LogTemp, Warning, TEXT("[GhostTrail] InitGhost 실패 - NULL"));
+        Destroy();
+        return;
+    }
 
-	FadeDuration = Lifetime;
-	FadeTimer = 0.f;
+    FadeDuration = Lifetime;
 
-	// 메시 복사
-	GhostMesh->SetSkeletalMesh(SourceMesh->GetSkeletalMeshAsset());
-	GhostMesh->SetRelativeTransform(SourceMesh->GetRelativeTransform());
-	GhostMesh->SetAnimInstanceClass(nullptr);
-	GhostMesh->SetComponentTickEnabled(false);
+    GhostMesh->SetSkeletalMesh(SourceMesh->GetSkeletalMeshAsset());
+    GhostMesh->SetRelativeTransform(SourceMesh->GetRelativeTransform());
+    GhostMesh->SetAnimInstanceClass(nullptr);
 
-	// ★ 본 트랜스폼 직접 복사
-	const TArray<FTransform>& SourceBoneSpaces = SourceMesh->GetComponentSpaceTransforms();
-	GhostMesh->GetEditableComponentSpaceTransforms() = SourceBoneSpaces;
-	GhostMesh->bNoSkeletonUpdate = true;
-	GhostMesh->MarkRenderTransformDirty();
-	GhostMesh->MarkRenderDynamicDataDirty();
+    // 포즈 스냅샷으로 복사
+    FPoseSnapshot Snapshot;
+    SourceMesh->SnapshotPose(Snapshot);
 
-	// 모든 머티리얼 슬롯에 고스트 머티리얼 적용
-	GhostMIDs.Empty();
-	for (int32 i = 0; i < GhostMesh->GetNumMaterials(); i++)
-	{
-		UMaterialInstanceDynamic* MID = UMaterialInstanceDynamic::Create(GhostMaterial, this);
-		MID->SetScalarParameterValue(FName("Opacity"), InitialOpacity);
-		GhostMesh->SetMaterial(i, MID);
-		GhostMIDs.Add(MID);
-	}
+    // 메시 초기화를 위해 한 번 틱 허용
+    GhostMesh->bNoSkeletonUpdate = false;
+    GhostMesh->InitAnim(true);
 
-	// 액터 스케일 복사
-	if (AActor* SourceOwner = SourceMesh->GetOwner())
-	{
-		SetActorScale3D(SourceOwner->GetActorScale3D());
-	}
+    // 본 트랜스폼 직접 복사
+    TArray<FTransform>& EditableBones = GhostMesh->GetEditableComponentSpaceTransforms();
+    const TArray<FTransform>& SourceBones = SourceMesh->GetComponentSpaceTransforms();
+    if (EditableBones.Num() == SourceBones.Num())
+    {
+        EditableBones = SourceBones;
+        GhostMesh->MarkRenderTransformDirty();
+        GhostMesh->MarkRenderDynamicDataDirty();
+    }
 
-	UE_LOG(LogTemp, Log, TEXT("[GhostTrail] InitGhost 완료 - 본 수: %d, 머티리얼 슬롯: %d, 위치: %s"),
-		SourceBoneSpaces.Num(), GhostMesh->GetNumMaterials(), *GetActorLocation().ToString());
+    // 스켈레톤 업데이트 중단
+    GhostMesh->bNoSkeletonUpdate = true;
+    GhostMesh->SetComponentTickEnabled(false);
+
+    // 머티리얼 적용
+    const int32 NumMats = GhostMesh->GetNumMaterials();
+    for (int32 i = 0; i < NumMats; i++)
+    {
+        UMaterialInstanceDynamic* MID = UMaterialInstanceDynamic::Create(GhostMaterial, this);
+        MID->SetScalarParameterValue(TEXT("Opacity"), InitialOpacity);
+        GhostMesh->SetMaterial(i, MID);
+        GhostMIDs.Add(MID);
+    }
+
+    SetActorScale3D(SourceMesh->GetOwner()->GetActorScale3D());
+
+    UE_LOG(LogTemp, Log, TEXT("[GhostTrail] InitGhost 완료 - 머티리얼 슬롯: %d, 본 수: %d"),
+        NumMats, EditableBones.Num());
 }
 
 void ABossGhostTrailActor::Tick(float DeltaTime)
 {
-	Super::Tick(DeltaTime);
+    Super::Tick(DeltaTime);
 
-	FadeTimer += DeltaTime;
+    FadeTimer += DeltaTime;
+    const float Alpha = FMath::Clamp(1.f - (FadeTimer / FadeDuration), 0.f, 1.f);
 
-	// 페이드아웃
-	const float Alpha = FMath::Clamp(1.f - (FadeTimer / FadeDuration), 0.f, 1.f);
-	const float CurrentOpacity = InitialOpacity * Alpha;
+    for (UMaterialInstanceDynamic* MID : GhostMIDs)
+    {
+        if (MID) MID->SetScalarParameterValue(TEXT("Opacity"), Alpha * InitialOpacity);
+    }
 
-	for (UMaterialInstanceDynamic* MID : GhostMIDs)
-	{
-		if (MID)
-		{
-			MID->SetScalarParameterValue(FName("Opacity"), CurrentOpacity);
-		}
-	}
-
-	// 수명 끝나면 소멸
-	if (FadeTimer >= FadeDuration)
-	{
-		Destroy();
-	}
+    if (FadeTimer >= FadeDuration)
+    {
+        Destroy();
+    }
 }
