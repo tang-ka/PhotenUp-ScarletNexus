@@ -77,9 +77,12 @@ public:
 	FOnActionStateChanged OnActionStateChanged;
 	
 private:
-	UPROPERTY(VisibleAnywhere, Category="Action Manager")
+	// UPROPERTY(VisibleAnywhere, Category="Action Manager")
+	// UPROPERTY(Transient)
+	UPROPERTY(EditDefaultsOnly, Category="Action Manager")
 	EActionState CurState = EActionState::Idle;
 	
 	UPROPERTY(VisibleAnywhere, Category = "Action Manager")
+	// UPROPERTY(Transient)
 	bool bComboWindowOpen = false;
 };

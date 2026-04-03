@@ -50,7 +50,7 @@ void APlayerKasane::BasicAttack()
 {
 	Super::BasicAttack();
 	
-	// GetInputBufferComp()->BufferInput(EAttackType::BasicAttack);
+	BladeHandlerComp->ExecuteAttackA1();
 }
 
 void APlayerKasane::PsychicAttack()

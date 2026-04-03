@@ -17,17 +17,40 @@ class SCARLETNEXUS_API UBladeHandlerComponent : public UActorComponent
 public:
 	// Sets default values for this component's properties
 	UBladeHandlerComponent();
-
-protected:
-	// Called when the game starts
 	virtual void BeginPlay() override;
-
-public:
-	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType,
 	                           FActorComponentTickFunction* ThisTickFunction) override;
 
+public:
+	void ExecuteAttackA1();
+	
 private:
+	void SpawnBladePool();
+	void ActivateIdleBlades();
+
+private:
+#pragma region Blade Pool Settings
+	UPROPERTY(EditDefaultsOnly, Category = "Blade")
+	int32 PoolSize = 6; // 블레이드 풀 크기
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Blade")
+	int32 IdleBladeCount = 3; // 대기 상태로 유지할 블레이드 수
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Blade")
+	TSubclassOf<AKasaneBlade> BladeClass;
+	
 	UPROPERTY(EditDefaultsOnly, Category = "Blade")
 	TArray<TObjectPtr<AKasaneBlade>> BladePool;
+#pragma endregion 
+	
+#pragma region Attack A1
+	UPROPERTY(EditDefaultsOnly, Category = "Blade|AttackA1")
+	float A1MaxDistance = 600.f;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Blade|AttackA1")
+	float A1SpreadAngle = 30.f;  // 부채꼴 전체 각도
+
+	UPROPERTY(EditDefaultsOnly, Category = "Blade|AttackA1")
+	float A1Speed = 2000.f;
+#pragma endregion
 };
