@@ -79,6 +79,11 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Status")
 	bool IsAlive() const { return CurrHP > 0; }
 	
+	//**AI
+	// StateTree 에셋
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="AI")
+	TObjectPtr<class UStateTree> EnemyStateTree;
+	
 	// HP 비율 (0~1) : 체력바 위젯 바인딩용
 	UFUNCTION(BlueprintCallable, Category="Status")
 	float GetHPRatio() const;
