@@ -28,7 +28,7 @@ private:
 	TArray<TObjectPtr<UMaterialInstanceDynamic>> GhostMIDs;
 	
 	float FadeTimer = 0.f;
-	float FadeDuration = 0.5f;
+	float FadeDuration = 2.0f;
 	float InitialOpacity = 0.5f;
 	
 };

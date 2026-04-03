@@ -26,13 +26,15 @@ void ABossGhostTrailActor::InitGhost(USkeletalMeshComponent* SourceMesh, UMateri
 	// 메시 복사
 	GhostMesh->SetSkeletalMesh(SourceMesh->GetSkeletalMeshAsset());
 	GhostMesh->SetRelativeTransform(SourceMesh->GetRelativeTransform());
-
-	// 현재 포즈 복사
-	GhostMesh->SetAnimClass(nullptr);
+	GhostMesh->SetAnimInstanceClass(nullptr);
 	GhostMesh->SetComponentTickEnabled(false);
-	const TArray<FTransform>& SourceTransforms = SourceMesh->GetComponentSpaceTransforms();
-	GhostMesh->GetEditableComponentSpaceTransforms() = SourceTransforms;
+
+	// ★ 본 트랜스폼 직접 복사
+	const TArray<FTransform>& SourceBoneSpaces = SourceMesh->GetComponentSpaceTransforms();
+	GhostMesh->GetEditableComponentSpaceTransforms() = SourceBoneSpaces;
+	GhostMesh->bNoSkeletonUpdate = true;
 	GhostMesh->MarkRenderTransformDirty();
+	GhostMesh->MarkRenderDynamicDataDirty();
 
 	// 모든 머티리얼 슬롯에 고스트 머티리얼 적용
 	GhostMIDs.Empty();
@@ -49,6 +51,9 @@ void ABossGhostTrailActor::InitGhost(USkeletalMeshComponent* SourceMesh, UMateri
 	{
 		SetActorScale3D(SourceOwner->GetActorScale3D());
 	}
+
+	UE_LOG(LogTemp, Log, TEXT("[GhostTrail] InitGhost 완료 - 본 수: %d, 머티리얼 슬롯: %d, 위치: %s"),
+		SourceBoneSpaces.Num(), GhostMesh->GetNumMaterials(), *GetActorLocation().ToString());
 }
 
 void ABossGhostTrailActor::Tick(float DeltaTime)

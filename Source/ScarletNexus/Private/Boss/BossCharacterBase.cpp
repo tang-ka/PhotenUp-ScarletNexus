@@ -263,25 +263,22 @@ void ABossCharacterBase::PlayDirectionalHitReaction(AActor* DamageCauser)
 
 void ABossCharacterBase::SpawnGhostTrail(float Lifetime)
 {
-	if (!GhostTrailMaterial)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("[GhostTrail] GhostTrailMaterial이 없음!"));
-		return;
-	}
+	if (!GhostTrailMaterial) return;
 
-	UE_LOG(LogTemp, Log, TEXT("[GhostTrail] 잔상 스폰!"));
+	FActorSpawnParameters Params;
+	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-	FActorSpawnParameters SP;
-	SP.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-
+	// 보스의 현재 위치+회전으로 스폰
 	ABossGhostTrailActor* Ghost = GetWorld()->SpawnActor<ABossGhostTrailActor>(
 		ABossGhostTrailActor::StaticClass(),
-		GetActorLocation(),
-		GetActorRotation(),
-		SP);
+		GetActorLocation(),    // ← 여기가 핵심!
+		GetActorRotation(),    // ← 회전도!
+		Params
+	);
 
 	if (Ghost)
 	{
 		Ghost->InitGhost(GetMesh(), GhostTrailMaterial, Lifetime);
+		UE_LOG(LogTemp, Log, TEXT("[GhostTrail] 잔상 스폰! 위치: %s"), *GetActorLocation().ToString());
 	}
 }
