@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "Components/TextBlock.h"
 #include "BossOverheadWidget.generated.h"
  
 UCLASS()
@@ -20,6 +21,14 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "BossUI")
 	float GetHPPercent() const;
  
+	// 이름 텍스트
+	UPROPERTY(meta=(BindWidget))
+	UTextBlock* TextName;
+	
+	// 이름 설정
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "BossUI")
+	void SetTextName(const FText& Name);
+	
 protected:
 	UPROPERTY(BlueprintReadOnly, Category = "BossUI")
 	TObjectPtr<AActor> OwnerBoss = nullptr;

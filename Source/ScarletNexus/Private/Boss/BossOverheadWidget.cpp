@@ -18,3 +18,11 @@ float UBossOverheadWidget::GetHPPercent() const
 	return IDamageable::Execute_GetHPPercent(OwnerBoss);
 }
 
+void UBossOverheadWidget::SetTextName(const FText& Name)
+{
+	if (TextName)
+	{
+		TextName->SetText(Name);
+	}
+}
+
