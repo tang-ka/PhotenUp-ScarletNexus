@@ -105,6 +105,9 @@ bool ABossCharacterBase::ReceiveDamage_Implementation(FDamageInfo DamageInfo)
 		DamageInfo.DamageAmount, OldHP, CurrentHPValue, MaxHPValue);
  
 	OnHPChanged.Broadcast(CurrentHPValue, MaxHPValue, DamageAmount);
+	
+	PlayDirectionalHitReaction(DamageInfo.DamageCauser);
+	
 	CheckPhaseTransition();
  
 	if (CurrentHPValue <= 0.f)
@@ -222,3 +225,37 @@ void ABossCharacterBase::HandleDeath()
 	
 }
 
+void ABossCharacterBase::PlayDirectionalHitReaction(AActor* DamageCauser)
+{
+	if (!DamageCauser) return;
+
+	// 공격 중이면 히트 리액션 스킵
+	if (const UAnimInstance* AnimInst = GetMesh()->GetAnimInstance())
+	{
+		if (AnimInst->IsAnyMontagePlaying())
+			return;
+	}
+
+	const FVector ToAttacker = (DamageCauser->GetActorLocation() - GetActorLocation()).GetSafeNormal2D();
+	const FVector Forward = GetActorForwardVector();
+	const FVector Right = GetActorRightVector();
+
+	const float ForwardDot = FVector::DotProduct(Forward, ToAttacker);
+	const float RightDot = FVector::DotProduct(Right, ToAttacker);
+
+	UAnimMontage* HitMontage = nullptr;
+
+	if (FMath::Abs(ForwardDot) >= FMath::Abs(RightDot))
+	{
+		HitMontage = (ForwardDot >= 0.f) ? HitReaction_Front : HitReaction_Back;
+	}
+	else
+	{
+		HitMontage = (RightDot >= 0.f) ? HitReaction_Right : HitReaction_Left;
+	}
+
+	if (HitMontage)
+	{
+		PlayAnimMontage(HitMontage);
+	}
+}
