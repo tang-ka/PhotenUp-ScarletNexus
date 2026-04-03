@@ -15,6 +15,7 @@
 #include "NavigationSystem.h"
 #include "DrawDebugHelpers.h"
 #include "Interface/Damageable.h"
+#include "Boss/BossGhostTrailActor.h"
  
  
 
@@ -305,6 +306,7 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::EnterCloneRush(
 	Data.bBossRushDamageApplied = false;
 	Data.LeftClone = nullptr;
 	Data.RightClone = nullptr;
+	Data.GhostSpawnTimer = 0.f;
 	Data.CRStartLocation = Boss->GetActorLocation();
 	const FVector ToP = Player->GetActorLocation() - Data.CRStartLocation;
 	Data.CRDirection = FVector(ToP.X, ToP.Y, 0.f).GetSafeNormal();
@@ -351,7 +353,7 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::EnterCloneRush(
 			{
 				CM->SetSkeletalMesh(BM->GetSkeletalMeshAsset());
 				CM->SetRelativeTransform(BM->GetRelativeTransform());
-				CM->SetAnimClass(BM->GetAnimClass());
+				CM->SetAnimInstanceClass(BM->GetAnimClass());
 			}
 		}
 		if (auto* CC = LC->FindComponentByClass<UCapsuleComponent>())
@@ -377,7 +379,7 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::EnterCloneRush(
 			{
 				CM->SetSkeletalMesh(BM->GetSkeletalMeshAsset());
 				CM->SetRelativeTransform(BM->GetRelativeTransform());
-				CM->SetAnimClass(BM->GetAnimClass());
+				CM->SetAnimInstanceClass(BM->GetAnimClass());
 			}
 		}
 		if (auto* CC = RC->FindComponentByClass<UCapsuleComponent>())
@@ -508,6 +510,14 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickCloneRush(
  
 	case ECRPhase::BossRush:
 		{
+			// 잔상 스폰
+			Data.GhostSpawnTimer += DeltaTime;
+			if (Data.GhostSpawnTimer >= 0.05f)
+			{
+				if (ABossCharacterBase* BossChar = Cast<ABossCharacterBase>(Boss))
+					BossChar->SpawnGhostTrail(0.3f);
+				Data.GhostSpawnTimer = 0.f;
+			}
 			// 본체도 플레이어 방향으로 약간 보정
 			if (const ACharacter* Player = UGameplayStatics::GetPlayerCharacter(Boss->GetWorld(), 0))
 			{
