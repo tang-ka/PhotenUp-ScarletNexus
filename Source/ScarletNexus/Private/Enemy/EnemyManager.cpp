@@ -20,9 +20,10 @@ void AEnemyManager::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	LoadWaveRows();
 	InitPool();
 	
-	if (bAutoStartFirstWave && Waves.Num() > 0)
+	if (bAutoStartFirstWave && WaveRows.Num() > 0)
 	{
 		StartWave(0);
 	}
@@ -35,7 +36,7 @@ void AEnemyManager::Tick(float DeltaTime)
 
 void AEnemyManager::StartNextWave()
 {
-	if (CurrentWaveIndex < Waves.Num())
+	if (CurrentWaveIndex < WaveRows.Num())
 	{
 		StartWave(CurrentWaveIndex);
 	}
@@ -43,31 +44,31 @@ void AEnemyManager::StartNextWave()
 
 void AEnemyManager::StartWave(int32 WaveIndex)
 {
-	if (!Waves.IsValidIndex(WaveIndex)) return;
+	if (!WaveRows.IsValidIndex(WaveIndex)) return;
 	
 	CurrentWaveIndex = WaveIndex;
-	const FEnemyWave& wave = Waves[WaveIndex];
+	const FEnemyWave* wave = WaveRows[WaveIndex];
 	
-	if (wave.DelayBeforeWave > 0.f)
+	if (wave->DelayBeforeWave > 0.f)
 	{
 		// 딜레이 후 스폰
 		GetWorldTimerManager().SetTimer(
 			WaveDelayTimerHandle,
 			[this, WaveIndex]()
 			{
-				if (Waves.IsValidIndex(WaveIndex))
+				if (WaveRows.IsValidIndex(WaveIndex))
 				{
 					OnWaveStarted.Broadcast(WaveIndex);
-					SpawnWaveEnemies(Waves[WaveIndex]);
+					SpawnWaveEnemies(*WaveRows[WaveIndex]);
 				}
 			},
-			wave.DelayBeforeWave,
+			wave->DelayBeforeWave,
 			false);
 	}
 	else
 	{
 		OnWaveStarted.Broadcast(WaveIndex);
-		SpawnWaveEnemies(wave);
+		SpawnWaveEnemies(*wave);
 	}
 }
 
@@ -94,7 +95,7 @@ void AEnemyManager::OnEnemyDied(AEnemyBase* Enemy)
 		OnWaveCleared.Broadcast(CurrentWaveIndex);
 		CurrentWaveIndex++;
 		
-		if (CurrentWaveIndex >= Waves.Num())
+		if (CurrentWaveIndex >= WaveRows.Num())
 		{
 			// 전체 웨이브 클리어
 			OnAllEnemiesDefeated.Broadcast();
@@ -107,14 +108,28 @@ void AEnemyManager::OnEnemyDied(AEnemyBase* Enemy)
 	}
 }
 
+void AEnemyManager::LoadWaveRows()
+{
+	WaveRows.Empty();
+	
+	if (!WaveDataTable) return;
+	
+	TArray<FEnemyWave*> rows;
+	WaveDataTable->GetAllRows<FEnemyWave>(TEXT("EnemyManager"), rows);
+	
+	// Row 이름 순서대로 들어오므로 그대로 사용
+	// (DataTable에서 Row 이름을 Wave_00, Wave_01... 으로 지으면 순서 보장)
+	WaveRows = rows;
+}
+
 void AEnemyManager::InitPool()
 {
 	// 웨이브에 등장하는 모든 클래스에 대해 풀 미리 생성
 	TSet<TSubclassOf<AEnemyBase>> UniqueClasses;
 	
-	for (const FEnemyWave& wave : Waves)
+	for (const FEnemyWave* wave : WaveRows)
 	{
-		for (const FEnemyWaveEntry& entry : wave.Entries)
+		for (const FEnemyWaveEntry& entry : wave->Entries)
 		{
 			if (entry.EnemyClass)
 			{
