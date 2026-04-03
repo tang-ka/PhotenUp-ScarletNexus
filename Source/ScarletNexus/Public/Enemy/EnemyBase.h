@@ -84,6 +84,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="AI")
 	TObjectPtr<class UStateTree> EnemyStateTree;
 	
+	// 소속 EnemyManager
+	UPROPERTY()
+	TObjectPtr<class AEnemyManager> OwningManager;
+	
 	// HP 비율 (0~1) : 체력바 위젯 바인딩용
 	UFUNCTION(BlueprintCallable, Category="Status")
 	float GetHPRatio() const;
