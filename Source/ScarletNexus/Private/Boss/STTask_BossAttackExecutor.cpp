@@ -769,16 +769,27 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickElectricOrbs(
     		{
     			Data.OOLaunchTimer = 0.f;
 
-    			const FVector BossLoc = Boss->GetActorLocation();
-    			const FVector FwdDir = Boss->GetActorForwardVector();
-    			const float ForwardOffset = 200.f;
-    			const float BaseHeight = 30.f;
+    			FVector HandLoc = Data.OOSpawnOrigin;
+    			if (const USkeletalMeshComponent* BossMesh = Boss->GetMesh())
+    			{
+    				HandLoc = BossMesh->GetSocketLocation(FName("LeftHand"));
+    			}
+    			const FVector FwdDir = Data.OOSpawnForward;
+    			const FVector RightDir = FVector(-FwdDir.Y, FwdDir.X, 0.f);
+    			const float ForwardOffset = 100.f;  // 손 앞 100cm
+    			const float BaseHeight = 0.f;       // 손 높이 기준이니까 0
+    			const float HorizontalSpacing = 80.f;
 
     			const float ZOffset = (Data.OOLaunchedCount % 2 == 0)
 					? BaseHeight + OO_ZigZagHeight * 0.5f
 					: BaseHeight - OO_ZigZagHeight * 0.5f;
 
-    			const FVector OrbPos = BossLoc + FwdDir * ForwardOffset + FVector(0, 0, ZOffset);
+    			const float HalfCount = (OO_OrbCount - 1) * 0.5f;
+    			const float HorizontalOffset = (Data.OOLaunchedCount - HalfCount) * HorizontalSpacing;
+
+    			const FVector OrbPos = HandLoc + FwdDir * ForwardOffset 
+					+ RightDir * HorizontalOffset 
+					+ FVector(0, 0, ZOffset);
 
     			Data.OOOrbPositions.Add(OrbPos);
     			Data.OOOrbDirections.Add(FVector::ZeroVector);
@@ -791,7 +802,7 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickElectricOrbs(
     		// 생성된 전류구 보스 앞에서 표시만
     		for (int32 i = 0; i < Data.OOOrbPositions.Num(); i++)
     		{
-    			DrawDebugSphere(Boss->GetWorld(), Data.OOOrbPositions[i], 50.f,
+    			DrawDebugSphere(Boss->GetWorld(), Data.OOOrbPositions[i], 30.f,
 					12, FColor::Purple, false, 0.1f, 0, 3.f);
     		}
 
@@ -826,7 +837,8 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickElectricOrbs(
             // 추적
             if (const ACharacter* Player = UGameplayStatics::GetPlayerCharacter(Boss->GetWorld(), 0))
             {
-                FVector DesiredDir = (Player->GetActorLocation() - Data.OOOrbPositions[i]).GetSafeNormal2D();
+            	FVector TargetLoc = Player->GetActorLocation() + FVector(0, 0, 50.f);
+            	FVector DesiredDir = (TargetLoc - Data.OOOrbPositions[i]).GetSafeNormal();
                 Data.OOOrbDirections[i] = FMath::VInterpNormalRotationTo(
                     Data.OOOrbDirections[i], DesiredDir, DeltaTime, OO_TrackingStrength);
             }

@@ -215,7 +215,7 @@ struct SCARLETNEXUS_API FSTTask_BossAttackExecutor : public FStateTreeTaskCommon
 	UPROPERTY(EditAnywhere, Category = "ElectricOrbs") int32 OO_OrbCount = 5;
 	UPROPERTY(EditAnywhere, Category = "ElectricOrbs") float OO_ChargeDuration = 0.6f;
 	UPROPERTY(EditAnywhere, Category = "ElectricOrbs") float OO_LaunchInterval = 0.15f;
-	UPROPERTY(EditAnywhere, Category = "ElectricOrbs") float OO_OrbSpeed = 200.f;
+	UPROPERTY(EditAnywhere, Category = "ElectricOrbs") float OO_OrbSpeed = 800.f;
 	UPROPERTY(EditAnywhere, Category = "ElectricOrbs") float OO_OrbMaxDistance = 2000.f;
 	UPROPERTY(EditAnywhere, Category = "ElectricOrbs") float OO_Damage = 100.f;
 	UPROPERTY(EditAnywhere, Category = "ElectricOrbs") float OO_OrbRadius = 20.f;
