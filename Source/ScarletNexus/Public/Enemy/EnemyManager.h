@@ -23,7 +23,7 @@ struct FEnemyWaveEntry
 };
 
 USTRUCT(BlueprintType)
-struct FEnemyWave
+struct FEnemyWave : public FTableRowBase
 {
 	GENERATED_BODY()
 	
@@ -56,7 +56,7 @@ public:
 	
 	// ** 웨이브 설정
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Wave")
-	TArray<FEnemyWave> Waves;
+	TObjectPtr<UDataTable> WaveDataTable;
 	
 	// 스폰 포인트 (월드에 배치된 Actor들)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Wave")
@@ -65,6 +65,15 @@ public:
 	// 자동으로 첫 웨이브 시작
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Wave")
 	bool bAutoStartFirstWave = true;
+	
+	// ** 스폰 설정
+	// Manager 위치 기준 스폰 반경
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Spawn")
+	float SpawnRadius = 800.f;
+	
+	// NavMesh 위에 스폰 시도
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Spawn")
+	bool bSnapToNavMesh = true;
 	
 	// ** 풀링 설정
 	// 클래스별 풀 초기 크기
@@ -86,7 +95,7 @@ public:
 	
 	// 전체 웨이브 완료 되었는지 체크
 	UFUNCTION(BlueprintCallable, Category="Wave")
-	bool IsAllWavesCleared() const { return CurrentWaveIndex >= Waves.Num(); }
+	bool IsAllWavesCleared() const { return CurrentWaveIndex >= WaveRows.Num(); }
 	
 	// ** 활성 적 추적
 	UFUNCTION(BlueprintCallable, Category="Tracking")
@@ -110,6 +119,10 @@ public:
 	FOnWaveCleared OnWaveCleared;
 	
 private:
+	// ** DataTable에서 읽은 Row 포인터들
+	TArray<FEnemyWave*> WaveRows;
+	void LoadWaveRows();
+	
 	// ** 풀링
 	// 클래스별 비활성 적 풀
 	TMap<TSubclassOf<AEnemyBase>, TArray<AEnemyBase*>> EnemyPool;
