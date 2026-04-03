@@ -132,7 +132,13 @@ struct FSTTask_BossAttackExecutorInstanceData
 	TArray<FVector> OOOrbDirections;
 	UPROPERTY()
 	TArray<bool> OOOrbHit;
- 
+	UPROPERTY()
+	TArray<float> OOOrbSpawnTime;
+	UPROPERTY()
+	FVector OOSpawnOrigin = FVector::ZeroVector;
+	UPROPERTY()
+	FVector OOSpawnForward = FVector::ZeroVector;
+	
 	// 염동력 투척
 	UPROPERTY()
 	ETTPhase TTPhase = ETTPhase::Gathering;
@@ -209,7 +215,7 @@ struct SCARLETNEXUS_API FSTTask_BossAttackExecutor : public FStateTreeTaskCommon
 	UPROPERTY(EditAnywhere, Category = "ElectricOrbs") int32 OO_OrbCount = 5;
 	UPROPERTY(EditAnywhere, Category = "ElectricOrbs") float OO_ChargeDuration = 0.6f;
 	UPROPERTY(EditAnywhere, Category = "ElectricOrbs") float OO_LaunchInterval = 0.15f;
-	UPROPERTY(EditAnywhere, Category = "ElectricOrbs") float OO_OrbSpeed = 200.f;
+	UPROPERTY(EditAnywhere, Category = "ElectricOrbs") float OO_OrbSpeed = 800.f;
 	UPROPERTY(EditAnywhere, Category = "ElectricOrbs") float OO_OrbMaxDistance = 2000.f;
 	UPROPERTY(EditAnywhere, Category = "ElectricOrbs") float OO_Damage = 100.f;
 	UPROPERTY(EditAnywhere, Category = "ElectricOrbs") float OO_OrbRadius = 20.f;
@@ -219,19 +225,10 @@ struct SCARLETNEXUS_API FSTTask_BossAttackExecutor : public FStateTreeTaskCommon
 	UPROPERTY(EditAnywhere, Category = "ElectricOrbs") float OO_TrackingStrength = 90.0f;
 	// 전류구 시간 최대 5초
 	UPROPERTY(EditAnywhere, Category = "ElectricOrbs") float OO_MaxLifetime = 4.f;
+	UPROPERTY(EditAnywhere, Category = "ElectricOrbs") float OO_SpawnInterval = 0.5f;
+	UPROPERTY(EditAnywhere, Category = "ElectricOrbs") float OO_ZigZagHeight = 80.f;
  
-	// // 염동력 투척 (Phase2_Enhanced+)
-	// // 주변 사물을 들어올려 플레이어에게 투척
-	// UPROPERTY(EditAnywhere, Category = "TelekinesisThrow") int32 TT_DebrisCount = 3;
-	// UPROPERTY(EditAnywhere, Category = "TelekinesisThrow") float TT_GatherDuration = 0.8f;
-	// UPROPERTY(EditAnywhere, Category = "TelekinesisThrow") float TT_AimDuration = 0.3f;
-	// UPROPERTY(EditAnywhere, Category = "TelekinesisThrow") float TT_ThrowInterval = 0.2f;
-	// UPROPERTY(EditAnywhere, Category = "TelekinesisThrow") float TT_ThrowSpeed = 3000.f;
-	// UPROPERTY(EditAnywhere, Category = "TelekinesisThrow") float TT_MaxDistance = 2000.f;
-	// UPROPERTY(EditAnywhere, Category = "TelekinesisThrow") float TT_Damage = 160.f;
-	// UPROPERTY(EditAnywhere, Category = "TelekinesisThrow") float TT_HitRadius = 120.f;
-	// UPROPERTY(EditAnywhere, Category = "TelekinesisThrow") float TT_KnockbackForce = 900.f;
-	// UPROPERTY(EditAnywhere, Category = "TelekinesisThrow") float TT_LiftHeight = 300.f;
+	
  
 private:
 	EActiveAttackType SelectAttack(const ACharacter* Boss) const;

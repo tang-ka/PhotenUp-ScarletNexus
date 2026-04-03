@@ -29,9 +29,7 @@ void FSTEval_BossPhase::Tick(FStateTreeExecutionContext& Context, const float De
 		return;
 	}
  
-	// -------------------------------------------------------
 	// 0. 사망 체크 — Evaluator에서 보내야 확실히 처리됨
-	// -------------------------------------------------------
 	if (DamageableHelpers::IsDead(BossActor))
 	{
 		if (!InstanceData.bDeathEventSent)
@@ -43,18 +41,15 @@ void FSTEval_BossPhase::Tick(FStateTreeExecutionContext& Context, const float De
 		return;
 	}
  
-	// -------------------------------------------------------
+	
 	// 1. 보스 상태 조회
-	// -------------------------------------------------------
 	// HP는 IDamageable로 조회
 	if (BossActor->GetClass()->ImplementsInterface(UDamageable::StaticClass()))
 	{
 		InstanceData.HPRatio = IDamageable::Execute_GetHPPercent(BossActor);
 	}
  
-	// -------------------------------------------------------
 	// 2. 플레이어 거리 및 시야 계산
-	// -------------------------------------------------------
 	if (const ACharacter* PlayerChar = UGameplayStatics::GetPlayerCharacter(BossActor->GetWorld(), 0))
 	{
 		InstanceData.DistanceToPlayer = FVector::Dist(
@@ -69,9 +64,7 @@ void FSTEval_BossPhase::Tick(FStateTreeExecutionContext& Context, const float De
 		InstanceData.bPlayerInSight = (DotProduct > 0.5f); // cos(60°) = 0.5
 	}
  
-	// -------------------------------------------------------
 	// 3. 페이즈 전환 판정
-	// -------------------------------------------------------
 	const EBossPhase NewPhase = DeterminePhase(InstanceData.HPRatio);
 	if (NewPhase != InstanceData.CurrentPhase)
 	{
@@ -80,9 +73,7 @@ void FSTEval_BossPhase::Tick(FStateTreeExecutionContext& Context, const float De
 		// 실제로는 페이즈 전환 몽타주 재생 후 false로 돌려야 함
 	}
  
-	// -------------------------------------------------------
 	// 4. 공격 타이머 갱신
-	// -------------------------------------------------------
 	InstanceData.TimeSinceLastAttack += DeltaTime;
 }
  

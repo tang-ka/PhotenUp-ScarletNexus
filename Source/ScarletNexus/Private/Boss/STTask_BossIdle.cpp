@@ -9,6 +9,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "NavigationSystem.h"
+#include "Boss/BossCharacterBase.h"
  
 
 // EnterState
@@ -53,9 +54,9 @@ EStateTreeRunStatus FSTTask_BossIdle::EnterState(
 	return EStateTreeRunStatus::Running;
 }
  
-// ============================================================
+
 // Tick
-// ============================================================
+
 EStateTreeRunStatus FSTTask_BossIdle::Tick(
 	FStateTreeExecutionContext& Context,
 	const float DeltaTime) const
@@ -77,9 +78,9 @@ EStateTreeRunStatus FSTTask_BossIdle::Tick(
 	InstanceData.EvadeCooldownTimer -= DeltaTime;
 	InstanceData.PatrolCooldownTimer -= DeltaTime;
  
-	// ══════════════════════════════════════
-	// 1) 회피 텔레포트 진행 중
-	// ══════════════════════════════════════
+	
+	// 1. 회피 텔레포트 진행 중
+	
 	if (InstanceData.bIsEvadeTeleporting)
 	{
 		InstanceData.EvadeTeleportTimer += DeltaTime;
@@ -97,6 +98,13 @@ EStateTreeRunStatus FSTTask_BossIdle::Tick(
 					- InstanceData.EvadeTeleportTarget).GetSafeNormal();
 				BossChar->SetActorRotation(FRotator(0.f, Dir.Rotation().Yaw, 0.f));
 			}
+			
+			// 나타나는 몽타주 재생
+			if (ABossCharacterBase* BossBase = Cast<ABossCharacterBase>(BossChar))
+			{
+				if (BossBase->TeleportAppearMontage)
+					BossChar->PlayAnimMontage(BossBase->TeleportAppearMontage);
+			}
  
 			InstanceData.bIsEvadeTeleporting = false;
 			InstanceData.EvadeCooldownTimer = EvadeCooldown;
@@ -104,9 +112,9 @@ EStateTreeRunStatus FSTTask_BossIdle::Tick(
 		return EStateTreeRunStatus::Running;
 	}
  
-	// ══════════════════════════════════════
-	// 2) 순찰 텔레포트 진행 중
-	// ══════════════════════════════════════
+	
+	// 2. 순찰 텔레포트 진행 중
+	
 	if (InstanceData.bIsPatrolTeleporting)
 	{
 		InstanceData.PatrolTeleportTimer += DeltaTime;
@@ -124,6 +132,13 @@ EStateTreeRunStatus FSTTask_BossIdle::Tick(
 					- InstanceData.PatrolTeleportTarget).GetSafeNormal();
 				BossChar->SetActorRotation(FRotator(0.f, Dir.Rotation().Yaw, 0.f));
 			}
+			
+			// 나타나는 몽타주 재생
+			if (ABossCharacterBase* BossBase = Cast<ABossCharacterBase>(BossChar))
+			{
+				if (BossBase->TeleportAppearMontage)
+					BossChar->PlayAnimMontage(BossBase->TeleportAppearMontage);
+			}
  
 			InstanceData.bIsPatrolTeleporting = false;
 			InstanceData.PatrolCooldownTimer = FMath::FRandRange(
@@ -135,9 +150,9 @@ EStateTreeRunStatus FSTTask_BossIdle::Tick(
 		return EStateTreeRunStatus::Running;
 	}
  
-	// ══════════════════════════════════════
-	// 3) 대기 시간 체크
-	// ══════════════════════════════════════
+	
+	// 3. 대기 시간 체크
+	
 	InstanceData.ElapsedTime += DeltaTime;
 	if (InstanceData.ElapsedTime >= InstanceData.WaitDuration)
 	{
@@ -155,9 +170,9 @@ EStateTreeRunStatus FSTTask_BossIdle::Tick(
 	const FVector PlayerLocation = PlayerChar->GetActorLocation();
 	const float Distance = FVector::Dist(BossLocation, PlayerLocation);
  
-	// ══════════════════════════════════════
-	// 4) 회피 텔레포트 발동 (플레이어가 너무 가까울 때)
-	// ══════════════════════════════════════
+	
+	// 4. 회피 텔레포트 발동 (플레이어가 너무 가까울 때)
+	
 	if (Distance < EvadeTriggerDistance && InstanceData.EvadeCooldownTimer <= 0.f)
 	{
 		FVector BackDir = (BossLocation - PlayerLocation).GetSafeNormal();
@@ -176,6 +191,13 @@ EStateTreeRunStatus FSTTask_BossIdle::Tick(
 		InstanceData.bIsEvadeTeleporting = true;
 		InstanceData.EvadeTeleportTimer = 0.f;
 		InstanceData.EvadeTeleportTarget = TeleportTarget;
+		
+		// 사라지는 몽타주
+		if (ABossCharacterBase* BossBase = Cast<ABossCharacterBase>(BossChar))
+		{
+			if (BossBase->TeleportVanishMontage)
+				BossBase->PlayAnimMontage(BossBase->TeleportVanishMontage);
+		}
  
 		BossChar->SetActorHiddenInGame(true);
 		BossChar->SetActorEnableCollision(false);
@@ -184,9 +206,9 @@ EStateTreeRunStatus FSTTask_BossIdle::Tick(
 		return EStateTreeRunStatus::Running;
 	}
  
-	// ══════════════════════════════════════
-	// 5) 순찰 텔레포트 발동 (쿨다운 끝나면 랜덤 위치로)
-	// ══════════════════════════════════════
+	
+	// 5. 순찰 텔레포트 발동 (쿨다운 끝나면 랜덤 위치로)
+	
 	if (InstanceData.PatrolCooldownTimer <= 0.f)
 	{
 		const float RandAngle = FMath::FRandRange(0.f, 360.f);
@@ -217,6 +239,13 @@ EStateTreeRunStatus FSTTask_BossIdle::Tick(
 		InstanceData.bIsPatrolTeleporting = true;
 		InstanceData.PatrolTeleportTimer = 0.f;
 		InstanceData.PatrolTeleportTarget = TeleportTarget;
+		
+		// 사라지는 몽타주 재생
+		if (ABossCharacterBase* BossBase = Cast<ABossCharacterBase>(BossChar))
+		{
+			if (BossBase->TeleportVanishMontage)
+				BossChar->PlayAnimMontage(BossBase->TeleportVanishMontage);
+		}
  
 		BossChar->SetActorHiddenInGame(true);
 		BossChar->SetActorEnableCollision(false);
@@ -224,9 +253,9 @@ EStateTreeRunStatus FSTTask_BossIdle::Tick(
 		return EStateTreeRunStatus::Running;
 	}
  
-	// ══════════════════════════════════════
-	// 6) 텔레포트 사이 — 플레이어를 바라보며 걷기
-	// ══════════════════════════════════════
+	
+	// 6. 텔레포트 사이 — 플레이어를 바라보며 걷기
+	
 	const FRotator LookAtRotation = UKismetMathLibrary::FindLookAtRotation(BossLocation, PlayerLocation);
 	const FRotator TargetRotation = FRotator(0.f, LookAtRotation.Yaw, 0.f);
 	const FRotator NewRotation = FMath::RInterpConstantTo(
@@ -259,9 +288,9 @@ EStateTreeRunStatus FSTTask_BossIdle::Tick(
 	return EStateTreeRunStatus::Running;
 }
  
-// ============================================================
+
 // ExitState
-// ============================================================
+
 void FSTTask_BossIdle::ExitState(
 	FStateTreeExecutionContext& Context,
 	const FStateTreeTransitionResult& Transition) const
