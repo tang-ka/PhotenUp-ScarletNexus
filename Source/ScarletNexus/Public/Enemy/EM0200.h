@@ -14,4 +14,6 @@ class SCARLETNEXUS_API AEM0200 : public AEnemyBase
 {
 	GENERATED_BODY()
 
+protected:
+	virtual void BeginPlay();
 };
