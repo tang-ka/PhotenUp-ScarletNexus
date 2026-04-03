@@ -65,6 +65,24 @@ public:
  
 	UPROPERTY(BlueprintAssignable, Category = "Boss|Events")
 	FOnBossHPChanged OnHPChanged;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Boss|Teleport")
+	TObjectPtr<UAnimMontage> TeleportVanishMontage;
+	UPROPERTY(EditDefaultsOnly, Category = "Boss|Teleport")
+	TObjectPtr<UAnimMontage> TeleportAppearMontage;
+	
+	// 머티리얼
+	void StartDissolve(float Duration, bool bDissolveOut);
+	
+private:
+	UPROPERTY()
+	TArray<TObjectPtr<UMaterialInstanceDynamic>> DissolveMIDs;
+    
+	float DissolveTimer = 0.f;
+	float DissolveDuration = 0.f;
+	bool bDissolving = false;
+	bool bDissolveOut = true;  // true = 사라짐, false = 나타남
+
  
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Boss|Config")
@@ -94,6 +112,21 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Boss|Combat")
 	TObjectPtr<UBossAttackCollisionComponent> LeftHandCollision;
+	
+	// 히트 리액션 몽타주
+	UPROPERTY(EditDefaultsOnly, Category = "Boss|HitReaction")
+	TObjectPtr<UAnimMontage> HitReaction_Front;
+	UPROPERTY(EditDefaultsOnly, Category = "Boss|HitReaction")
+	TObjectPtr<UAnimMontage> HitReaction_Back;
+	UPROPERTY(EditDefaultsOnly, Category = "Boss|HitReaction")
+	TObjectPtr<UAnimMontage> HitReaction_Left;
+	UPROPERTY(EditDefaultsOnly, Category = "Boss|HitReaction")
+	TObjectPtr<UAnimMontage> HitReaction_Right;
+	
+	
+	
+	
+	void PlayDirectionalHitReaction(AActor* DamageCauser);
  
 	void CheckPhaseTransition();
  
