@@ -6,6 +6,7 @@
 #include "Components/CapsuleComponent.h"
 #include "Components/WidgetComponent.h"
 #include "Enemy/EnemyAIController.h"
+#include "Enemy/EnemyManager.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 // Sets default values
@@ -127,12 +128,20 @@ void AEnemyBase::Die()
 		EnableRagdoll();
 	}
 	
-	// 타이머 종료 후 Destroy
-	GetWorldTimerManager().SetTimer(
-		DestroyTimerHandle,
-		[this]() {Destroy();}, 
-		DestroyDelay,
-		false);
+	// EnemyManager에 사망 통보
+	if (OwningManager)
+	{
+		OwningManager->OnEnemyDied(this);
+	}
+	else
+	{
+		// 타이머 종료 후 Destroy
+		GetWorldTimerManager().SetTimer(
+			DestroyTimerHandle,
+			[this]() {Destroy();}, 
+			DestroyDelay,
+			false);
+	}
 }
 
 void AEnemyBase::EnableRagdoll()

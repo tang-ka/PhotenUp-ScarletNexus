@@ -30,13 +30,9 @@ private:
 	UPROPERTY(VisibleAnywhere, Category="AI")
 	TObjectPtr<class UAISenseConfig_Sight> SightConfig;
 	
-	// State Tree 콤포넌트 (Pawn에 붙이지 않고 Controller에서 관리)
+	// State Tree 콤포넌트
 	UPROPERTY(VisibleAnywhere, Category="AI")
 	TObjectPtr<class UStateTreeComponent> StateTreeComp;
-	
-	// 에디터에서 할당할 StateTree 에셋
-	UPROPERTY(EditDefaultsOnly, Category="AI")
-	TObjectPtr<class UStateTree> EnemyStateTree;
 	
 	// 감지 이벤트 콜백
 	UFUNCTION()

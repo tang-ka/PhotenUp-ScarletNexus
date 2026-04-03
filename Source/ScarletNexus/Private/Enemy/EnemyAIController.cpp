@@ -4,6 +4,7 @@
 #include "Enemy/EnemyAIController.h"
 
 #include "Components/StateTreeComponent.h"
+#include "Enemy/EnemyBase.h"
 #include "Perception/AIPerceptionComponent.h"
 #include "Perception/AIPerceptionTypes.h"
 #include "Perception/AISenseConfig_Sight.h"
@@ -42,10 +43,14 @@ void AEnemyAIController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
 	
-	if (EnemyStateTree && StateTreeComp)
+	// Pawn(EnemyBase)에서 StateTree 에셋 가져오기
+	if (AEnemyBase* enemy = Cast<AEnemyBase>(InPawn))
 	{
-		StateTreeComp->SetStateTree(EnemyStateTree);
-		StateTreeComp->StartLogic();
+		if (enemy->EnemyStateTree && StateTreeComp)
+		{
+			StateTreeComp->SetStateTree(enemy->EnemyStateTree);
+			StateTreeComp->StartLogic();
+		}
 	}
 }
 
