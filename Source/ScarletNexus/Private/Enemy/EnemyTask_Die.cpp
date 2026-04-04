@@ -8,7 +8,7 @@
 #include "Enemy/EnemyAnimInstance.h"
 #include "Enemy/EnemyBase.h"
 
-static AEnemyBase* GetEnemyFromContext(FStateTreeExecutionContext& Context)
+static AEnemyBase* GetEnemyFromContext_Die(FStateTreeExecutionContext& Context)
 {
 	if (AAIController* aic = Cast<AAIController>(Context.GetOwner()))
 	{
@@ -22,7 +22,7 @@ EStateTreeRunStatus FEnemyTask_Die::EnterState(FStateTreeExecutionContext& Conte
 {
 	auto& data = Context.GetInstanceData(*this);
 	
-	AEnemyBase* enemy = GetEnemyFromContext(Context);
+	AEnemyBase* enemy = GetEnemyFromContext_Die(Context);
 	if (!enemy) return EStateTreeRunStatus::Failed;
 	
 	if (!data.bDieTriggered)
