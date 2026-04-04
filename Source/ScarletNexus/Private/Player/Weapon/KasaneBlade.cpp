@@ -33,22 +33,22 @@ void AKasaneBlade::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	switch (CurState)
-	{
-	case EBladeState::Idle:
-		TickIdle(DeltaTime);
-		break;
-	case EBladeState::Attack:
-		TickAttack(DeltaTime);
-		break;
-	case EBladeState::Return:
-		TickReturn(DeltaTime);
-		break;
-	case EBladeState::Inactive:
-	default:
-		break;
-	}
-
+	// switch (CurState)
+	// {
+	// case EBladeState::Idle:
+	// 	TickIdle(DeltaTime);
+	// 	break;
+	// case EBladeState::Attack:
+	// 	TickAttack(DeltaTime);
+	// 	break;
+	// case EBladeState::Return:
+	// 	TickReturn(DeltaTime);
+	// 	break;
+	// case EBladeState::Inactive:
+	// default:
+	// 	break;
+	// }
+	//
 	// =============================================
 	// 1. 이동 방향을 바라봄 (접선 방향)
 	// =============================================
