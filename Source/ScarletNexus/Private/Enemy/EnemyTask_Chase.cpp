@@ -15,11 +15,8 @@ EStateTreeRunStatus FEnemyTask_Chase::EnterState(FStateTreeExecutionContext& Con
 	if (!data.ChaseTarget) return EStateTreeRunStatus::Failed;
 	
 	// owner -> pawn -> AIController 경로로 MoveTo 요청
-	APawn* pawn = Cast<APawn>(Context.GetOwner());
-	if (!pawn) return EStateTreeRunStatus::Failed;
-	
-	AAIController* aic = Cast<AAIController>(pawn->GetController());
-	if (!aic) return EStateTreeRunStatus::Failed;
+	AAIController* aic = Cast<AAIController>(Context.GetOwner());
+	if (!aic || !aic->GetPawn()) return EStateTreeRunStatus::Failed;
 	
 	aic->MoveToActor(data.ChaseTarget, data.AcceptanceRadius);
 	
@@ -30,12 +27,12 @@ EStateTreeRunStatus FEnemyTask_Chase::Tick(FStateTreeExecutionContext& Context, 
 {
 	auto& data = Context.GetInstanceData(*this);
 	if (!data.ChaseTarget) return EStateTreeRunStatus::Failed;
-	
-	APawn* pawn = Cast<APawn>(Context.GetOwner());
-	if (!pawn) return EStateTreeRunStatus::Failed;
-	
-	AAIController* aic = Cast<AAIController>(pawn->GetController());
+
+	AAIController* aic = Cast<AAIController>(Context.GetOwner());
 	if (!aic) return EStateTreeRunStatus::Failed;
+	
+	APawn* pawn = aic->GetPawn();
+	if (!pawn) return EStateTreeRunStatus::Failed;
 	
 	// AcceptanceRadius 이내에 도달했으면 성공
 	const float dist = FVector::Dist(pawn->GetActorLocation(), data.ChaseTarget->GetActorLocation());

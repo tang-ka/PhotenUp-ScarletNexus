@@ -10,6 +10,11 @@
 void AEM0200::BeginPlay()
 {
 	Super::BeginPlay();
+
+	if (HealthBarComp)
+	{
+		HealthBarComp->AddRelativeLocation(FVector(0, 0, 200));
+	}
 	
 	UBossOverheadWidget* ohWidget = Cast<UBossOverheadWidget>(HealthBarComp->GetUserWidgetObject());
 	if (ohWidget)
