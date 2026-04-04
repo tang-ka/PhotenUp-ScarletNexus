@@ -4,6 +4,7 @@
 #include "Enemy/EnemyManager.h"
 
 #include "AudioMixerBlueprintLibrary.h"
+#include "ScarletNexus.h"
 #include "Chaos/ChaosPerfTest.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/WidgetComponent.h"
@@ -269,19 +270,15 @@ void AEnemyManager::DeactivateEnemy(AEnemyBase* Enemy)
 
 FTransform AEnemyManager::GetRandomSpawnTransform() const
 {
-	if (SpawnPoints.Num() == 0)
-	{
-		// 스폰 포인트 없으면 매니저 위치 사용
-		return GetActorTransform();
-	}
-	
-	const int32 idx = FMath::RandRange(0, SpawnPoints.Num() - 1);
-	if (SpawnPoints[idx])
-	{
-		return SpawnPoints[idx]->GetActorTransform();
-	}
-	
-	return GetActorTransform();
+	const FVector origin = GetActorLocation();
+
+	const float angle = FMath::FRandRange(0.f, 2.f * PI);
+	const float dist = FMath::FRandRange(SpawnRadius * 0.3f, SpawnRadius);
+	FVector location = origin + FVector(FMath::Cos(angle) * dist, FMath::Sin(angle) * dist, 0.f);
+
+	FRotator rotation = FRotator(0.f, FMath::FRandRange(0.f, 360.f), 0.f);
+
+	return FTransform(rotation, location);
 }
 
 void AEnemyManager::SpawnWaveEnemies(const FEnemyWave& Wave)

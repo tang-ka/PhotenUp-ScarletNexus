@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "EnemyBase.h"
 #include "StateTreeTaskBase.h"
 #include "EnemyTask_Stun.generated.h"
 
@@ -27,7 +28,7 @@ struct FEnemyTask_Stun : public FStateTreeTaskCommonBase
 	{
 		return FInstanceDataType::StaticStruct();
 	}
-	
+
 	virtual EStateTreeRunStatus EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const override;
 	virtual EStateTreeRunStatus Tick(FStateTreeExecutionContext& Context, const float DeltaTime) const override;
 	virtual void ExitState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const override;
