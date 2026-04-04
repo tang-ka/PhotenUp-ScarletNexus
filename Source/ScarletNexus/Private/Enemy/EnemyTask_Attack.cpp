@@ -11,7 +11,7 @@
 #include "Player/PlayerCharacterBase.h"
 
 // Owner(Controller) -> EnemyBase 헬퍼
-static AEnemyBase* GetEnemyFromContext(FStateTreeExecutionContext& Context)
+static AEnemyBase* GetEnemyFromContext_Attack(FStateTreeExecutionContext& Context)
 {
 	if (AAIController* aic = Cast<AAIController>(Context.GetOwner()))
 	{
@@ -30,7 +30,7 @@ EStateTreeRunStatus FEnemyTask_Attack::EnterState(FStateTreeExecutionContext& Co
 	if (!data.Target) return EStateTreeRunStatus::Failed;
 
 	// 공격 몽타주 재생
-	AEnemyBase* enemy = GetEnemyFromContext(Context);
+	AEnemyBase* enemy = GetEnemyFromContext_Attack(Context);
 	if (enemy)
 	{
 		if (UEnemyAnimInstance* animInst = Cast<UEnemyAnimInstance>(enemy->GetMesh()->GetAnimInstance()))
@@ -45,7 +45,7 @@ EStateTreeRunStatus FEnemyTask_Attack::EnterState(FStateTreeExecutionContext& Co
 EStateTreeRunStatus FEnemyTask_Attack::Tick(FStateTreeExecutionContext& Context, const float DeltaTime) const
 {
 	auto& data = Context.GetInstanceData(*this);
-	AEnemyBase* enemy = GetEnemyFromContext(Context);
+	AEnemyBase* enemy = GetEnemyFromContext_Attack(Context);
 	if (!enemy || !data.Target) return EStateTreeRunStatus::Failed;
 	
 	data.ElapsedTime += DeltaTime;

@@ -9,7 +9,7 @@
 #include "Enemy/EnemyBase.h"
 
 // Owner(Controller) -> EnemyBase 헬퍼
-static AEnemyBase* GetEnemyFromContext(FStateTreeExecutionContext& Context)
+static AEnemyBase* GetEnemyFromContext_Stun(FStateTreeExecutionContext& Context)
 {
 	if (AAIController* aic = Cast<AAIController>(Context.GetOwner()))
 	{
@@ -24,7 +24,7 @@ EStateTreeRunStatus FEnemyTask_Stun::EnterState(FStateTreeExecutionContext& Cont
 	auto data = Context.GetInstanceData(*this);
 	data.ElapsedTime = 0.f;
 	
-	AEnemyBase* enemy = GetEnemyFromContext(Context);
+	AEnemyBase* enemy = GetEnemyFromContext_Stun(Context);
 	if (!enemy) return EStateTreeRunStatus::Failed;
 	
 	// 이동 정지
@@ -60,7 +60,7 @@ EStateTreeRunStatus FEnemyTask_Stun::Tick(FStateTreeExecutionContext& Context, c
 
 void FEnemyTask_Stun::ExitState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const
 {
-	AEnemyBase* enemy = GetEnemyFromContext(Context);
+	AEnemyBase* enemy = GetEnemyFromContext_Stun(Context);
 	if (!enemy) return;
 	
 	// 스턴 해제
