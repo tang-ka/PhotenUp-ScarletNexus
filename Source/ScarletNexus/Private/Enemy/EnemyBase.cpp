@@ -26,6 +26,18 @@ AEnemyBase::AEnemyBase()
 	HealthBarComp->SetWidgetSpace(EWidgetSpace::Screen);
 	HealthBarComp->SetDrawSize(FVector2D(120.f, 15.f));
 	HealthBarComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	// 개체 이격
+	if (UCharacterMovementComponent* moveComp = GetCharacterMovement())
+	{
+		moveComp->bUseRVOAvoidance = true;
+		moveComp->AvoidanceConsiderationRadius = 500.f;
+		moveComp->AvoidanceWeight = 0.5f;
+	}
+
+	// 콜리전 프리셋 설정
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	GetCapsuleComponent()->SetCollisionProfileName(TEXT("Enemy"));
 }
 
 // Called when the game starts or when spawned
