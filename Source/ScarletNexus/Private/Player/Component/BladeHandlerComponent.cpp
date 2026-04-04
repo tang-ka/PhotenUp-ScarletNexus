@@ -69,8 +69,9 @@ void UBladeHandlerComponent::ExecuteAttackA1()
 
 		FVector Direction = OwnerForward.RotateAngleAxis(AngleDeg, FVector::UpVector);
 		// 랜덤 높이 오프셋 추가
-		float HeightOffset = FMath::FRandRange(0.f, 20.f);
-		Origin.Z += HeightOffset;
+		// float HeightOffset = FMath::FRandRange(0.f, 4.f);
+		// Direction.Z += HeightOffset;
+		// Direction.Normalize();
 
 		BladePool[i]->ReturnIdleIndex = (i < IdleBladeCount) ? i : -1;
 		BladePool[i]->LaunchAttack(EBladeAttackPattern::A1, Origin, Direction, A1MaxDistance, A1Speed);
@@ -97,8 +98,17 @@ void UBladeHandlerComponent::SpawnBladePool()
 			SpawnParams
 		);
 
+		USkeletalMeshComponent* SkelMesh = Cast<USkeletalMeshComponent>(GetOwner()->GetComponentByClass(USkeletalMeshComponent::StaticClass()));
 		if (Blade)
 		{
+			FName BoneName = FName(*FString::Printf(TEXT("Weapon%02d"), i + 1));
+			
+			Blade->AttachToComponent(
+				SkelMesh,
+				FAttachmentTransformRules::SnapToTargetNotIncludingScale,
+				BoneName
+			);
+			
 			// 초기 상태: 비활성
 			Blade->Init(GetOwner(), i);
 			Blade->SetActive(false);
@@ -110,6 +120,7 @@ void UBladeHandlerComponent::SpawnBladePool()
 void UBladeHandlerComponent::ActivateIdleBlades()
 {	
 	int32 Count = FMath::Min(IdleBladeCount, BladePool.Num());
+	Count = BladePool.Num();
 	for (int32 i = 0; i < Count; ++i)
 	{
 		BladePool[i]->InitForIdle(Count);

@@ -50,7 +50,7 @@ void APlayerKasane::BasicAttack()
 {
 	Super::BasicAttack();
 	
-	BladeHandlerComp->ExecuteAttackA1();
+	// BladeHandlerComp->ExecuteAttackA1();
 }
 
 void APlayerKasane::PsychicAttack()
