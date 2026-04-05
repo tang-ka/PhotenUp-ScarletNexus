@@ -7,7 +7,6 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Boss/BossAttackCollisionComponent.h"
-#include "Boss/BossGhostTrailActor.h"
  
 ABossCharacterBase::ABossCharacterBase()
 {
@@ -261,24 +260,4 @@ void ABossCharacterBase::PlayDirectionalHitReaction(AActor* DamageCauser)
 	}
 }
 
-void ABossCharacterBase::SpawnGhostTrail(float Lifetime)
-{
-	if (!GhostTrailMaterial) return;
 
-	FActorSpawnParameters Params;
-	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-
-	// 보스의 현재 위치+회전으로 스폰
-	ABossGhostTrailActor* Ghost = GetWorld()->SpawnActor<ABossGhostTrailActor>(
-		ABossGhostTrailActor::StaticClass(),
-		GetActorLocation(),    // ← 여기가 핵심!
-		GetActorRotation(),    // ← 회전도!
-		Params
-	);
-
-	if (Ghost)
-	{
-		Ghost->InitGhost(GetMesh(), GhostTrailMaterial, Lifetime);
-		UE_LOG(LogTemp, Log, TEXT("[GhostTrail] 잔상 스폰! 위치: %s"), *GetActorLocation().ToString());
-	}
-}
