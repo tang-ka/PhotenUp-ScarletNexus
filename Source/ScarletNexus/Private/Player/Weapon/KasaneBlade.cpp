@@ -6,6 +6,7 @@
 #include "ScarletNexus.h"
 #include "Components/SphereComponent.h"
 #include "Interface/DamageableHelper.h"
+#include "Kismet/GameplayStatics.h"
 
 
 AKasaneBlade::AKasaneBlade()
@@ -155,6 +156,8 @@ void AKasaneBlade::BeginIdle()
 
 void AKasaneBlade::BeginAttack()
 {
+	SetActive(true);
+	GetRootComponent()->SetRelativeLocation(FVector::ZeroVector);
 }
 
 void AKasaneBlade::BeginReturn()
@@ -220,6 +223,20 @@ void AKasaneBlade::TickIdle(float DeltaTime)
 	// 보간으로 부드럽게
 	FVector NewLocation = FMath::VInterpTo(GetActorLocation(), DesiredLocation, DeltaTime, FollowInterpSpeed);
 	SetActorLocation(NewLocation);
+}
+
+void AKasaneBlade::TickAttack(float DeltaTime)
+{
+	FVector CurRelative = GetRootComponent()->GetRelativeLocation();
+	FVector NewRelative = FMath::VInterpTo(CurRelative, FVector::ZeroVector, DeltaTime, 20);
+
+	if (NewRelative.SizeSquared() < KINDA_SMALL_NUMBER)
+	{
+		SetActorRelativeLocation(FVector::ZeroVector);
+		return;
+	}
+
+	SetActorRelativeLocation(NewRelative);
 }
 
 // void AKasaneBlade::TickAttack(float DeltaTime)

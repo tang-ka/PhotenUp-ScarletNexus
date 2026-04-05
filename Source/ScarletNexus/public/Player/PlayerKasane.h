@@ -31,6 +31,10 @@ public:
 
 public:
 	UBladeHandlerComponent* GetBladeHandlerComp() const { return BladeHandlerComp; }
+	
+protected:
+	virtual void OnMontageStarted(UAnimMontage* Montage) override;
+	virtual void OnMontageEnded(UAnimMontage* Montage, bool bInterrupted) override;
 
 private:
 #pragma region Components

@@ -149,7 +149,8 @@ void APlayerCharacterBase::BeginPlay()
 	auto* AnimInstance = GetMesh()->GetAnimInstance();
 	if (AnimInstance)
 	{
-		AnimInstance->OnMontageEnded.AddDynamic(this, &APlayerCharacterBase::OnMontageEdnded);
+		AnimInstance->OnMontageStarted.AddDynamic(this, &APlayerCharacterBase::OnMontageStarted);
+		AnimInstance->OnMontageEnded.AddDynamic(this, &APlayerCharacterBase::OnMontageEnded);
 	}
 }
 
@@ -350,7 +351,7 @@ void APlayerCharacterBase::PlayAttackMontage(const UComboAttackDataAsset* Attack
 	                AttackDataAsset->MontageSectionName);
 }
 
-void APlayerCharacterBase::OnMontageEdnded(UAnimMontage* Montage, bool bInterrupted)
+void APlayerCharacterBase::OnMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
 	if (bInterrupted)
 	{

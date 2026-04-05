@@ -89,6 +89,28 @@ void UBladeHandlerComponent::SetActiveAllBladesCollision(bool bActivate)
 	}
 }
 
+void UBladeHandlerComponent::SetAttackStateAllBlades()
+{
+	for (AKasaneBlade* Blade : BladePool)
+	{
+		if (Blade)
+		{
+			Blade->ChangeBladeState(EBladeState::Attack);
+		}
+	}
+}
+
+void UBladeHandlerComponent::SetDefaultStateAllBlades()
+{
+	for (AKasaneBlade* Blade : BladePool)
+	{
+		if (Blade)
+		{
+			Blade->ChangeBladeState(Blade->GetDefaultState());
+		}
+	}
+}
+
 void UBladeHandlerComponent::SpawnBladePool()
 {
 	UWorld* World = GetWorld();
@@ -133,7 +155,6 @@ void UBladeHandlerComponent::SpawnBladePool()
 			}
 			Blade->ChangeBladeState(Blade->GetDefaultState());
 			BladePool.Add(Blade);
-			
 		}
 	}
 }

@@ -67,7 +67,7 @@ private:
 
 	void TickIdle(float DeltaTime);
 	
-	// void TickAttack(float DeltaTime);
+	void TickAttack(float DeltaTime);
 	// void TickAttackA1(float DeltaTime);
 	
 	void TickReturn(float DeltaTime);
