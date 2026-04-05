@@ -12,3 +12,7 @@ void UKasaneAnimInstance::AnimNotify_JumpEnd()
 {
 	bIsJumpEnd = true;
 }
+
+void UKasaneAnimInstance::AnimNotify_CriticalHit()
+{
+}

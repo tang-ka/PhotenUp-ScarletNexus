@@ -27,6 +27,9 @@ public:
 	
 	UFUNCTION()
 	void AnimNotify_JumpEnd();
+	
+	UFUNCTION()
+	void AnimNotify_CriticalHit();
 
 private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Animation, meta=(AllowPrivateAccess=true))

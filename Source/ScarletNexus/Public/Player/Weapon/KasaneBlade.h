@@ -11,6 +11,7 @@ class USphereComponent;
 UENUM(BlueprintType)
 enum class EBladeState : uint8
 {
+	None UMETA(DisplayName = "None"),
 	Inactive UMETA(DisplayName = "Inactive"), // 블레이드가 비활성화된 상태 (풀에서 대기 중)
 	Idle UMETA(DisplayName = "Idle"), // 블레이드가 대기 상태로 플레이어 주변에 떠 있는 상태
 	Attack UMETA(DisplayName = "Attack"), // 블레이드가 공격 중인 상태
@@ -44,8 +45,12 @@ public:
 	bool IsMoving() const;
 
 	void SetActive(bool bActivate);
+	void SetActiveCollision(bool bActivate) const;
+	void SetDefaultState(EBladeState NewDefault) { DefaultState = NewDefault; }
+	
 	void ChangeBladeState(EBladeState NewState);
 	EBladeState GetBladeState() const { return CurState; }
+	EBladeState GetDefaultState() const { return DefaultState; }
 
 	void Init(AActor* InOwner, int32 Index);
 	void InitForIdle(int32 InIdleBladeCount);
@@ -53,18 +58,17 @@ public:
 	void LaunchAttack(EBladeAttackPattern InPattern,
 	                  FVector InOrigin, FVector InDirection,
 	                  float InMaxDistance, float InSpeed);
-	
+
 private:
+	void BeginInactive();
 	void BeginIdle();
 	void BeginAttack();
 	void BeginReturn();
 
 	void TickIdle(float DeltaTime);
 	
-	void TickAttack(float DeltaTime);
-	void TickAttackA1(float DeltaTime);
-	void TickAttackA2(float DeltaTime);
-	void TickAttackA3(float DeltaTime);
+	// void TickAttack(float DeltaTime);
+	// void TickAttackA1(float DeltaTime);
 	
 	void TickReturn(float DeltaTime);
 	
@@ -79,9 +83,12 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "Blade|State")
 	EBladeState CurState = EBladeState::Inactive;
 
-	UPROPERTY(VisibleInstanceOnly, Category = "Blade|State")
+	UPROPERTY(VisibleAnywhere, Category = "Blade|State")
 	EBladeAttackPattern CurAttackPattern = EBladeAttackPattern::None;
-
+	
+	UPROPERTY(VisibleAnywhere, Category = "Blade|State")
+	EBladeState DefaultState = EBladeState::Idle;
+	
 #pragma region Idle
 	UPROPERTY(EditDefaultsOnly, Category = "Blade|Idle")
 	float OrbitRadius = 80.f; // 캐릭터 중심으로부터의 거리

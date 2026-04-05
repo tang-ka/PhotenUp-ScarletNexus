@@ -23,7 +23,7 @@ void UBladeHandlerComponent::BeginPlay()
 	Super::BeginPlay();
 	
 	SpawnBladePool();
-	ActivateIdleBlades();
+	// ActivateIdleBlades();
 }
 
 void UBladeHandlerComponent::TickComponent(float DeltaTime, ELevelTick TickType,
@@ -78,6 +78,17 @@ void UBladeHandlerComponent::ExecuteAttackA1()
 	}
 }
 
+void UBladeHandlerComponent::SetActiveAllBladesCollision(bool bActivate)
+{
+	for (AKasaneBlade* Blade : BladePool)
+	{
+		if (Blade)
+		{
+			Blade->SetActiveCollision(bActivate);
+		}
+	}
+}
+
 void UBladeHandlerComponent::SpawnBladePool()
 {
 	UWorld* World = GetWorld();
@@ -111,8 +122,18 @@ void UBladeHandlerComponent::SpawnBladePool()
 			
 			// 초기 상태: 비활성
 			Blade->Init(GetOwner(), i);
-			Blade->SetActive(false);
+			if (i < IdleBladeCount)
+			{
+				Blade->SetDefaultState(EBladeState::Idle);
+				Blade->InitForIdle(IdleBladeCount);
+			}
+			else
+			{
+				Blade->SetDefaultState(EBladeState::Inactive);
+			}
+			Blade->ChangeBladeState(Blade->GetDefaultState());
 			BladePool.Add(Blade);
+			
 		}
 	}
 }

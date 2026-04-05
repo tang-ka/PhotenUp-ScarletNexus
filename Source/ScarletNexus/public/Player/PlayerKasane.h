@@ -23,10 +23,14 @@ protected:
 	virtual void BasicAttack() override;
 	virtual void PsychicAttack() override;
 	virtual void BackStepAttack() override;
+
 public:
 	virtual void Tick(float DeltaTime) override;
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+public:
+	UBladeHandlerComponent* GetBladeHandlerComp() const { return BladeHandlerComp; }
 
 private:
 #pragma region Components

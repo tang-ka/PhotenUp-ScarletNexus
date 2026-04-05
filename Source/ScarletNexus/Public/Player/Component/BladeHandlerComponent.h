@@ -22,6 +22,7 @@ public:
 	                           FActorComponentTickFunction* ThisTickFunction) override;
 
 public:
+	void SetActiveAllBladesCollision(bool bActivate);
 	void ExecuteAttackA1();
 	
 private:

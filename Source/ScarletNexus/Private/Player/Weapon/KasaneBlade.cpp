@@ -33,22 +33,22 @@ void AKasaneBlade::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	// switch (CurState)
-	// {
-	// case EBladeState::Idle:
-	// 	TickIdle(DeltaTime);
-	// 	break;
-	// case EBladeState::Attack:
-	// 	TickAttack(DeltaTime);
-	// 	break;
-	// case EBladeState::Return:
-	// 	TickReturn(DeltaTime);
-	// 	break;
-	// case EBladeState::Inactive:
-	// default:
-	// 	break;
-	// }
-	//
+	switch (CurState)
+	{
+	case EBladeState::Idle:
+		TickIdle(DeltaTime);
+		break;
+	case EBladeState::Attack:
+		// TickAttack(DeltaTime);
+		break;
+	case EBladeState::Return:
+		TickReturn(DeltaTime);
+		break;
+	case EBladeState::Inactive:
+	default:
+		break;
+	}
+
 	// =============================================
 	// 1. 이동 방향을 바라봄 (접선 방향)
 	// =============================================
@@ -74,8 +74,13 @@ bool AKasaneBlade::IsMoving() const
 void AKasaneBlade::SetActive(bool bActivate)
 {
 	SetActorHiddenInGame(!bActivate);
-	SetActorEnableCollision(bActivate);
+	SetActiveCollision(bActivate);
 	SetActorTickEnabled(bActivate);
+}
+
+void AKasaneBlade::SetActiveCollision(bool bActivate) const
+{
+	SphereComp->SetCollisionEnabled(bActivate ? ECollisionEnabled::QueryOnly : ECollisionEnabled::NoCollision);
 }
 
 void AKasaneBlade::ChangeBladeState(EBladeState NewState)
@@ -87,6 +92,9 @@ void AKasaneBlade::ChangeBladeState(EBladeState NewState)
 
 	switch (NewState)
 	{
+	case EBladeState::Inactive:
+		BeginInactive();
+		break;
 	case EBladeState::Idle:
 		BeginIdle();
 		break;
@@ -96,13 +104,12 @@ void AKasaneBlade::ChangeBladeState(EBladeState NewState)
 	case EBladeState::Return:
 		BeginReturn();
 		break;
-	case EBladeState::Inactive:
-		SetActive(false);
-		break;
 	default:
 		break;
 	}
 
+	PRINTLOG_SH(TEXT("블레이드 %d 상태 변경: %s -> %s"), BladeIndex, *UEnum::GetValueAsString(CurState), *UEnum::GetValueAsString(NewState));
+	
 	CurState = NewState;
 }
 
@@ -116,7 +123,7 @@ void AKasaneBlade::InitForIdle(int32 InIdleBladeCount)
 {
 	// 인덱스마다 다른 위상으로 Bobbing 비동기화
 	IdleBladeCount = InIdleBladeCount;
-	PhaseOffset = (2.f * PI * BladeIndex) / InIdleBladeCount;
+	PhaseOffset = (2.f * PI * BladeIndex) / IdleBladeCount;
 	ChangeBladeState(EBladeState::Idle);
 }
 
@@ -136,6 +143,11 @@ void AKasaneBlade::LaunchAttack(EBladeAttackPattern InPattern, FVector InOrigin,
 	ChangeBladeState(EBladeState::Attack);
 }
 
+void AKasaneBlade::BeginInactive()
+{
+	SetActive(false);
+}
+
 void AKasaneBlade::BeginIdle()
 {
 	SetActive(true);
@@ -151,23 +163,8 @@ void AKasaneBlade::BeginReturn()
 	P0 = GetActorLocation();
 
 	// 구 위의 랜덤 오프셋을 BeginReturn에서 한 번만 결정
-	FVector RandomDir = FMath::VRand();  // 구면 균등 랜덤 방향
-	ReturnTargetOffset = RandomDir * ReturnArrivalRadius; 
-	
-	// // 발사 방향 기준 좌우 판별
-	// // AttackDirection과 Owner→블레이드 방향의 외적으로 좌우 결정
-	// if (OwnerActor.IsValid())
-	// {
-	// 	FVector ToOwner = (OwnerActor->GetActorLocation() - P0).GetSafeNormal();
-	// 	FVector Cross = FVector::CrossProduct(AttackDirection, ToOwner);
-	//
-	// 	// Cross.Z > 0 이면 왼쪽, < 0 이면 오른쪽
-	// 	ReturnCurveSide = (Cross.Z >= 0.f) ? 1.f : -1.f;
-	// }
-	// else
-	// {
-	// 	ReturnCurveSide = (FMath::RandBool()) ? 1.f : -1.f;
-	// }
+	FVector RandomDir = FMath::VRand(); // 구면 균등 랜덤 방향
+	ReturnTargetOffset = RandomDir * ReturnArrivalRadius;
 }
 
 void AKasaneBlade::TickIdle(float DeltaTime)
@@ -225,46 +222,38 @@ void AKasaneBlade::TickIdle(float DeltaTime)
 	SetActorLocation(NewLocation);
 }
 
-void AKasaneBlade::TickAttack(float DeltaTime)
-{
-	switch (CurAttackPattern)
-	{
-	case EBladeAttackPattern::A1:
-		TickAttackA1(DeltaTime);
-		break;
-	case EBladeAttackPattern::A2:
-		// TODO
-		break;
-	case EBladeAttackPattern::A3:
-		// TODO
-		break;
-	default:
-		break;
-	}
-}
+// void AKasaneBlade::TickAttack(float DeltaTime)
+// {
+// 	switch (CurAttackPattern)
+// 	{
+// 	case EBladeAttackPattern::A1:
+// 		TickAttackA1(DeltaTime);
+// 		break;
+// 	case EBladeAttackPattern::A2:
+// 		// TODO
+// 		break;
+// 	case EBladeAttackPattern::A3:
+// 		// TODO
+// 		break;
+// 	default:
+// 		break;
+// 	}
+// }
 
-void AKasaneBlade::TickAttackA1(float DeltaTime)
-{
-	AttackElapsed += DeltaTime;
-
-	FVector NewLocation = AttackOrigin + AttackDirection * AttackSpeed * AttackElapsed;
-	SetActorLocation(NewLocation);
-
-	float TraveledDistance = FVector::Dist(AttackOrigin, NewLocation);
-	if (TraveledDistance >= AttackMaxDistance)
-	{
-		CurAttackPattern = EBladeAttackPattern::None;
-		ChangeBladeState(EBladeState::Return);
-	}
-}
-
-void AKasaneBlade::TickAttackA2(float DeltaTime)
-{
-}
-
-void AKasaneBlade::TickAttackA3(float DeltaTime)
-{
-}
+// void AKasaneBlade::TickAttackA1(float DeltaTime)
+// {
+// 	AttackElapsed += DeltaTime;
+//
+// 	FVector NewLocation = AttackOrigin + AttackDirection * AttackSpeed * AttackElapsed;
+// 	SetActorLocation(NewLocation);
+//
+// 	float TraveledDistance = FVector::Dist(AttackOrigin, NewLocation);
+// 	if (TraveledDistance >= AttackMaxDistance)
+// 	{
+// 		CurAttackPattern = EBladeAttackPattern::None;
+// 		ChangeBladeState(EBladeState::Return);
+// 	}
+// }
 
 void AKasaneBlade::TickReturn(float DeltaTime)
 {
@@ -314,41 +303,12 @@ void AKasaneBlade::TickReturn(float DeltaTime)
 			ChangeBladeState(EBladeState::Inactive);
 		}
 	}
-	// if (!OwnerActor.IsValid())
-	// {
-	// 	return;
-	// }
-	//
-	// FVector TargetLocation = OwnerActor->GetActorLocation();
-	// FVector CurrentLocation = GetActorLocation();
-	//
-	// FVector Direction = (TargetLocation - CurrentLocation).GetSafeNormal();
-	// FVector NewLocation = CurrentLocation + Direction * ReturnSpeed * DeltaTime;
-	// SetActorLocation(NewLocation);
-	//
-	// // 도착 판정
-	// float DistToOwner = FVector::Dist(NewLocation, TargetLocation);
-	// if (DistToOwner < 100.f)
-	// {
-	// 	if (ReturnIdleIndex >= 0)
-	// 	{
-	// 		// Idle 블레이드로 복귀
-	// 		ChangeBladeState(EBladeState::Idle);
-	// 	}
-	// 	else
-	// 	{
-	// 		ChangeBladeState(EBladeState::Inactive);
-	// 	}
-	// }
 }
 
-void AKasaneBlade::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+void AKasaneBlade::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+                                   UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep,
+                                   const FHitResult& SweepResult)
 {
-	if (CurState != EBladeState::Attack)
-	{
-		return;
-	}
-
 	if (!IsValid(OtherActor) || OtherActor == OwnerActor.Get() || OtherActor == this)
 	{
 		return;
