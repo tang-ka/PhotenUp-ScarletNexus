@@ -3,6 +3,7 @@
 
 #include "Player/PlayerCharacterBase.h"
 #include "Camera/CameraComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Math/RotationMatrix.h"
 #include "InputMappingContext.h"
@@ -135,6 +136,9 @@ void APlayerCharacterBase::BeginPlay()
 {
 	Super::BeginPlay();
 
+	// StatsComp 죽음 델리게이트 바인딩
+	StatsComp->OnDeath.AddUObject(this, &APlayerCharacterBase::HandleDeath);
+
 	// Add the input mapping context
 	auto* PC = Cast<APlayerController>(GetController());
 	if (PC)
@@ -186,22 +190,28 @@ void APlayerCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 #pragma region IDamageable Interface
 bool APlayerCharacterBase::ReceiveDamage_Implementation(FDamageInfo DamageInfo)
 {
-	return IDamageable::ReceiveDamage_Implementation(DamageInfo);
+	if (StatsComp->IsDead())
+	{
+		return false;
+	}
+
+	StatsComp->ReceiveDamage(DamageInfo.DamageAmount);
+	return true;
 }
 
 int APlayerCharacterBase::GetHP_Implementation() const
 {
-	return IDamageable::GetHP_Implementation();
+	return StatsComp->GetCurrentHP();
 }
 
 float APlayerCharacterBase::GetHPPercent_Implementation() const
 {
-	return IDamageable::GetHPPercent_Implementation();
+	return StatsComp->GetHPPercentage();
 }
 
 bool APlayerCharacterBase::IsDead_Implementation() const
 {
-	return IDamageable::IsDead_Implementation();
+	return StatsComp->IsDead();
 }
 #pragma endregion
 
@@ -381,6 +391,24 @@ void APlayerCharacterBase::OnMovementUpdated(float DeltaSeconds, const FVector& 
 		
 		// PRINTLOG_SH(TEXT("IsInAir: %d, IsFalling: %d, IsJumpEnd: %d"), bInAir, bFalling, AnimInstance->IsJumEnd());
 	}
+}
+
+void APlayerCharacterBase::HandleDeath()
+{
+	// 입력 비활성화
+	if (APlayerController* PC = Cast<APlayerController>(GetController()))
+	{
+		DisableInput(PC);
+	}
+
+	// 이동 중지
+	GetCharacterMovement()->StopMovementImmediately();
+	GetCharacterMovement()->DisableMovement();
+
+	// 충돌 비활성화
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	PRINTLOG_SH(TEXT("플레이어 사망"));
 }
 
 void APlayerCharacterBase::TryConsumeBufferedAttack()

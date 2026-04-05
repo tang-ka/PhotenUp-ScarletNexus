@@ -41,5 +41,6 @@ void UAnimNotifyState_ActivateBladeCollision::NotifyEnd(USkeletalMeshComponent* 
 	if (Player)
 	{
 		Player->GetBladeHandlerComp()->SetActiveAllBladesCollision(false);
+		Player->GetBladeHandlerComp()->SetCanCriticalAllBlades(false); // Critical OFF
 	}
 }

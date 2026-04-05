@@ -24,6 +24,7 @@ public:
 public:
 	void ExecuteAttackA1();
 	void SetActiveAllBladesCollision(bool bActivate);
+	void SetCanCriticalAllBlades(bool bCanCritical);
 	void SetAttackStateAllBlades();
 	void SetDefaultStateAllBlades();
 

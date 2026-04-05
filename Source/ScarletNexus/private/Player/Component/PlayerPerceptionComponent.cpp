@@ -153,6 +153,7 @@ void UPlayerPerceptionComponent::InitDetectionSphere()
 	DetectionSphere = NewObject<USphereComponent>(Owner, TEXT("DetectionSphere"));
 
 	DetectionSphere->SetupAttachment(GetOwner()->GetRootComponent());
+	DetectionSphere->SetGenerateOverlapEvents(false);
 	DetectionSphere->RegisterComponent();
 
 	DetectionSphere->SetSphereRadius(SoftTargetRadius);

@@ -53,6 +53,7 @@ public:
 	virtual bool IsDead_Implementation() const override;
 #pragma endregion
 
+
 #pragma region Component Getters
 	FORCEINLINE UCameraComponent* GetCameraComp() const { return CameraComp; }
 	FORCEINLINE USpringArmComponent* GetSpringArmComp() const { return SpringArmComp; }
@@ -67,6 +68,8 @@ public:
 #pragma endregion
 
 protected:
+	virtual void HandleDeath();
+	
 #pragma region Input Action Functions
 	void OnMoveInput(const FInputActionValue& Value);
 	void OnLookInput(const FInputActionValue& Value);

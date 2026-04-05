@@ -59,6 +59,10 @@ public:
 	                  FVector InOrigin, FVector InDirection,
 	                  float InMaxDistance, float InSpeed);
 
+	// === Critical ===
+	void SetCanCritical(bool bValue) { bCanCritical = bValue; }
+	bool GetCanCritical() const { return bCanCritical; }
+
 private:
 	void BeginInactive();
 	void BeginIdle();
@@ -71,6 +75,10 @@ private:
 	// void TickAttackA1(float DeltaTime);
 	
 	void TickReturn(float DeltaTime);
+
+	// === HitStop ===
+	void TriggerHitStop();
+	void EndHitStop();
 	
 public:
 	int32 ReturnIdleIndex = -1;
@@ -88,6 +96,10 @@ private:
 	
 	UPROPERTY(VisibleAnywhere, Category = "Blade|State")
 	EBladeState DefaultState = EBladeState::Idle;
+
+	// === Critical ===
+	UPROPERTY(VisibleAnywhere, Category = "Blade|Critical")
+	bool bCanCritical = false;
 	
 #pragma region Idle
 	UPROPERTY(EditDefaultsOnly, Category = "Blade|Idle")
@@ -158,6 +170,15 @@ private:
 	float PhaseOffset = 0.f; // 위상 오프셋
 
 	FVector PrevLocation = FVector::ZeroVector;
+
+	// === HitStop ===
+	UPROPERTY(EditDefaultsOnly, Category = "Blade|HitStop")
+	float HitStopTimeDilation = 0.05f; // 히트스탑 시 시간 배율
+
+	UPROPERTY(EditDefaultsOnly, Category = "Blade|HitStop")
+	float HitStopDuration = 0.08f;     // 히트스탑 실제 지속 시간 (초)
+
+	FTimerHandle HitStopTimerHandle;
 
 #pragma region Components
 	UPROPERTY(VisibleAnywhere, Category = "Components")

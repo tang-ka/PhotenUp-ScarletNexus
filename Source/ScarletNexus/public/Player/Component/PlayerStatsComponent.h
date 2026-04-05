@@ -7,6 +7,7 @@
 #include "PlayerStatsComponent.generated.h"
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnStatChangedDelegate, int32);
+DECLARE_MULTICAST_DELEGATE(FOnDeathDelegate);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class SCARLETNEXUS_API UPlayerStatsComponent : public UActorComponent
@@ -36,10 +37,14 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void ReceiveDamage(int32 DamageAmount);
 
+	UFUNCTION(BlueprintCallable)
+	bool IsDead() const { return CurrentHP <= 0; }
+
 public:
 	FOnStatChangedDelegate OnHPChanged;
 	FOnStatChangedDelegate OnMaxHPChanged;
 	FOnStatChangedDelegate OnMPChanged;
+	FOnDeathDelegate OnDeath;
 
 #pragma region Getters & Setters
 	UFUNCTION(BlueprintCallable)

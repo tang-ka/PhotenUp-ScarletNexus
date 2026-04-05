@@ -7,6 +7,7 @@
 #include "Components/SphereComponent.h"
 #include "Interface/DamageableHelper.h"
 #include "Kismet/GameplayStatics.h"
+#include "GameFramework/WorldSettings.h"
 
 
 AKasaneBlade::AKasaneBlade()
@@ -332,5 +333,44 @@ void AKasaneBlade::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AAc
 	}
 
 	// 임시 데미지 수치 10
-	DamageableHelpers::ApplyDamage(OtherActor, OwnerActor.Get(), 10);
+	const bool bHit = DamageableHelpers::ApplyDamage(OtherActor, OwnerActor.Get(), 10);
+	if (bHit)
+	{
+		TriggerHitStop();
+	}
+}
+
+void AKasaneBlade::TriggerHitStop()
+{
+	if (!GetWorld())
+	{
+		return;
+	}
+
+	// 이미 히트스탑 진행 중이면 타이머만 갱신
+	UGameplayStatics::SetGlobalTimeDilation(GetWorld(), HitStopTimeDilation);
+
+	// TimeDilation이 적용된 게임 시간 기준으로 타이머를 역산
+	// 타이머도 딜레이션 영향을 받으므로, 실제로 원하는 실시간을 얻으려면 곱해야 함
+	// 예) 실제 0.08초 → 게임 타이머로 0.08 * 0.05 = 0.004 게임초 → 실시간 0.08초
+	const float AdjustedDuration = (HitStopTimeDilation > KINDA_SMALL_NUMBER)
+		? HitStopDuration * HitStopTimeDilation
+		: HitStopDuration;
+
+	GetWorldTimerManager().SetTimer(
+		HitStopTimerHandle,
+		this,
+		&AKasaneBlade::EndHitStop,
+		AdjustedDuration,
+		false
+	);
+}
+
+void AKasaneBlade::EndHitStop()
+{
+	if (!GetWorld())
+	{
+		return;
+	}
+	UGameplayStatics::SetGlobalTimeDilation(GetWorld(), 1.0f);
 }

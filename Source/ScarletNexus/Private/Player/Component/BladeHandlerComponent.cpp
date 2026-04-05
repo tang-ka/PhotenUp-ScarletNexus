@@ -89,6 +89,17 @@ void UBladeHandlerComponent::SetActiveAllBladesCollision(bool bActivate)
 	}
 }
 
+void UBladeHandlerComponent::SetCanCriticalAllBlades(bool bCanCritical)
+{
+	for (AKasaneBlade* Blade : BladePool)
+	{
+		if (Blade)
+		{
+			Blade->SetCanCritical(bCanCritical);
+		}
+	}
+}
+
 void UBladeHandlerComponent::SetAttackStateAllBlades()
 {
 	for (AKasaneBlade* Blade : BladePool)

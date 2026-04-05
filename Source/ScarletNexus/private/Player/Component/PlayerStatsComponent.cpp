@@ -40,7 +40,17 @@ void UPlayerStatsComponent::HealPercent(float HealPercent)
 
 void UPlayerStatsComponent::ReceiveDamage(int32 DamageAmount)
 {
+	if (IsDead())
+	{
+		return;
+	}
+
 	SetCurrentHP(CurrentHP - DamageAmount);
+
+	if (IsDead())
+	{
+		OnDeath.Broadcast();
+	}
 }
 
 void UPlayerStatsComponent::SetCurrentHP(int32 NewHP)
