@@ -29,11 +29,16 @@ struct FPCTask_AttackInstanceData
 	UPROPERTY(EditAnywhere)
 	float AttackCooldown = 1.5f;
 
-	// 재생할 몽타주 - ST 에디터에서 캐릭터별로 할당
+	// 재생할 몽타주 - 캐릭터별로 사용할 공격 애니메이션 몽타주 전체 할당
 	UPROPERTY(EditAnywhere)
-	TObjectPtr<UAnimMontage> AttackMontage = nullptr;
+	TArray<TObjectPtr<UAnimMontage>> AttackMontageList;
+
+	// 재생 속도
+	UPROPERTY(EditAnywhere)
+	float PlayRate = 1.f;
 	
 	// 내부 타이머
+	float MontageLength = 0.f; // 현재 재생 중인 몽타주 길이 추적
 	float ElapsedTime = 0.f;
 	bool bAttacked = false;
 };
@@ -51,4 +56,5 @@ struct FPCTask_Attack : public FStateTreeTaskCommonBase
 	
 	virtual EStateTreeRunStatus EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const override;
 	virtual EStateTreeRunStatus Tick(FStateTreeExecutionContext& Context, const float DeltaTime) const override;
+	virtual void ExitState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const override;
 };

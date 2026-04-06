@@ -15,8 +15,7 @@
 #include "NavigationSystem.h"
 #include "DrawDebugHelpers.h"
 #include "Interface/Damageable.h"
-#include "Boss/BossGhostTrailActor.h"
- 
+#include "NiagaraFunctionLibrary.h"
  
 
 // EnterState
@@ -306,7 +305,6 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::EnterCloneRush(
 	Data.bBossRushDamageApplied = false;
 	Data.LeftClone = nullptr;
 	Data.RightClone = nullptr;
-	Data.GhostSpawnTimer = 0.f;
 	Data.CRStartLocation = Boss->GetActorLocation();
 	const FVector ToP = Player->GetActorLocation() - Data.CRStartLocation;
 	Data.CRDirection = FVector(ToP.X, ToP.Y, 0.f).GetSafeNormal();
@@ -458,24 +456,9 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickCloneRush(
 			auto* RC = Cast<ABossCloneActor>(Data.RightClone);
 			if (!RC || RC->IsRushComplete())
 			{
-				// 우분신 끝나면 바로 본체 돌진
 				Data.CRStartLocation = Boss->GetActorLocation();
 				Data.CRTargetLocation = Data.CRStartLocation + Data.CRDirection * CR_RushDistance;
-
-				if (BossConfig)
-				{
-					const ABossCharacterBase* BossChar = Cast<ABossCharacterBase>(Boss);
-					const EBossPhase Phase = BossChar ? BossChar->GetCurrentPhase() : EBossPhase::Phase1;
-					TArray<FBossAttackPattern> Patterns = BossConfig->GetAvailablePatterns(Phase);
-					for (const FBossAttackPattern& P : Patterns)
-					{
-						if (P.AttackType == EBossAttackType::CloneRush && P.AttackMontage)
-						{
-							Boss->PlayAnimMontage(P.AttackMontage, 1.0f, FName("Rush"));
-							break;
-						}
-					}
-				}
+				// 몽타주 여기서 안 틂
 				Data.CRPhase = ECRPhase::BossRush;
 				Data.PhaseTimer = 0.f;
 			}
@@ -510,13 +493,22 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickCloneRush(
  
 	case ECRPhase::BossRush:
 		{
-			// 잔상 스폰
-			Data.GhostSpawnTimer += DeltaTime;
-			if (Data.GhostSpawnTimer >= 0.05f)
+			if (Data.PhaseTimer <= DeltaTime)
 			{
-				if (ABossCharacterBase* BossChar = Cast<ABossCharacterBase>(Boss))
-					BossChar->SpawnGhostTrail(0.3f);
-				Data.GhostSpawnTimer = 0.f;
+				if (BossConfig)
+				{
+					const ABossCharacterBase* BossChar = Cast<ABossCharacterBase>(Boss);
+					const EBossPhase Phase = BossChar ? BossChar->GetCurrentPhase() : EBossPhase::Phase1;
+					TArray<FBossAttackPattern> Patterns = BossConfig->GetAvailablePatterns(Phase);
+					for (const FBossAttackPattern& P : Patterns)
+					{
+						if (P.AttackType == EBossAttackType::CloneRush && P.AttackMontage)
+						{
+							Boss->PlayAnimMontage(P.AttackMontage, 1.0f, FName("Rush"));
+							break;
+						}
+					}
+				}
 			}
 			// 본체도 플레이어 방향으로 약간 보정
 			if (const ACharacter* Player = UGameplayStatics::GetPlayerCharacter(Boss->GetWorld(), 0))
@@ -609,9 +601,7 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickAerialElectric(
 		}
 		break;
 	case EAEPhase::Charging:
-#if ENABLE_DRAW_DEBUG
-		DrawDebugCircle(Boss->GetWorld(), Data.AEGroundTarget + FVector(0, 0, 5), AE_DamageRadius, 32, FColor::Red, false, DeltaTime * 2.f, 0, 3.f, FVector(1, 0, 0), FVector(0, 1, 0), false);
-#endif
+
 		if (Data.PhaseTimer >= AE_ChargeDuration)
 		{
 			Data.AEPhase = EAEPhase::Discharge;
@@ -624,10 +614,26 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickAerialElectric(
 		{
 			ApplyDamageInRadius(Boss, Data.AEGroundTarget, AE_DamageRadius, AE_Damage, AE_KnockbackForce, FVector::UpVector);
 			Data.bDamageApplied = true;
+			// 번개 VFX 스폰
+			if (const ABossCharacterBase* BossChar = Cast<ABossCharacterBase>(Boss))
+			{
+				if (BossChar->LightningVFX)
+				{
+					FVector SpawnLoc = Boss->GetActorLocation();
+					if (const USkeletalMeshComponent* BossMesh = Boss->GetMesh())
+					{
+						SpawnLoc = BossMesh->GetSocketLocation(FName("LeftHand"));
+						SpawnLoc.Z -= 400.f;
+					}
+					UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+						Boss->GetWorld(),
+						BossChar->LightningVFX,
+						SpawnLoc,
+						FRotator::ZeroRotator
+					);
+				}
+			}
 		}
-#if ENABLE_DRAW_DEBUG
-		DrawDebugCircle(Boss->GetWorld(), Data.AEGroundTarget + FVector(0, 0, 5), AE_DamageRadius, 32, FColor::Yellow, false, DeltaTime * 2.f, 0, 5.f, FVector(1, 0, 0), FVector(0, 1, 0), false);
-#endif
 		if (Data.PhaseTimer >= AE_DischargeDuration)
 		{
 			Data.AEPhase = EAEPhase::Landing;
@@ -704,21 +710,48 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickIceSpikes(
 		break;
 	case EISPhase::Spawning:
 		{
+			// 데미지 판정 (기존 유지)
 			const FVector RV = FVector(-Data.ISDirection.Y, Data.ISDirection.X, 0.f);
 			for (int32 i = 0; i < IS_SpikeCount; i++)
 			{
 				const FVector SL = Data.ISOrigin + Data.ISDirection * FMath::RandRange(IS_AreaStartOffset, IS_AreaStartOffset + IS_AreaLength)
 					+ RV * FMath::RandRange(-IS_AreaWidth * 0.5f, IS_AreaWidth * 0.5f);
 				ApplyDamageInRadius(Boss, SL, IS_SpikeRadius, IS_Damage, IS_KnockbackForce, FVector::UpVector);
-#if ENABLE_DRAW_DEBUG
-				DrawDebugCylinder(Boss->GetWorld(), SL - FVector(0, 0, 10), SL + FVector(0, 0, 250), IS_SpikeRadius * 0.25f, 6, FColor::Cyan, false, IS_HoldDuration + 0.5f, 0, 3.f);
-#endif
 			}
+
+			// 나이아가라 VFX 스폰
+			if (const ABossCharacterBase* BossChar = Cast<ABossCharacterBase>(Boss))
+			{
+				if (BossChar->IceSpikeVFX)
+				{
+					
+					const FVector SpawnLoc = Data.ISOrigin + Data.ISDirection * (IS_AreaStartOffset + IS_AreaLength * 0.5f);
+					const FRotator SpawnRot = Data.ISDirection.Rotation();
+					UE_LOG(LogTemp, Log, TEXT("[IceSpikes] 나이아가라 VFX 스폰!"));
+					UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+						Boss->GetWorld(),
+						BossChar->IceSpikeVFX,
+						SpawnLoc,
+						SpawnRot,
+						FVector(1.f),
+						true,
+						true,
+						ENCPoolMethod::None
+						
+					);
+				}
+				else
+				{
+					UE_LOG(LogTemp, Warning, TEXT("[IceSpikes] IceSpikeVFX가 NULL! BP에서 할당 확인 필요"));
+				}
+			}
+
 			Data.ISPhase = EISPhase::Holding;
 			Data.PhaseTimer = 0.f;
 			UE_LOG(LogTemp, Log, TEXT("[IceSpikes] 가시 %d개 생성!"), IS_SpikeCount);
 		}
 		break;
+		
 	case EISPhase::Holding:
 		if (Data.PhaseTimer >= IS_HoldDuration)
 		{

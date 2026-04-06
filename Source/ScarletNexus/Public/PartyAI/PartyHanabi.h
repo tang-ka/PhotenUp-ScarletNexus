@@ -6,6 +6,7 @@
 #include "PartyAI/PartyMemberBase.h"
 #include "PartyHanabi.generated.h"
 
+class AWeaponSpear;
 /**
  * 
  */
@@ -22,6 +23,10 @@ public:
 	// 하나비 스탯
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Status")
 	int HanabiATK = 35;
+
+	// 무기 블루프린트
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
+	TSubclassOf<AWeaponSpear> WeaponClass;
 	
 	// 무기 소켓
 	const FName WeaponSocketName = FName("Weapon");
@@ -32,10 +37,6 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
 	FRotator WeaponRotationOffset = FRotator::ZeroRotator;
-	
-	// 무기 블루프린트 클래스
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
-	TSubclassOf<AActor> WeaponClass;
 	
 	// 근거리 창 기본 공격
 	UFUNCTION(BlueprintCallable, Category = Attack)
@@ -51,15 +52,14 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "PK")
 	TObjectPtr<class UPKComponent> PKComp;
 
-	// 애니메이션
-	// 창 공격 A1 애니메이션 몽타주
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
-	TObjectPtr<UAnimMontage> AttackA1Montage;
-
 	// 최종 데미지 계산용 랜덤 공격력
 	UFUNCTION(BlueprintCallable)
 	int GetHanabiATK();
 	
 	// 기본공격 : BoxTrace로 창 앞 범위 내 적 감지
 	void PerformSpearTrace(TArray<FHitResult> hitResults);
+
+	// 기본공격 충돌
+	UFUNCTION()
+	void OnSpearHit(AActor* HitActor);
 };

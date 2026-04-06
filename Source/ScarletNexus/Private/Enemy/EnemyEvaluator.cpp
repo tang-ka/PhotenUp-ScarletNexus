@@ -3,7 +3,10 @@
 
 #include "Enemy/EnemyEvaluator.h"
 
+#include "AIController.h"
+#include "ScarletNexus.h"
 #include "StateTreeExecutionContext.h"
+#include "Enemy/EnemyBase.h"
 #include "Engine/OverlapResult.h"
 #include "PartyAI/PartyMemberBase.h"
 #include "Player/PlayerCharacterBase.h"
@@ -16,19 +19,50 @@ void FEnemyEvaluator::TreeStart(FStateTreeExecutionContext& Context) const
 void FEnemyEvaluator::Tick(FStateTreeExecutionContext& Context, const float DeltaTime) const
 {
 	auto& data = Context.GetInstanceData(*this);
-	
+
+	AEnemyBase* enemy = nullptr;
 	AActor* owner = Cast<AActor>(Context.GetOwner());
 	if (!owner) return;
+
+	enemy = Cast<AEnemyBase>(owner);
+	if (!owner)
+	{
+		PRINTLOG_GT(TEXT("owner가 Null이다"));
+		return;
+	}
 	
-	const FVector ownerLocation = owner->GetActorLocation();
+	if (!enemy)
+	{
+		if (AAIController* aic = Cast<AAIController>(owner))
+		{
+			APawn* pawn = aic->GetPawn();
+			//PRINTLOG_GT(TEXT("Controller Pawn: %s"), pawn ? *pawn->GetName() : TEXT("Null"));
+			enemy = Cast<AEnemyBase>(pawn);
+		}
+	}
+
+	if (!enemy)
+	{
+		PRINTLOG_GT(TEXT("EnemyBase가 Null이다"));
+		return;
+	}
+	
+	// 상태 체크
+	data.bIsStunned = enemy->bIsStunned;
+	data.bIsDie = enemy->bIsDie;
+
+	// Die/Stun 시 타겟 탐색 스킵
+	if (data.bIsStunned || data.bIsDie) return;
+	
+	const FVector pawnLocation = enemy->GetActorLocation();
 	
 	TArray<FOverlapResult> overlaps;
 	FCollisionQueryParams params;
-	params.AddIgnoredActor(owner);
+	params.AddIgnoredActor(enemy);
 	
-	owner->GetWorld()->OverlapMultiByChannel(
+	enemy->GetWorld()->OverlapMultiByChannel(
 		overlaps,
-		ownerLocation,
+		pawnLocation,
 		FQuat::Identity,
 		ECC_Pawn,
 		FCollisionShape::MakeSphere(data.DetectRadius),
@@ -40,7 +74,7 @@ void FEnemyEvaluator::Tick(FStateTreeExecutionContext& Context, const float Delt
 	for (const FOverlapResult& hit : overlaps)
 	{
 		AActor* actor = hit.GetActor();
-		if (!actor) return;
+		if (!actor) continue;
 		
 		// 플레이어 캐릭터 or 파티 맴버를 타겟으로 인식
 		bool bIsTarget = false;
@@ -53,9 +87,9 @@ void FEnemyEvaluator::Tick(FStateTreeExecutionContext& Context, const float Delt
 			bIsTarget = partyMember->IsAlive();
 		}
 		
-		if (bestTarget)
+		if (bIsTarget)
 		{
-			const float dist = FVector::DistSquared(ownerLocation, actor->GetActorLocation());
+			const float dist = FVector::DistSquared(pawnLocation, actor->GetActorLocation());
 			if (dist < bestDist)
 			{
 				bestDist = dist;
@@ -68,7 +102,7 @@ void FEnemyEvaluator::Tick(FStateTreeExecutionContext& Context, const float Delt
 	
 	if (bestTarget)
 	{
-		data.DistanceToTarget = FVector::Dist(ownerLocation, bestTarget->GetActorLocation());
+		data.DistanceToTarget = FVector::Dist(pawnLocation, bestTarget->GetActorLocation());
 		data.bInAttackRange = data.DistanceToTarget <= data.AttackRange;
 	}
 	else

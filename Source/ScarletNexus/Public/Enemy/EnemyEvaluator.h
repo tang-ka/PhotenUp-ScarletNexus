@@ -21,7 +21,7 @@ struct FEnemyEvaluatorInstanceData
 	
 	// 공격 사거리
 	UPROPERTY(EditAnywhere)
-	float AttackRange = 200.f;
+	float AttackRange = 500.f;
 	
 	// 타겟이 공격 범위 안에 있는지 체크
 	UPROPERTY(EditAnywhere, meta=(Output))

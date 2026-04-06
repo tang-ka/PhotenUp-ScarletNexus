@@ -49,10 +49,6 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Hit")
 	bool bIsStunned = false;
 	
-	// 피격 시 호출 : 경직 + 선택적 히트 몽타주
-	UFUNCTION(BlueprintCallable, Category="Hit")
-	void ApplyHitReaction(AActor* DamageCauser);
-	
 	// 블루프린트에서 히트 몽타주 할당
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Hit")
 	TObjectPtr<UAnimMontage> HitReactionMontage;
@@ -76,6 +72,9 @@ public:
 	// 블루프린트 위젯 클래스 할당
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="UI")
 	TSubclassOf<UUserWidget> HPBarWidgetClass;
+	
+	UFUNCTION(BlueprintCallable, Category="UI")
+	void UpdateHealthBar();
 	
 	UFUNCTION(BlueprintCallable, Category="Status")
 	bool IsAlive() const { return CurrHP > 0; }
@@ -108,10 +107,6 @@ protected:
 	// Ragdoll 전환
 	void EnableRagdoll();
 	
-	// 경직 타이머 완료 콜백
-	void OnHitStunEnd();
-	
 private:
 	FTimerHandle DestroyTimerHandle;
-	FTimerHandle StunTimerHandle;
 };

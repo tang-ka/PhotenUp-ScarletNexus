@@ -93,8 +93,6 @@ struct FSTTask_BossAttackExecutorInstanceData
 	TObjectPtr<AActor> RightClone = nullptr;
 	UPROPERTY()
 	bool bBossRushDamageApplied = false;
-	UPROPERTY()
-	float GhostSpawnTimer = 0.f;
  
 	// 공중 전류
 	UPROPERTY()
