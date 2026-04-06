@@ -614,14 +614,21 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickAerialElectric(
 		{
 			ApplyDamageInRadius(Boss, Data.AEGroundTarget, AE_DamageRadius, AE_Damage, AE_KnockbackForce, FVector::UpVector);
 			Data.bDamageApplied = true;
+			// 번개 VFX 스폰
 			if (const ABossCharacterBase* BossChar = Cast<ABossCharacterBase>(Boss))
 			{
 				if (BossChar->LightningVFX)
 				{
+					FVector SpawnLoc = Boss->GetActorLocation();
+					if (const USkeletalMeshComponent* BossMesh = Boss->GetMesh())
+					{
+						SpawnLoc = BossMesh->GetSocketLocation(FName("LeftHand"));
+						SpawnLoc.Z -= 400.f;
+					}
 					UNiagaraFunctionLibrary::SpawnSystemAtLocation(
 						Boss->GetWorld(),
 						BossChar->LightningVFX,
-						Boss->GetActorLocation(),
+						SpawnLoc,
 						FRotator::ZeroRotator
 					);
 				}
