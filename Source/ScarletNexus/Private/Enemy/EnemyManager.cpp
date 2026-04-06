@@ -83,6 +83,7 @@ void AEnemyManager::OnEnemyDied(AEnemyBase* Enemy)
 {
 	if (!Enemy) return;
 	
+	ReleaseAttackToken(Enemy);
 	AliveEnemies.Remove(Enemy);
 	
 	// 풀로 반환 (딜레이 후 DestroyDelay와 맞춤
@@ -316,4 +317,26 @@ void AEnemyManager::SpawnWaveEnemies(const FEnemyWave& Wave)
 			AliveEnemies.Add(enemy);
 		}
 	}
+}
+
+bool AEnemyManager::RequestAttackToken(AEnemyBase* Enemy)
+{
+	if (!Enemy) return false;
+	
+	// 이미 토큰 보유 중
+	if (CurrentAttackers.Contains(Enemy)) return true;
+	
+	// 슬롯 남아있으면 허용
+	if (CurrentAttackers.Num() < MaxAttackers)
+	{
+		CurrentAttackers.Add(Enemy);
+		return true;
+	}
+	
+	return false;
+}
+
+void AEnemyManager::ReleaseAttackToken(AEnemyBase* Enemy)
+{
+	CurrentAttackers.Remove(Enemy);
 }

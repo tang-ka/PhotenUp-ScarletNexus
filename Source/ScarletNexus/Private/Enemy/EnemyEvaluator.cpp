@@ -7,6 +7,7 @@
 #include "ScarletNexus.h"
 #include "StateTreeExecutionContext.h"
 #include "Enemy/EnemyBase.h"
+#include "Enemy/EnemyManager.h"
 #include "Engine/OverlapResult.h"
 #include "PartyAI/PartyMemberBase.h"
 #include "Player/PlayerCharacterBase.h"
@@ -104,10 +105,31 @@ void FEnemyEvaluator::Tick(FStateTreeExecutionContext& Context, const float Delt
 	{
 		data.DistanceToTarget = FVector::Dist(pawnLocation, bestTarget->GetActorLocation());
 		data.bInAttackRange = data.DistanceToTarget <= data.AttackRange;
+		
+		// 공격 토큰 체크
+		if (data.bInAttackRange && enemy->OwningManager)
+		{
+			data.bCanAttack = enemy->OwningManager->RequestAttackToken(enemy);
+		}
+		else
+		{
+			if (enemy->OwningManager)
+			{
+				enemy->OwningManager->ReleaseAttackToken(enemy);
+			}
+			data.bCanAttack = false;
+		}
 	}
 	else
 	{
 		data.DistanceToTarget = 0.f;
 		data.bInAttackRange = false;
+		
+		// 타겟이 없으면 토큰 반환
+		if (enemy->OwningManager)
+		{
+			enemy->OwningManager->ReleaseAttackToken(enemy);
+		}
+		data.bCanAttack = false;
 	}
 }

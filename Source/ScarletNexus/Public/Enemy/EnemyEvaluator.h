@@ -38,6 +38,10 @@ struct FEnemyEvaluatorInstanceData
 	// 사망 상태
 	UPROPERTY(EditAnywhere, meta=(Output))
 	bool bIsDie = false;
+	
+	// 공격 가능한지 체크
+	UPROPERTY(EditAnywhere, meta=(Output))
+	bool bCanAttack = false;
 };
 
 USTRUCT(DisplayName="Enemy Evaluator")
