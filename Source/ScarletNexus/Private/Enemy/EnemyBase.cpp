@@ -4,6 +4,7 @@
 #include "Enemy/EnemyBase.h"
 
 #include "Components/CapsuleComponent.h"
+#include "Components/ProgressBar.h"
 #include "Components/WidgetComponent.h"
 #include "Enemy/EnemyAIController.h"
 #include "Enemy/EnemyManager.h"
@@ -26,6 +27,18 @@ AEnemyBase::AEnemyBase()
 	HealthBarComp->SetWidgetSpace(EWidgetSpace::Screen);
 	HealthBarComp->SetDrawSize(FVector2D(120.f, 15.f));
 	HealthBarComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	// 개체 이격
+	if (UCharacterMovementComponent* moveComp = GetCharacterMovement())
+	{
+		moveComp->bUseRVOAvoidance = true;
+		moveComp->AvoidanceConsiderationRadius = 500.f;
+		moveComp->AvoidanceWeight = 0.5f;
+	}
+
+	// 콜리전 프리셋 설정
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	GetCapsuleComponent()->SetCollisionProfileName(TEXT("Enemy"));
 }
 
 // Called when the game starts or when spawned
@@ -56,35 +69,18 @@ void AEnemyBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent
 
 }
 
-void AEnemyBase::ApplyHitReaction(AActor* DamageCauser)
+void AEnemyBase::UpdateHealthBar()
 {
-	if (bIsStunned || bIsDie) return;
+	if (!HealthBarComp) return;
 	
-	bIsStunned = true;
+	UUserWidget* widget = HealthBarComp->GetWidget();
+	if (!widget) return;
 	
-	// 이동 정지
-	if (UCharacterMovementComponent* moveComp = GetCharacterMovement())
+	// 위젯 BP의 HPPercent 변수에 값 세팅
+	if (UProgressBar* bar = Cast<UProgressBar>(widget->GetWidgetFromName(TEXT("ProgressBarHP"))))
 	{
-		moveComp->StopMovementImmediately();
+		bar->SetPercent(GetHPRatio());
 	}
-	
-	// 히트 몽타주 재생
-	if (HitReactionMontage)
-	{
-		if (UAnimInstance* animInst = GetMesh()->GetAnimInstance())
-		{
-			animInst->Montage_Play(HitReactionMontage, 1.f);
-		}
-	}
-	
-	// 스턴 타이머 
-	GetWorldTimerManager().ClearTimer(StunTimerHandle);
-	GetWorldTimerManager().SetTimer(
-		StunTimerHandle,
-		this,
-		&AEnemyBase::OnHitStunEnd,
-		HitStunDuration,
-		false);
 }
 
 float AEnemyBase::GetHPRatio() const
@@ -155,16 +151,13 @@ void AEnemyBase::EnableRagdoll()
 	}
 }
 
-void AEnemyBase::OnHitStunEnd()
-{
-	bIsStunned = false;
-}
-
 bool AEnemyBase::ReceiveDamage_Implementation(FDamageInfo DamageInfo)
 {
 	if (bIsDie) return false;
 	
 	CurrHP = FMath::Clamp(CurrHP - DamageInfo.DamageAmount, 0, MaxHP);
+	
+	UpdateHealthBar();
 	
 	// 히트 리액션 플래그 설정
 	if (IsAlive())

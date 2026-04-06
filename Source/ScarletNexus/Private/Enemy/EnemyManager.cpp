@@ -28,6 +28,12 @@ void AEnemyManager::BeginPlay()
 	{
 		StartWave(0);
 	}
+
+	// ** 치트 단축키 바인딩
+	if (APlayerController* pc = GetWorld()->GetFirstPlayerController())
+	{
+		pc->InputComponent->BindAction("CheatEnemyToggle", IE_Pressed, this, &AEnemyManager::Cheat_ToggleAllEnemiesVisible);
+	}
 }
 
 void AEnemyManager::Tick(float DeltaTime)
@@ -105,6 +111,18 @@ void AEnemyManager::OnEnemyDied(AEnemyBase* Enemy)
 		{
 			// 다음 웨이브
 			StartNextWave();
+		}
+	}
+}
+
+void AEnemyManager::Cheat_ToggleAllEnemiesVisible()
+{
+	bEnemyVisible = !bEnemyVisible;
+	for (AEnemyBase* enemy : AliveEnemies)
+	{
+		if (enemy)
+		{
+			enemy->SetActorHiddenInGame(!bEnemyVisible);
 		}
 	}
 }

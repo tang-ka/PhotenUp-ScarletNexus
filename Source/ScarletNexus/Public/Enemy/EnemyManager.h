@@ -158,4 +158,9 @@ private:
 	
 	// 웨이브 딜레이 타이머
 	FTimerHandle WaveDelayTimerHandle;
+
+	// ** 치트
+	UFUNCTION(BlueprintCallable, Category="Cheat")
+	void Cheat_ToggleAllEnemiesVisible();
+	bool bEnemyVisible = true;
 };
