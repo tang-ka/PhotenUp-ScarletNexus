@@ -456,25 +456,11 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickCloneRush(
 			auto* RC = Cast<ABossCloneActor>(Data.RightClone);
 			if (!RC || RC->IsRushComplete())
 			{
-				// 바로 BossRush 대신 딜레이 거치기
-				Data.CRPhase = ECRPhase::RightDelay;
+				Data.CRStartLocation = Boss->GetActorLocation();
+				Data.CRTargetLocation = Data.CRStartLocation + Data.CRDirection * CR_RushDistance;
+				// 몽타주 여기서 안 틂
+				Data.CRPhase = ECRPhase::BossRush;
 				Data.PhaseTimer = 0.f;
-
-				// WindUp → Rush 전환 몽타주 미리 재생
-				if (BossConfig)
-				{
-					const ABossCharacterBase* BossChar = Cast<ABossCharacterBase>(Boss);
-					const EBossPhase Phase = BossChar ? BossChar->GetCurrentPhase() : EBossPhase::Phase1;
-					TArray<FBossAttackPattern> Patterns = BossConfig->GetAvailablePatterns(Phase);
-					for (const FBossAttackPattern& P : Patterns)
-					{
-						if (P.AttackType == EBossAttackType::CloneRush && P.AttackMontage)
-						{
-							Boss->PlayAnimMontage(P.AttackMontage, 1.0f, FName("Rush"));
-							break;
-						}
-					}
-				}
 			}
 		}
 		break;
@@ -507,9 +493,22 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickCloneRush(
  
 	case ECRPhase::BossRush:
 		{
-			if (Data.PhaseTimer < 0.15f)
+			if (Data.PhaseTimer <= DeltaTime)
 			{
-				break;
+				if (BossConfig)
+				{
+					const ABossCharacterBase* BossChar = Cast<ABossCharacterBase>(Boss);
+					const EBossPhase Phase = BossChar ? BossChar->GetCurrentPhase() : EBossPhase::Phase1;
+					TArray<FBossAttackPattern> Patterns = BossConfig->GetAvailablePatterns(Phase);
+					for (const FBossAttackPattern& P : Patterns)
+					{
+						if (P.AttackType == EBossAttackType::CloneRush && P.AttackMontage)
+						{
+							Boss->PlayAnimMontage(P.AttackMontage, 1.0f, FName("Rush"));
+							break;
+						}
+					}
+				}
 			}
 			// 본체도 플레이어 방향으로 약간 보정
 			if (const ACharacter* Player = UGameplayStatics::GetPlayerCharacter(Boss->GetWorld(), 0))
@@ -602,9 +601,7 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickAerialElectric(
 		}
 		break;
 	case EAEPhase::Charging:
-#if ENABLE_DRAW_DEBUG
-		DrawDebugCircle(Boss->GetWorld(), Data.AEGroundTarget + FVector(0, 0, 5), AE_DamageRadius, 32, FColor::Red, false, DeltaTime * 2.f, 0, 3.f, FVector(1, 0, 0), FVector(0, 1, 0), false);
-#endif
+
 		if (Data.PhaseTimer >= AE_ChargeDuration)
 		{
 			Data.AEPhase = EAEPhase::Discharge;
@@ -617,10 +614,19 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickAerialElectric(
 		{
 			ApplyDamageInRadius(Boss, Data.AEGroundTarget, AE_DamageRadius, AE_Damage, AE_KnockbackForce, FVector::UpVector);
 			Data.bDamageApplied = true;
+			if (const ABossCharacterBase* BossChar = Cast<ABossCharacterBase>(Boss))
+			{
+				if (BossChar->LightningVFX)
+				{
+					UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+						Boss->GetWorld(),
+						BossChar->LightningVFX,
+						Boss->GetActorLocation(),
+						FRotator::ZeroRotator
+					);
+				}
+			}
 		}
-#if ENABLE_DRAW_DEBUG
-		DrawDebugCircle(Boss->GetWorld(), Data.AEGroundTarget + FVector(0, 0, 5), AE_DamageRadius, 32, FColor::Yellow, false, DeltaTime * 2.f, 0, 5.f, FVector(1, 0, 0), FVector(0, 1, 0), false);
-#endif
 		if (Data.PhaseTimer >= AE_DischargeDuration)
 		{
 			Data.AEPhase = EAEPhase::Landing;

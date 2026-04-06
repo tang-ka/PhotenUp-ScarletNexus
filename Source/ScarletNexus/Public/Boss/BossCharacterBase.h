@@ -86,6 +86,9 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Boss|VFX")
 	TObjectPtr<UNiagaraSystem> IceSpikeVFX;
 	
+	UPROPERTY(EditDefaultsOnly, Category = "Boss|VFX")
+	TObjectPtr<UNiagaraSystem> LightningVFX;
+	
 private:
 	UPROPERTY()
 	TArray<TObjectPtr<UMaterialInstanceDynamic>> DissolveMIDs;
