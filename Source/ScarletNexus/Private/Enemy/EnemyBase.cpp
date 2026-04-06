@@ -3,6 +3,7 @@
 
 #include "Enemy/EnemyBase.h"
 
+#include "ScarletNexus.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/ProgressBar.h"
 #include "Components/WidgetComponent.h"
@@ -96,14 +97,8 @@ float AEnemyBase::GetHPRatio() const
 
 void AEnemyBase::Die()
 {
-	if (bIsDie) return;
-	bIsDie = true;
-	
-	// AI 정지
-	if (AAIController* aic = Cast<AAIController>(GetController()))
-	{
-		aic->UnPossess();
-	}
+	//PRINTLOG_GT(TEXT("Enemy: %s Die. bIsDie: %s"), *GetName(), bIsDie ? TEXT("True") : TEXT("False"));
+	if (!bIsDie) bIsDie = true;
 	
 	// 충돌 비활성
 	if (UCapsuleComponent* capsule = GetCapsuleComponent())

@@ -56,7 +56,7 @@ void APartyMemberBase::TakeDamage_Party(int Damage)
 	CurrHP = FMath::Clamp(CurrHP - Damage, 0, MaxHP);
 	
 	// 데미지 감소 후 HP가 0 이하면 사망 처리
-	if (!IsAlive())
+	if (CurrHP <= 0)
 	{
 		
 	}
