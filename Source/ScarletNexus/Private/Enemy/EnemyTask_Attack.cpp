@@ -3,9 +3,22 @@
 
 #include "Enemy/EnemyTask_Attack.h"
 
+#include "AIController.h"
 #include "StateTreeExecutionContext.h"
+#include "Enemy/EnemyAnimInstance.h"
+#include "Enemy/EnemyBase.h"
 #include "PartyAI/PartyMemberBase.h"
 #include "Player/PlayerCharacterBase.h"
+
+// Owner(Controller) -> EnemyBase 헬퍼
+static AEnemyBase* GetEnemyFromContext_Attack(FStateTreeExecutionContext& Context)
+{
+	if (AAIController* aic = Cast<AAIController>(Context.GetOwner()))
+	{
+		return Cast<AEnemyBase>(aic->GetPawn());
+	}
+	return Cast<AEnemyBase>(Context.GetOwner());
+}
 
 EStateTreeRunStatus FEnemyTask_Attack::EnterState(FStateTreeExecutionContext& Context,
                                                   const FStateTreeTransitionResult& Transition) const
@@ -15,6 +28,16 @@ EStateTreeRunStatus FEnemyTask_Attack::EnterState(FStateTreeExecutionContext& Co
 	data.bDamageApplied = false;
 	
 	if (!data.Target) return EStateTreeRunStatus::Failed;
+
+	// 공격 몽타주 재생
+	AEnemyBase* enemy = GetEnemyFromContext_Attack(Context);
+	if (enemy)
+	{
+		if (UEnemyAnimInstance* animInst = Cast<UEnemyAnimInstance>(enemy->GetMesh()->GetAnimInstance()))
+		{
+			animInst->PlayAttackMontage();
+		}
+	}
 	
 	return EStateTreeRunStatus::Running;
 }
@@ -22,15 +45,15 @@ EStateTreeRunStatus FEnemyTask_Attack::EnterState(FStateTreeExecutionContext& Co
 EStateTreeRunStatus FEnemyTask_Attack::Tick(FStateTreeExecutionContext& Context, const float DeltaTime) const
 {
 	auto& data = Context.GetInstanceData(*this);
-	AActor* owner = Cast<AActor>(Context.GetOwner());
-	if (!owner || !data.Target) return EStateTreeRunStatus::Failed;
+	AEnemyBase* enemy = GetEnemyFromContext_Attack(Context);
+	if (!enemy || !data.Target) return EStateTreeRunStatus::Failed;
 	
 	data.ElapsedTime += DeltaTime;
 	
 	// 쿨다운 중 특정 시점에 한 번 데미지 적용
 	if (!data.bDamageApplied && data.ElapsedTime >= data.AttackCooldown * data.DamageTimingRatio)
 	{
-		const float dist = FVector::Dist(owner->GetActorLocation(), data.Target->GetActorLocation());
+		const float dist = FVector::Dist(enemy->GetActorLocation(), data.Target->GetActorLocation());
 		
 		if (dist <= data.AttackRadius)
 		{
@@ -44,15 +67,12 @@ EStateTreeRunStatus FEnemyTask_Attack::Tick(FStateTreeExecutionContext& Context,
 			{
 				FDamageInfo info;
 				info.DamageAmount = data.AtkDmg;
-				info.DamageCauser = owner;
+				info.DamageCauser = enemy;
 				player->ReceiveDamage_Implementation(info);
 			}
 		}
 		
 		data.bDamageApplied = true;
-		
-		// TODO: 공격 애니메이션 재생
-		
 	}
 	
 	// 쿨다운 완료 -> Succeeded로 Combat 루프 재진입

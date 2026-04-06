@@ -6,6 +6,8 @@
 #include "StateTreeTaskBase.h"
 #include "EnemyTask_Attack.generated.h"
 
+class AEnemyBase;
+
 USTRUCT()
 struct FEnemyTask_AttackInstanceData
 {
@@ -46,7 +48,7 @@ struct FEnemyTask_Attack : public FStateTreeTaskCommonBase
 	{
 		return FInstanceDataType::StaticStruct();
 	}
-	
+
 	virtual EStateTreeRunStatus EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const override;
 	virtual EStateTreeRunStatus Tick(FStateTreeExecutionContext& Context, const float DeltaTime) const override;
 };

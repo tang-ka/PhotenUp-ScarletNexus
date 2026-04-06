@@ -5,7 +5,18 @@
 
 #include "AIController.h"
 #include "StateTreeExecutionContext.h"
+#include "Enemy/EnemyAnimInstance.h"
 #include "Enemy/EnemyBase.h"
+
+// Owner(Controller) -> EnemyBase 헬퍼
+static AEnemyBase* GetEnemyFromContext_Stun(FStateTreeExecutionContext& Context)
+{
+	if (AAIController* aic = Cast<AAIController>(Context.GetOwner()))
+	{
+		return Cast<AEnemyBase>(aic->GetPawn());
+	}
+	return Cast<AEnemyBase>(Context.GetOwner());
+}
 
 EStateTreeRunStatus FEnemyTask_Stun::EnterState(FStateTreeExecutionContext& Context,
                                                 const FStateTreeTransitionResult& Transition) const
@@ -13,7 +24,7 @@ EStateTreeRunStatus FEnemyTask_Stun::EnterState(FStateTreeExecutionContext& Cont
 	auto data = Context.GetInstanceData(*this);
 	data.ElapsedTime = 0.f;
 	
-	AEnemyBase* enemy = Cast<AEnemyBase>(Context.GetOwner());
+	AEnemyBase* enemy = GetEnemyFromContext_Stun(Context);
 	if (!enemy) return EStateTreeRunStatus::Failed;
 	
 	// 이동 정지
@@ -25,11 +36,10 @@ EStateTreeRunStatus FEnemyTask_Stun::EnterState(FStateTreeExecutionContext& Cont
 	// 히트 몽타주 재생
 	if (enemy->HitReactionMontage)
 	{
-		if (UAnimInstance* animInst = enemy->GetMesh()->GetAnimInstance())
+		if (UEnemyAnimInstance* animInst = Cast<UEnemyAnimInstance>(enemy->GetMesh()->GetAnimInstance()))
 		{
-			animInst->Montage_Play(enemy->HitReactionMontage, 1.f);
+			animInst->PlayHitReactMontage();
 		}
-		
 	}
 	return EStateTreeRunStatus::Running;
 }
@@ -50,7 +60,7 @@ EStateTreeRunStatus FEnemyTask_Stun::Tick(FStateTreeExecutionContext& Context, c
 
 void FEnemyTask_Stun::ExitState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const
 {
-	AEnemyBase* enemy = Cast<AEnemyBase>(Context.GetOwner());
+	AEnemyBase* enemy = GetEnemyFromContext_Stun(Context);
 	if (!enemy) return;
 	
 	// 스턴 해제

@@ -7,6 +7,7 @@
 #include "Interface/Damageable.h"
 #include "EnemyBase.generated.h"
 
+class UBossOverheadWidget;
 class UWidgetComponent;
 
 UCLASS()
