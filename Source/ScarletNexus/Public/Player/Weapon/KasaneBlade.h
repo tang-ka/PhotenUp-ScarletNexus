@@ -7,6 +7,7 @@
 #include "KasaneBlade.generated.h"
 
 class USphereComponent;
+class AKasaneBlade;
 
 UENUM(BlueprintType)
 enum class EBladeState : uint8
@@ -26,6 +27,9 @@ enum class EBladeAttackPattern : uint8
 	A2, // 추후
 	A3 // 추후
 };
+
+// 블레이드 충돌 시 호출되는 델리게이트 (충돌한 블레이드, 충돌 대상 액터)
+DECLARE_DELEGATE_TwoParams(FOnBladeHit, AKasaneBlade*, AActor*);
 
 UCLASS()
 class SCARLETNEXUS_API AKasaneBlade : public AActor
@@ -62,6 +66,9 @@ public:
 	// === Critical ===
 	void SetCanCritical(bool bValue) { bCanCritical = bValue; }
 	bool GetCanCritical() const { return bCanCritical; }
+
+	// === 충돌 델리게이트 (BladeHandler에서 바인딩) ===
+	FOnBladeHit OnBladeHit;
 
 private:
 	void BeginInactive();

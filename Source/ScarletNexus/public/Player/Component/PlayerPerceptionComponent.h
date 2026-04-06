@@ -45,6 +45,9 @@ public:
 	void DeactivateLockOn();
 	UFUNCTION(BlueprintCallable)
 	bool IsLockedOnActivate() const { return bIsLockedOn; }
+
+	// 특정 액터를 직접 락온 타겟으로 설정
+	void LockOnToTarget(AActor* Target);
 #pragma endregion
 
 private:

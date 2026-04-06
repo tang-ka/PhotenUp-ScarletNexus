@@ -137,6 +137,17 @@ void UPlayerPerceptionComponent::DeactivateLockOn()
 	}
 }
 
+void UPlayerPerceptionComponent::LockOnToTarget(AActor* Target)
+{
+	if (!IsValid(Target))
+	{
+		return;
+	}
+
+	HardTarget = Target;
+	bIsLockedOn = true;
+}
+
 void UPlayerPerceptionComponent::InitDetectionSphere()
 {
 	if (DetectionSphere)
@@ -186,9 +197,20 @@ void UPlayerPerceptionComponent::InitDetectionSphere()
 
 void UPlayerPerceptionComponent::UpdatePerception()
 {
+	// 죽었거나 유효하지 않은 적을 후보 목록에서 제거
+	CandidateSoftTargets.RemoveAll([](const TWeakObjectPtr<AActor>& Candidate)
+	{
+		return !Candidate.IsValid() || DamageableHelpers::IsDead(Candidate.Get());
+	});
+
+	// 락온 타겟이 사망하거나 유효하지 않으면 락온 해제
+	if (bIsLockedOn && (!HardTarget.IsValid() || DamageableHelpers::IsDead(HardTarget.Get())))
+	{
+		DeactivateLockOn();
+	}
+
 	if (!bIsLockedOn)
 	{
-		// UE_LOG(LogTemp, Warning, TEXT("Updating Soft Target"));
 		SoftTarget = EvaluateCandidates(CandidateSoftTargets);
 	}
 	
@@ -325,8 +347,8 @@ float UPlayerPerceptionComponent::CalcScreenCenterScore(AActor* Target) const
 void UPlayerPerceptionComponent::OnBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
                                                 UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep,
                                                 const FHitResult& SweepResult)
-{
-	if (DamageableHelpers::IsDamageable(OtherActor))
+{	
+	if (DamageableHelpers::IsDamageable(OtherActor) && !DamageableHelpers::IsDead(OtherActor))
 	{
 		if (ACharacter* Character = Cast<ACharacter>(OtherActor))
 		{
