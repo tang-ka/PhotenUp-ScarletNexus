@@ -118,6 +118,19 @@ public:
 	UPROPERTY(BlueprintAssignable, Category="Events")
 	FOnWaveCleared OnWaveCleared;
 	
+	// ** Combat
+	// 최대 동시 공격 가능 수
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Combat")
+	int32 MaxAttackers = 1;
+	
+	// 공격 토큰 요청 (ture면 공격 가능)
+	UFUNCTION(BlueprintCallable, Category="Combat")
+	bool RequestAttackToken(AEnemyBase* Enemy);
+	
+	// 공격 토큰 반환
+	UFUNCTION(BlueprintCallable, Category="Combat")
+	void ReleaseAttackToken(AEnemyBase* Enemy);
+	
 private:
 	// ** DataTable에서 읽은 Row 포인터들
 	TArray<FEnemyWave*> WaveRows;
@@ -163,4 +176,8 @@ private:
 	UFUNCTION(BlueprintCallable, Category="Cheat")
 	void Cheat_ToggleAllEnemiesVisible();
 	bool bEnemyVisible = true;
+	
+	// 현재 공격 중인 개체
+	UPROPERTY()
+	TArray<AEnemyBase*> CurrentAttackers;
 };
