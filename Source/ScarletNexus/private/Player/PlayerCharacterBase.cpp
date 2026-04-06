@@ -108,8 +108,8 @@ APlayerCharacterBase::APlayerCharacterBase(const FObjectInitializer& ObjectIniti
 	SpringArmComp = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArmComp"));
 	SpringArmComp->SetupAttachment(GetRootComponent());
 	SpringArmComp->SetRelativeLocation(FVector(0.0f, 0.0f, 60.0f));
-	SpringArmComp->TargetArmLength = 400.0f;
-	SpringArmComp->SocketOffset = FVector(0.0f, 0.0f, 30.0f);
+	SpringArmComp->TargetArmLength = 700.0f;
+	SpringArmComp->SocketOffset = FVector(0.0f, 0.0f, 70.0f);
 	SpringArmComp->bUsePawnControlRotation = true;
 	SpringArmComp->bEnableCameraLag = true;
 	SpringArmComp->CameraLagSpeed = 5.0f;
@@ -281,7 +281,22 @@ void APlayerCharacterBase::OnLockOnInput(const FInputActionValue& Value)
 
 void APlayerCharacterBase::BasicAttack()
 {
-	ExecuteAttack(EAttackType::BasicAttack);
+	if (ExecuteAttack(EAttackType::BasicAttack))
+	{
+		// 공격이 실제로 실행된 경우에만 타겟 방향으로 회전
+		if (PerceptionComp)
+		{
+			if (AActor* CurrentTarget = PerceptionComp->GetCurrentTarget())
+			{
+				FVector ToTarget = CurrentTarget->GetActorLocation() - GetActorLocation();
+				ToTarget.Z = 0.f;
+				if (!ToTarget.IsNearlyZero())
+				{
+					SetActorRotation(ToTarget.GetSafeNormal().Rotation());
+				}
+			}
+		}
+	}
 }
 
 void APlayerCharacterBase::PsychicAttack()
@@ -301,7 +316,7 @@ void APlayerCharacterBase::BackStepAttack()
 	DashSkillComp->StartDash(NextDashDirection, true);
 }
 
-void APlayerCharacterBase::ExecuteAttack(EAttackType AttackType)
+bool APlayerCharacterBase::ExecuteAttack(EAttackType AttackType)
 {
 	// 1. 버퍼에 입력 저장
 	GetInputBufferComp()->BufferInput(AttackType);
@@ -310,7 +325,7 @@ void APlayerCharacterBase::ExecuteAttack(EAttackType AttackType)
 	if (!GetActionManagerComp()->CanAttack())
 	{
 		PRINTLOG_SH(TEXT("공격 불가 상태"));
-		return;
+		return false;
 	}
 
 	// 3. 버퍼에서 입력 소비 시도 
@@ -318,13 +333,13 @@ void APlayerCharacterBase::ExecuteAttack(EAttackType AttackType)
 	if (!GetInputBufferComp()->ConsumeBufferedInput(NextAttackType))
 	{
 		PRINTLOG_SH(TEXT("버퍼에 유효한 입력 없음"));
-		return;
+		return false;
 	}
 
 	// 4. 콤보 진행 시도
 	if (!GetComboComp()->TryExecuteCombo(NextAttackType))
 	{
-		return;
+		return false;
 	}
 
 	// 5. 상태 변경
@@ -332,6 +347,8 @@ void APlayerCharacterBase::ExecuteAttack(EAttackType AttackType)
 
 	// 6. 애니메이션 재생
 	PlayCurrentAttackMontage();
+
+	return true;
 }
 
 void APlayerCharacterBase::PlayCurrentAttackMontage()
@@ -362,16 +379,18 @@ void APlayerCharacterBase::PlayAttackMontage(const UComboAttackDataAsset* Attack
 	                AttackDataAsset->MontageSectionName);
 	
 	GetActionManagerComp()->SetMovementLocked(true);
-	Cast<UKasaneAnimInstance>(AnimInstance)->SetIsBasicAttacking(true);
+
+	if (UKasaneAnimInstance* KasaneAnim = Cast<UKasaneAnimInstance>(AnimInstance))
+	{
+		KasaneAnim->SetIsBasicAttacking(true);
+		KasaneAnim->SetAttackState(AttackDataAsset->AnimAttackState);
+	}
 }
 
 void APlayerCharacterBase::OnMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
-	if (UKasaneAnimInstance* AnimInstance = Cast<UKasaneAnimInstance>(GetMesh()->GetAnimInstance()))
-	{
-		AnimInstance->SetIsBasicAttacking(false);
-	}
-	
+	UKasaneAnimInstance* AnimInstance = Cast<UKasaneAnimInstance>(GetMesh()->GetAnimInstance());
+
 	if (bInterrupted)
 	{
 		return;
@@ -387,6 +406,7 @@ void APlayerCharacterBase::OnMontageEnded(UAnimMontage* Montage, bool bInterrupt
 
 	// 공격 종료 시 이동 잠금 해제
 	GetActionManagerComp()->SetMovementLocked(false);
+	AnimInstance->SetAttackState(EAttackState::None);
 }
 
 void APlayerCharacterBase::OnMovementUpdated(float DeltaSeconds, const FVector& OldLocation, const FVector& OldVelocity)

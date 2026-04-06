@@ -4,6 +4,9 @@
 #include "Player/Component/BladeHandlerComponent.h"
 
 #include "Player/Weapon/KasaneBlade.h"
+#include "Kismet/GameplayStatics.h"
+#include "Player/PlayerCharacterBase.h"
+#include "Player/Component/PlayerPerceptionComponent.h"
 
 
 UBladeHandlerComponent::UBladeHandlerComponent()
@@ -165,6 +168,10 @@ void UBladeHandlerComponent::SpawnBladePool()
 				Blade->SetDefaultState(EBladeState::Inactive);
 			}
 			Blade->ChangeBladeState(Blade->GetDefaultState());
+
+			// 충돌 델리게이트 바인딩
+			Blade->OnBladeHit.BindUObject(this, &UBladeHandlerComponent::HandleBladeHit);
+			
 			BladePool.Add(Blade);
 		}
 	}
@@ -177,6 +184,34 @@ void UBladeHandlerComponent::ActivateIdleBlades()
 	for (int32 i = 0; i < Count; ++i)
 	{
 		BladePool[i]->InitForIdle(Count);
+	}
+}
+
+void UBladeHandlerComponent::HandleBladeHit(AKasaneBlade* HitBlade, AActor* HitActor)
+{
+	if (!GetWorld())
+	{
+		return;
+	}
+
+	// CameraShake 재생
+	if (HitCameraShakeClass)
+	{
+		APlayerController* PC = GetWorld()->GetFirstPlayerController();
+		if (PC)
+		{
+			PC->ClientStartCameraShake(HitCameraShakeClass);
+		}
+	}
+
+	// 맞힌 액터를 즉시 락온 타겟으로 설정 (아직 락온 중이 아닐 때만)
+	if (APlayerCharacterBase* Player = Cast<APlayerCharacterBase>(GetOwner()))
+	{
+		UPlayerPerceptionComponent* Perception = Player->GetPerceptionComp();
+		if (!Perception->IsLockedOnActivate())
+		{
+			Perception->LockOnToTarget(HitActor);
+		}
 	}
 }
 

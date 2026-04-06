@@ -3,9 +3,28 @@
 
 #include "Player/Animation/KasaneAnimInstance.h"
 
+#include "ScarletNexus.h"
 #include "Player/PlayerKasane.h"
 #include "Player/Component/ActionManagerComponent.h"
 #include "Player/Component/BladeHandlerComponent.h"
+#include "Player/Component/ComboComponent.h"
+
+void UKasaneAnimInstance::SetAttackState(EAttackState InState)
+{
+	PRINTLOG_SH(TEXT("[AnimInstance] 공격 상태 변경: %d -> %d"), AttackState, InState);
+	AttackState = InState;
+	
+	if (AttackState != EAttackState::None)
+	{
+		SetIsBasicAttacking(true);
+		BlendWeight = 1.f; // 공격 애니메이션이 시작되면 BlendWeight를 1로 설정하여 공격 애니메이션이 우선적으로 재생되도록 합니다.
+	}
+	else
+	{
+		SetIsBasicAttacking(false);
+		BlendWeight = 0.f; // 공격 애니메이션이 끝나면 BlendWeight를 0으로 설정하여 기본 애니메이션으로 전환합니다.
+	}
+}
 
 void UKasaneAnimInstance::AnimNotify_JumpStart()
 {
@@ -33,5 +52,7 @@ void UKasaneAnimInstance::AnimNotify_AllowMove()
 	{
 		Player->GetActionManagerComp()->SetMovementLocked(false);
 		Player->GetActionManagerComp()->ForceSetState(EActionState::Idle);
+		Player->GetComboComp()->ResetCombo();
+		SetAttackState(EAttackState::None);
 	}
 }

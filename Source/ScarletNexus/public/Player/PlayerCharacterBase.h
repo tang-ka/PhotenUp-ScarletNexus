@@ -90,7 +90,7 @@ protected:
 	virtual void PsychicAttack();
 	virtual void BackStepAttack();
 
-	void ExecuteAttack(EAttackType AttackType);
+	bool ExecuteAttack(EAttackType AttackType);
 	void PlayCurrentAttackMontage();
 	virtual void PlayAttackMontage(const UComboAttackDataAsset* AttackDataAsset);
 	// Attacking 상태에서 몽타주가 끝났을 때만 콤보 리셋 및 상태 변경
