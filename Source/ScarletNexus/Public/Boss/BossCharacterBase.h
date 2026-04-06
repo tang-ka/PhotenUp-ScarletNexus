@@ -8,6 +8,7 @@
 #include "Interface/Damageable.h"
 #include "ICombatState.h"
 #include "BossTypes.h"
+#include "NiagaraSystem.h"
 #include "BossCharacterBase.generated.h"
  
 class UBossConfigDataAsset;
@@ -81,6 +82,10 @@ public:
 	// 머티리얼
 	void StartDissolve(float Duration, bool bDissolveOut);
 	
+	// 나이아가라
+	UPROPERTY(EditDefaultsOnly, Category = "Boss|VFX")
+	TObjectPtr<UNiagaraSystem> IceSpikeVFX;
+	
 private:
 	UPROPERTY()
 	TArray<TObjectPtr<UMaterialInstanceDynamic>> DissolveMIDs;
@@ -130,6 +135,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Boss|HitReaction")
 	TObjectPtr<UAnimMontage> HitReaction_Right;
 	
+
 	
 	
 	

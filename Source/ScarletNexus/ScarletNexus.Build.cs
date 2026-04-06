@@ -10,7 +10,7 @@ public class ScarletNexus : ModuleRules
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 	
 		PublicDependencyModuleNames.AddRange(new string[] 
-			{ "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput" , "StateTreeModule", "GameplayStateTreeModule", "GameplayTags", "NavigationSystem", "UMG"});
+			{ "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput" , "StateTreeModule", "GameplayStateTreeModule", "GameplayTags", "NavigationSystem", "UMG", "Niagara"});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
 

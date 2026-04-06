@@ -15,7 +15,7 @@
 #include "NavigationSystem.h"
 #include "DrawDebugHelpers.h"
 #include "Interface/Damageable.h"
- 
+#include "NiagaraFunctionLibrary.h"
  
 
 // EnterState
@@ -456,10 +456,11 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickCloneRush(
 			auto* RC = Cast<ABossCloneActor>(Data.RightClone);
 			if (!RC || RC->IsRushComplete())
 			{
-				// 우분신 끝나면 바로 본체 돌진
-				Data.CRStartLocation = Boss->GetActorLocation();
-				Data.CRTargetLocation = Data.CRStartLocation + Data.CRDirection * CR_RushDistance;
+				// 바로 BossRush 대신 딜레이 거치기
+				Data.CRPhase = ECRPhase::RightDelay;
+				Data.PhaseTimer = 0.f;
 
+				// WindUp → Rush 전환 몽타주 미리 재생
 				if (BossConfig)
 				{
 					const ABossCharacterBase* BossChar = Cast<ABossCharacterBase>(Boss);
@@ -474,8 +475,6 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickCloneRush(
 						}
 					}
 				}
-				Data.CRPhase = ECRPhase::BossRush;
-				Data.PhaseTimer = 0.f;
 			}
 		}
 		break;
@@ -508,6 +507,10 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickCloneRush(
  
 	case ECRPhase::BossRush:
 		{
+			if (Data.PhaseTimer < 0.15f)
+			{
+				break;
+			}
 			// 본체도 플레이어 방향으로 약간 보정
 			if (const ACharacter* Player = UGameplayStatics::GetPlayerCharacter(Boss->GetWorld(), 0))
 			{
@@ -694,21 +697,48 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickIceSpikes(
 		break;
 	case EISPhase::Spawning:
 		{
+			// 데미지 판정 (기존 유지)
 			const FVector RV = FVector(-Data.ISDirection.Y, Data.ISDirection.X, 0.f);
 			for (int32 i = 0; i < IS_SpikeCount; i++)
 			{
 				const FVector SL = Data.ISOrigin + Data.ISDirection * FMath::RandRange(IS_AreaStartOffset, IS_AreaStartOffset + IS_AreaLength)
 					+ RV * FMath::RandRange(-IS_AreaWidth * 0.5f, IS_AreaWidth * 0.5f);
 				ApplyDamageInRadius(Boss, SL, IS_SpikeRadius, IS_Damage, IS_KnockbackForce, FVector::UpVector);
-#if ENABLE_DRAW_DEBUG
-				DrawDebugCylinder(Boss->GetWorld(), SL - FVector(0, 0, 10), SL + FVector(0, 0, 250), IS_SpikeRadius * 0.25f, 6, FColor::Cyan, false, IS_HoldDuration + 0.5f, 0, 3.f);
-#endif
 			}
+
+			// 나이아가라 VFX 스폰
+			if (const ABossCharacterBase* BossChar = Cast<ABossCharacterBase>(Boss))
+			{
+				if (BossChar->IceSpikeVFX)
+				{
+					
+					const FVector SpawnLoc = Data.ISOrigin + Data.ISDirection * (IS_AreaStartOffset + IS_AreaLength * 0.5f);
+					const FRotator SpawnRot = Data.ISDirection.Rotation();
+					UE_LOG(LogTemp, Log, TEXT("[IceSpikes] 나이아가라 VFX 스폰!"));
+					UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+						Boss->GetWorld(),
+						BossChar->IceSpikeVFX,
+						SpawnLoc,
+						SpawnRot,
+						FVector(1.f),
+						true,
+						true,
+						ENCPoolMethod::None
+						
+					);
+				}
+				else
+				{
+					UE_LOG(LogTemp, Warning, TEXT("[IceSpikes] IceSpikeVFX가 NULL! BP에서 할당 확인 필요"));
+				}
+			}
+
 			Data.ISPhase = EISPhase::Holding;
 			Data.PhaseTimer = 0.f;
 			UE_LOG(LogTemp, Log, TEXT("[IceSpikes] 가시 %d개 생성!"), IS_SpikeCount);
 		}
 		break;
+		
 	case EISPhase::Holding:
 		if (Data.PhaseTimer >= IS_HoldDuration)
 		{
