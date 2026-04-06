@@ -88,6 +88,7 @@ EStateTreeRunStatus FPCTask_Attack::Tick(FStateTreeExecutionContext& Context, co
 			info.DamageCauser = owner;
 			//partyMember
 			IDamageable::Execute_ReceiveDamage(data.Target, info);
+			PRINTLOG_GT(TEXT("Target: %s"), *data.Target.GetName());
 		}
 		data.bAttacked = true;
 	}

@@ -7,6 +7,7 @@
 #include "Interface/Damageable.h"
 #include "EnemyBase.generated.h"
 
+class UDissolveComponent;
 class UBossOverheadWidget;
 class UWidgetComponent;
 
@@ -95,6 +96,11 @@ public:
 	// 사망 처리 (ST Die Task에서 호출)
 	UFUNCTION(BlueprintCallable, Category="Die")
 	virtual void Die();
+	
+	//**FX
+	// Dissolve
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="FX")
+	UDissolveComponent* DissolveComp;
 	
 #pragma region IDamageable
 	bool ReceiveDamage_Implementation(FDamageInfo DamageInfo) override;
