@@ -21,6 +21,7 @@ public:
 	void SetIsInAir(bool bInAir) { bIsInAir = bInAir; }
 	void SetIsFalling(bool bFalling) { bIsFalling = bFalling; }
 	void SetIsJumpEnd(bool bInJumpEnd) { bIsJumpEnd = bInJumpEnd; }
+	void SetIsBasicAttacking(bool bAttacking) { bIsBasicAttacking = bAttacking; }
 	
 	UFUNCTION()
 	void AnimNotify_JumpStart();
@@ -30,6 +31,9 @@ public:
 	
 	UFUNCTION()
 	void AnimNotify_CriticalHit();
+	
+	UFUNCTION()
+	void AnimNotify_AllowMove();
 
 private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Animation, meta=(AllowPrivateAccess=true))
@@ -49,4 +53,7 @@ private:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Animation, meta=(AllowPrivateAccess=true))
 	bool bIsStaggered = false;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Animation, meta=(AllowPrivateAccess=true))
+	bool bIsBasicAttacking = false;
 };

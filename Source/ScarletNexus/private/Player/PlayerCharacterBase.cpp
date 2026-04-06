@@ -11,6 +11,7 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "ScarletNexus.h"
+#include "Components/BoxComponent.h"
 #include "Data/ComboAttackDataAsset.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Interface/DamageableHelper.h"
@@ -359,10 +360,18 @@ void APlayerCharacterBase::PlayAttackMontage(const UComboAttackDataAsset* Attack
 	PlayAnimMontage(AttackDataAsset->AttackMontage,
 	                AttackDataAsset->MontagePlayRate,
 	                AttackDataAsset->MontageSectionName);
+	
+	GetActionManagerComp()->SetMovementLocked(true);
+	Cast<UKasaneAnimInstance>(AnimInstance)->SetIsBasicAttacking(true);
 }
 
 void APlayerCharacterBase::OnMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
+	if (UKasaneAnimInstance* AnimInstance = Cast<UKasaneAnimInstance>(GetMesh()->GetAnimInstance()))
+	{
+		AnimInstance->SetIsBasicAttacking(false);
+	}
+	
 	if (bInterrupted)
 	{
 		return;
@@ -375,6 +384,9 @@ void APlayerCharacterBase::OnMontageEnded(UAnimMontage* Montage, bool bInterrupt
 
 	ComboComp->ResetCombo();
 	ActionManagerComp->ForceSetState(EActionState::Idle);
+
+	// 공격 종료 시 이동 잠금 해제
+	GetActionManagerComp()->SetMovementLocked(false);
 }
 
 void APlayerCharacterBase::OnMovementUpdated(float DeltaSeconds, const FVector& OldLocation, const FVector& OldVelocity)
@@ -439,11 +451,18 @@ void APlayerCharacterBase::Move(const FVector2D& InDirection)
 	{
 		return;
 	}
-	
-	if (!ActionManagerComp->CanMove())
+
+	// SetMovementLocked(true) 상태에서 입력 차단
+	// (MOVE_None만으로는 UE5 CMC 파이프라인 전체를 막지 못함)
+	if (ActionManagerComp->IsMovementLocked())
 	{
 		return;
 	}
+
+	// if (!ActionManagerComp->CanMove())
+	// {
+	// 	return;
+	// }
 
 	const FRotator ControlRotation = Controller->GetControlRotation();
 	const FRotator YawRotation(0.0f, ControlRotation.Yaw, 0.0f);
