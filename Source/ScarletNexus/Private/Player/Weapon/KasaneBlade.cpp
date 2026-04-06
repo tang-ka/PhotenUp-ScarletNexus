@@ -110,7 +110,7 @@ void AKasaneBlade::ChangeBladeState(EBladeState NewState)
 		break;
 	}
 
-	PRINTLOG_SH(TEXT("블레이드 %d 상태 변경: %s -> %s"), BladeIndex, *UEnum::GetValueAsString(CurState), *UEnum::GetValueAsString(NewState));
+	// PRINTLOG_SH(TEXT("블레이드 %d 상태 변경: %s -> %s"), BladeIndex, *UEnum::GetValueAsString(CurState), *UEnum::GetValueAsString(NewState));
 	
 	CurState = NewState;
 }
