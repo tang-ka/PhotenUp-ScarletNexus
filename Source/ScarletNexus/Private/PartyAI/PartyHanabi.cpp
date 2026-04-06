@@ -20,11 +20,11 @@ APartyHanabi::APartyHanabi()
 	
 	PKComp = CreateDefaultSubobject<UPKComponent>(TEXT("PKComp"));
 	
-	ConstructorHelpers::FObjectFinder<UStateTree>TempST(TEXT("/Script/StateTreeModule.StateTree'/Game/GT/ST/ST_PartyCharacter.ST_PartyCharacter'"));
+	/*ConstructorHelpers::FObjectFinder<UStateTree>TempST(TEXT("/Script/StateTreeModule.StateTree'/Game/GT/ST/ST_PartyCharacter.ST_PartyCharacter'"));
 	if (TempST.Succeeded())
 	{
 		PartyAIComp->PartyCharacterST = TempST.Object;
-	}
+	}*/
 }
 
 void APartyHanabi::BeginPlay()
@@ -118,5 +118,6 @@ void APartyHanabi::OnSpearHit(AActor* HitActor)
 	FDamageInfo info;
 	info.DamageAmount = ATK;
 	info.DamageCauser = this;
-	IDamageable::Execute_ReceiveDamage(HitActor, info);
+	//IDamageable::Execute_ReceiveDamage(HitActor, info);
+	DamageableHelpers::ApplyDamage(HitActor, info);
 }

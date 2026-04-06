@@ -77,6 +77,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="UI")
 	TSubclassOf<UUserWidget> HPBarWidgetClass;
 	
+	UFUNCTION(BlueprintCallable, Category="UI")
+	void UpdateHealthBar();
+	
 	UFUNCTION(BlueprintCallable, Category="Status")
 	bool IsAlive() const { return CurrHP > 0; }
 	
@@ -108,10 +111,6 @@ protected:
 	// Ragdoll 전환
 	void EnableRagdoll();
 	
-	// 경직 타이머 완료 콜백
-	void OnHitStunEnd();
-	
 private:
 	FTimerHandle DestroyTimerHandle;
-	FTimerHandle StunTimerHandle;
 };
