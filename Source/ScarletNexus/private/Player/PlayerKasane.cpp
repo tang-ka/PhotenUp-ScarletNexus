@@ -46,6 +46,25 @@ void APlayerKasane::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 }
 
+void APlayerKasane::OnMontageStarted(UAnimMontage* Montage)
+{
+	Super::OnMontageStarted(Montage);
+
+	BladeHandlerComp->SetAttackStateAllBlades();
+}
+
+void APlayerKasane::OnMontageEnded(UAnimMontage* Montage, bool bInterrupted)
+{
+	Super::OnMontageEnded(Montage, bInterrupted);
+	
+	if (bInterrupted)
+	{
+		return;
+	}
+	BladeHandlerComp->SetDefaultStateAllBlades();
+	BladeHandlerComp->SetActiveAllBladesCollision(false);
+}
+
 void APlayerKasane::BasicAttack()
 {
 	Super::BasicAttack();

@@ -25,4 +25,3 @@ void UBossOverheadWidget::SetTextName(const FText& Name)
 		TextName->SetText(Name);
 	}
 }
-

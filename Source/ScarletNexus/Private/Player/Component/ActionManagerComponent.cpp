@@ -4,7 +4,12 @@
 #include "Player/Component/ActionManagerComponent.h"
 
 #include "ScarletNexus.h"
+#include "Player/PlayerCharacterBase.h"
+#include "Player/Component/PlayerCharacterMovementComponent.h"
 
+
+class UPlayerCharacterMovementComponent;
+class APlayerCharacterBase;
 
 UActionManagerComponent::UActionManagerComponent()
 {
@@ -18,6 +23,31 @@ void UActionManagerComponent::BeginPlay()
 	ForceSetState(EActionState::Idle);
 }
 
+void UActionManagerComponent::SetMovementLocked(bool bLocked)
+{
+	bIsMovementLocked = bLocked;
+
+	APlayerCharacterBase* Character = Cast<APlayerCharacterBase>(GetOwner());
+	if (!Character)
+	{
+		return;
+	}
+
+	UPlayerCharacterMovementComponent* CMC = 
+		Cast<UPlayerCharacterMovementComponent>(Character->GetCharacterMovement());
+	if (!CMC)
+	{
+		return;
+	}
+
+	if (bLocked)
+	{
+		// 잠금 시점의 관성(Velocity)을 즉시 제거합니다.
+		// 실제 이동 차단은 Move()의 IsMovementLocked() 체크가 담당합니다.
+		CMC->StopMovementImmediately();
+	}
+}
+
 bool UActionManagerComponent::CanAttack() const
 {
 	switch (CurState)
@@ -26,7 +56,7 @@ bool UActionManagerComponent::CanAttack() const
 		return true;
 
 	case EActionState::Attacking:
-		return bComboWindowOpen;
+		return bIsComboWindowOpen;
 
 	case EActionState::Dashing:
 		// Dashing 완료 후 Idle로 전이된 뒤 공격 가능
@@ -50,7 +80,8 @@ bool UActionManagerComponent::CanAttack() const
 bool UActionManagerComponent::CanMove() const
 {
 	 // Attack, Staggered, Dead 상태에서는 이동 불가
-	return CurState != EActionState::Attacking &&
+	return bIsMovementLocked == false &&
+		   CurState != EActionState::Attacking &&
 		   CurState != EActionState::Staggered &&
 		   CurState != EActionState::Dead;
 }
@@ -103,13 +134,13 @@ void UActionManagerComponent::OpenComboWindow()
 		return;
 	}
 
-	bComboWindowOpen = true;
+	bIsComboWindowOpen = true;
 	PRINTLOG_SH(TEXT("[ActionManager] 콤보 윈도우 열림"));
 }
 
 void UActionManagerComponent::CloseComboWindow()
 {
-	bComboWindowOpen = false;
+	bIsComboWindowOpen = false;
 	PRINTLOG_SH(TEXT("[ActionManager] 콤보 윈도우 닫힘"));
 }
 
@@ -143,7 +174,7 @@ bool UActionManagerComponent::IsValidTransition(EActionState From, EActionState 
 		if (To == EActionState::Attacking)
 		{
 			// Attacking -> Attacking은 콤보 윈도우가 열려 있을 때만 허용
-			return bComboWindowOpen;
+			return bIsComboWindowOpen;
 		}
 		// Attacking -> Idle (공격 종료)
 		return To == EActionState::Idle;

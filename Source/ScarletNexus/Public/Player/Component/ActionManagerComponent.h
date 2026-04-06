@@ -32,9 +32,13 @@ public:
 	virtual void BeginPlay() override;
 
 public:
+	UFUNCTION(BlueprintCallable, Category = "Action Manager")
+	void SetMovementLocked(bool bLocked);
+	
 #pragma region State Management
 	// ===== 상태 조회 =====
 	FORCEINLINE EActionState GetCurrentState() const { return CurState; }
+	FORCEINLINE bool IsMovementLocked() const { return bIsMovementLocked; }
 
 	// ===== 행동 허가 판단 =====
 	UFUNCTION(BlueprintCallable, Category = "Action Manager")
@@ -58,7 +62,7 @@ public:
 #pragma endregion
 	
 #pragma region Combo Window
-	FORCEINLINE bool IsComboWindowOpen() const { return bComboWindowOpen; }
+	FORCEINLINE bool IsComboWindowOpen() const { return bIsComboWindowOpen; }
 	
 	UFUNCTION(BlueprintCallable, Category = "Action Manager")
 	void OpenComboWindow();
@@ -84,5 +88,6 @@ private:
 	
 	UPROPERTY(VisibleAnywhere, Category = "Action Manager")
 	// UPROPERTY(Transient)
-	bool bComboWindowOpen = false;
+	bool bIsComboWindowOpen = false;
+	bool bIsMovementLocked = false;
 };
