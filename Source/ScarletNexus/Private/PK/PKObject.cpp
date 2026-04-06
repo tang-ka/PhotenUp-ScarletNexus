@@ -5,6 +5,7 @@
 
 #include "ScarletNexus.h"
 #include "Components/BoxComponent.h"
+#include "FX/DissolveComponent.h"
 #include "Interface/DamageableHelper.h"
 
 // Sets default values
@@ -20,6 +21,9 @@ APKObject::APKObject()
 	
 	StaticMeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMeshComp"));
 	StaticMeshComp->SetupAttachment(BoxComp);
+	
+	// 디졸브 콤포넌트
+	DissolveComp = CreateDefaultSubobject<UDissolveComponent>(TEXT("DissolveComp"));
 }
 
 // Called when the game starts or when spawned
@@ -136,6 +140,16 @@ void APKObject::OnBoxHit(UPrimitiveComponent* HitComponent, AActor* OtherActor,
 		{
 			ObjectState = EPKObjectState::CanBePickedUp;
 			bUsedObject = false;
+		}
+		
+		// 사용되면 (던져짐) 부딪혔을 때 사라지게 함
+		if (ObjectState == EPKObjectState::IsUsed)
+		{
+			// 디졸브 효과
+			if (DissolveComp)
+			{
+				DissolveComp->StartDissolve();
+			}
 		}
 	}
 

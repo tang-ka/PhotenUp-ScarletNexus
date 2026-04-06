@@ -7,6 +7,8 @@
 #include "Interface/PKInteractable.h"
 #include "PKObject.generated.h"
 
+class UDissolveComponent;
+
 UENUM()
 enum class EPKObjectState : uint8
 {
@@ -73,6 +75,11 @@ public:
 	
 	UFUNCTION(BlueprintCallable)
 	EPKObjectState GetPKObjectState() { return ObjectState; }
+	
+	//**FX
+	// Dissolve
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="FX")
+	UDissolveComponent* DissolveComp;
 	
 	// PK 인터페이스 구현
 	virtual bool CanBePickeduped_Implementation() const override;

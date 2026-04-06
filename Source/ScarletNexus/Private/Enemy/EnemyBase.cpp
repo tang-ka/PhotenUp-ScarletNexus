@@ -8,6 +8,7 @@
 #include "Components/WidgetComponent.h"
 #include "Enemy/EnemyAIController.h"
 #include "Enemy/EnemyManager.h"
+#include "FX/DissolveComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 // Sets default values
@@ -39,6 +40,9 @@ AEnemyBase::AEnemyBase()
 	// 콜리전 프리셋 설정
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	GetCapsuleComponent()->SetCollisionProfileName(TEXT("Enemy"));
+	
+	// 디졸브 콤포넌트
+	DissolveComp = CreateDefaultSubobject<UDissolveComponent>(TEXT("DissolveComp"));
 }
 
 // Called when the game starts or when spawned
@@ -47,6 +51,7 @@ void AEnemyBase::BeginPlay()
 	Super::BeginPlay();
 	
 	CurrHP = MaxHP;
+	UpdateHealthBar();
 	
 	// 위젯 클래스가 할당되어 있으면 세팅
 	if (HPBarWidgetClass)
@@ -137,6 +142,12 @@ void AEnemyBase::Die()
 			[this]() {Destroy();}, 
 			DestroyDelay,
 			false);
+	}
+	
+	// 디졸브 효과
+	if (DissolveComp)
+	{
+		DissolveComp->StartDissolve();
 	}
 }
 
