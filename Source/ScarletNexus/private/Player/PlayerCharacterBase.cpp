@@ -3,6 +3,7 @@
 
 #include "Player/PlayerCharacterBase.h"
 #include "Camera/CameraComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Math/RotationMatrix.h"
 #include "InputMappingContext.h"
@@ -10,6 +11,7 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "ScarletNexus.h"
+#include "Components/BoxComponent.h"
 #include "Data/ComboAttackDataAsset.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Interface/DamageableHelper.h"
@@ -135,6 +137,9 @@ void APlayerCharacterBase::BeginPlay()
 {
 	Super::BeginPlay();
 
+	// StatsComp 죽음 델리게이트 바인딩
+	StatsComp->OnDeath.AddUObject(this, &APlayerCharacterBase::HandleDeath);
+
 	// Add the input mapping context
 	auto* PC = Cast<APlayerController>(GetController());
 	if (PC)
@@ -149,7 +154,8 @@ void APlayerCharacterBase::BeginPlay()
 	auto* AnimInstance = GetMesh()->GetAnimInstance();
 	if (AnimInstance)
 	{
-		AnimInstance->OnMontageEnded.AddDynamic(this, &APlayerCharacterBase::OnMontageEdnded);
+		AnimInstance->OnMontageStarted.AddDynamic(this, &APlayerCharacterBase::OnMontageStarted);
+		AnimInstance->OnMontageEnded.AddDynamic(this, &APlayerCharacterBase::OnMontageEnded);
 	}
 }
 
@@ -185,22 +191,28 @@ void APlayerCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 #pragma region IDamageable Interface
 bool APlayerCharacterBase::ReceiveDamage_Implementation(FDamageInfo DamageInfo)
 {
-	return IDamageable::ReceiveDamage_Implementation(DamageInfo);
+	if (StatsComp->IsDead())
+	{
+		return false;
+	}
+
+	StatsComp->ReceiveDamage(DamageInfo.DamageAmount);
+	return true;
 }
 
 int APlayerCharacterBase::GetHP_Implementation() const
 {
-	return IDamageable::GetHP_Implementation();
+	return StatsComp->GetCurrentHP();
 }
 
 float APlayerCharacterBase::GetHPPercent_Implementation() const
 {
-	return IDamageable::GetHPPercent_Implementation();
+	return StatsComp->GetHPPercentage();
 }
 
 bool APlayerCharacterBase::IsDead_Implementation() const
 {
-	return IDamageable::IsDead_Implementation();
+	return StatsComp->IsDead();
 }
 #pragma endregion
 
@@ -348,10 +360,18 @@ void APlayerCharacterBase::PlayAttackMontage(const UComboAttackDataAsset* Attack
 	PlayAnimMontage(AttackDataAsset->AttackMontage,
 	                AttackDataAsset->MontagePlayRate,
 	                AttackDataAsset->MontageSectionName);
+	
+	GetActionManagerComp()->SetMovementLocked(true);
+	Cast<UKasaneAnimInstance>(AnimInstance)->SetIsBasicAttacking(true);
 }
 
-void APlayerCharacterBase::OnMontageEdnded(UAnimMontage* Montage, bool bInterrupted)
+void APlayerCharacterBase::OnMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
+	if (UKasaneAnimInstance* AnimInstance = Cast<UKasaneAnimInstance>(GetMesh()->GetAnimInstance()))
+	{
+		AnimInstance->SetIsBasicAttacking(false);
+	}
+	
 	if (bInterrupted)
 	{
 		return;
@@ -364,6 +384,9 @@ void APlayerCharacterBase::OnMontageEdnded(UAnimMontage* Montage, bool bInterrup
 
 	ComboComp->ResetCombo();
 	ActionManagerComp->ForceSetState(EActionState::Idle);
+
+	// 공격 종료 시 이동 잠금 해제
+	GetActionManagerComp()->SetMovementLocked(false);
 }
 
 void APlayerCharacterBase::OnMovementUpdated(float DeltaSeconds, const FVector& OldLocation, const FVector& OldVelocity)
@@ -380,6 +403,24 @@ void APlayerCharacterBase::OnMovementUpdated(float DeltaSeconds, const FVector& 
 		
 		// PRINTLOG_SH(TEXT("IsInAir: %d, IsFalling: %d, IsJumpEnd: %d"), bInAir, bFalling, AnimInstance->IsJumEnd());
 	}
+}
+
+void APlayerCharacterBase::HandleDeath()
+{
+	// 입력 비활성화
+	if (APlayerController* PC = Cast<APlayerController>(GetController()))
+	{
+		DisableInput(PC);
+	}
+
+	// 이동 중지
+	GetCharacterMovement()->StopMovementImmediately();
+	GetCharacterMovement()->DisableMovement();
+
+	// 충돌 비활성화
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	PRINTLOG_SH(TEXT("플레이어 사망"));
 }
 
 void APlayerCharacterBase::TryConsumeBufferedAttack()
@@ -410,11 +451,18 @@ void APlayerCharacterBase::Move(const FVector2D& InDirection)
 	{
 		return;
 	}
-	
-	if (!ActionManagerComp->CanMove())
+
+	// SetMovementLocked(true) 상태에서 입력 차단
+	// (MOVE_None만으로는 UE5 CMC 파이프라인 전체를 막지 못함)
+	if (ActionManagerComp->IsMovementLocked())
 	{
 		return;
 	}
+
+	// if (!ActionManagerComp->CanMove())
+	// {
+	// 	return;
+	// }
 
 	const FRotator ControlRotation = Controller->GetControlRotation();
 	const FRotator YawRotation(0.0f, ControlRotation.Yaw, 0.0f);

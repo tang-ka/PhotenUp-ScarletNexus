@@ -53,6 +53,7 @@ public:
 	virtual bool IsDead_Implementation() const override;
 #pragma endregion
 
+
 #pragma region Component Getters
 	FORCEINLINE UCameraComponent* GetCameraComp() const { return CameraComp; }
 	FORCEINLINE USpringArmComponent* GetSpringArmComp() const { return SpringArmComp; }
@@ -67,6 +68,8 @@ public:
 #pragma endregion
 
 protected:
+	virtual void HandleDeath();
+	
 #pragma region Input Action Functions
 	void OnMoveInput(const FInputActionValue& Value);
 	void OnLookInput(const FInputActionValue& Value);
@@ -92,7 +95,10 @@ protected:
 	virtual void PlayAttackMontage(const UComboAttackDataAsset* AttackDataAsset);
 	// Attacking 상태에서 몽타주가 끝났을 때만 콤보 리셋 및 상태 변경
 	UFUNCTION()
-	void OnMontageEdnded(UAnimMontage* Montage, bool bInterrupted);
+	virtual void OnMontageStarted(UAnimMontage* Montage) {};
+	UFUNCTION()
+	virtual void OnMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+	
 public:
 	void TryConsumeBufferedAttack();
 #pragma endregion
