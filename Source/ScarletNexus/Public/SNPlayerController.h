@@ -4,17 +4,17 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
-#include "PartyTestPlayerController.generated.h"
+#include "SNPlayerController.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class SCARLETNEXUS_API APartyTestPlayerController : public APlayerController
+class SCARLETNEXUS_API ASNPlayerController : public APlayerController
 {
 	GENERATED_BODY()
 
 public:
-	APartyTestPlayerController();
+	ASNPlayerController();
 	
 };
