@@ -49,10 +49,6 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Hit")
 	bool bIsStunned = false;
 	
-	// 피격 시 호출 : 경직 + 선택적 히트 몽타주
-	UFUNCTION(BlueprintCallable, Category="Hit")
-	void ApplyHitReaction(AActor* DamageCauser);
-	
 	// 블루프린트에서 히트 몽타주 할당
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Hit")
 	TObjectPtr<UAnimMontage> HitReactionMontage;
