@@ -7,7 +7,6 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Boss/BossAttackCollisionComponent.h"
-#include "Boss/BossGhostTrailActor.h"
  
 ABossCharacterBase::ABossCharacterBase()
 {
@@ -261,27 +260,4 @@ void ABossCharacterBase::PlayDirectionalHitReaction(AActor* DamageCauser)
 	}
 }
 
-void ABossCharacterBase::SpawnGhostTrail(float Lifetime)
-{
-	if (!GhostTrailMaterial)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("[GhostTrail] GhostTrailMaterial이 없음!"));
-		return;
-	}
 
-	UE_LOG(LogTemp, Log, TEXT("[GhostTrail] 잔상 스폰!"));
-
-	FActorSpawnParameters SP;
-	SP.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-
-	ABossGhostTrailActor* Ghost = GetWorld()->SpawnActor<ABossGhostTrailActor>(
-		ABossGhostTrailActor::StaticClass(),
-		GetActorLocation(),
-		GetActorRotation(),
-		SP);
-
-	if (Ghost)
-	{
-		Ghost->InitGhost(GetMesh(), GhostTrailMaterial, Lifetime);
-	}
-}
