@@ -306,6 +306,8 @@ void APlayerCharacterBase::PsychicAttack()
 	PsychokinesisComp->SetTarget(GetPerceptionComp()->GetCurrentTarget());
 	PsychokinesisComp->SetPickedObject(GetPerceptionComp()->GetPsychokinesisTarget());
 	PsychokinesisComp->StartHold();
+	// HoldTime 만료 시 PsychokinesisComponent::OnHoldComplete()에서
+	// bBasicAttackHitConfirmed 플래그에 따라 일반 Throw / 콤보 베지어 StrongThrow 분기
 }
 
 void APlayerCharacterBase::BackStepAttack()
@@ -463,6 +465,14 @@ void APlayerCharacterBase::TryConsumeBufferedAttack()
 
 	ActionManagerComp->TrySetState(EActionState::Attacking);
 	PlayCurrentAttackMontage();
+
+	// 버퍼를 통해 PsychicAttack이 콤보로 진입한 경우 PK 로직도 실행
+	if (BufferedType == EAttackType::PsychicAttack)
+	{
+		PsychokinesisComp->SetTarget(GetPerceptionComp()->GetCurrentTarget());
+		PsychokinesisComp->SetPickedObject(GetPerceptionComp()->GetPsychokinesisTarget());
+		PsychokinesisComp->StartHold();
+	}
 }
 
 void APlayerCharacterBase::Move(const FVector2D& InDirection)

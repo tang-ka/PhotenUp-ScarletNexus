@@ -39,6 +39,17 @@ public:
 	
 	UFUNCTION(BlueprintCallable)
 	void SetTarget(AActor* NewTarget) { ThrowTarget = NewTarget; }
+
+	/** 기본공격 히트 확인 플래그 설정 */
+	void SetBasicAttackHitConfirmed(bool bConfirmed) { bBasicAttackHitConfirmed = bConfirmed; }
+
+	/** 기본공격 히트 확인 플래그를 읽고 즉시 소비(false로 리셋) */
+	bool ConsumeBasicAttackHitConfirmed()
+	{
+		const bool bWas = bBasicAttackHitConfirmed;
+		bBasicAttackHitConfirmed = false;
+		return bWas;
+	}
 #pragma endregion
 	
 	UFUNCTION(BlueprintCallable)
@@ -54,11 +65,26 @@ public:
 	void StrongThrow(); // 기본 공격을 맞췄을 경우 발동
 	
 private:
+	FVector CalculateLaunchVelocity(const FVector& StartLocation, const FVector& TargetLocation, float Speed) const;
+
+	/** HoldTime 만료 시 호출 — 일반 PK → Throw(), 콤보 PK → 베지어 리프트 시작 */
+	void OnHoldComplete();
+
+	/** StrongThrow 베지어 리프트 완료 후 실제 발사 */
+	void ExecuteStrongThrowLaunch();
+	
+private:
 	UPROPERTY()
 	TObjectPtr<APlayerCharacterBase> Me;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category=PK, meta=(AllowPrivateAccess=true))
-	TWeakObjectPtr<AActor> PickedObject;;
+	TWeakObjectPtr<AActor> PickedObject;
+	
+	UPROPERTY(EditDefaultsOnly, Category=PK)
+	TObjectPtr<UAnimMontage> PKStartMontage;
+	
+	FName HoldStartSectionName = TEXT("Capture");
+	FName ThrowStartSectionName = TEXT("Throw");
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category=PK, meta=(AllowPrivateAccess=true))
 	TWeakObjectPtr<AActor> ThrowTarget;
@@ -73,7 +99,7 @@ private:
 	
 #pragma region Hold Properties
 	UPROPERTY(EditDefaultsOnly, Category=PK)
-	float HoldTime = 2.f; // 이 시간이 지나면 던짐.
+	float HoldTime = 1.f; // 이 시간이 지나면 던짐.
 	
 	FTimerHandle HoldTimerHandle;
 	
@@ -82,18 +108,40 @@ private:
 	FVector HoldStartLocation;
 	float HoldElapsedTime = 0.f; // Hold 시작 후 경과 시간
 #pragma endregion 
-
-#pragma region Throw State
-	bool bThrowing = false;              // 던지기 이동 중 여부
-	FVector ThrowDirection = FVector::ZeroVector; // 던지는 방향 (정규화)
-	FVector ThrowTargetLocation = FVector::ZeroVector; // 던진 순간 타겟 위치
-#pragma endregion
 	
 #pragma region Floating Properties
 	UPROPERTY(EditDefaultsOnly, Category="PK|Floating")
-	float FloatingHeight = 200.f; // 집어서 띄워지는 높이 (플레이어로부터)
+	float FloatingHeight = 150.f; // 집어서 띄워지는 높이 (플레이어로부터)
 	
 	UPROPERTY(EditDefaultsOnly, Category="PK|Floating")
 	float FloatingTime = 1.f;
+#pragma endregion
+
+#pragma region Strong Throw Properties
+	/** 기본공격이 적에게 적중했는지 여부 */
+	bool bBasicAttackHitConfirmed = false;
+	
+	/** 베지어 리프트 진행 중 여부 */
+	bool bStrongThrowing = false;
+	
+	/** 베지어 시작점 (오브젝트 원래 위치, 고정) */
+	FVector StrongThrowBezierP0;
+	
+	/** 베지어 리프트 경과 시간 */
+	float StrongThrowElapsedTime = 0.f;
+	
+	/** 베지어 리프트 소요 시간 */
+	UPROPERTY(EditDefaultsOnly, Category="PK|StrongThrow")
+	float StrongThrowLiftDuration = 0.5f;
+	
+	/** 플레이어 머리 위 오프셋 (베지어 도착점) */
+	UPROPERTY(EditDefaultsOnly, Category="PK|StrongThrow")
+	FVector StrongThrowHeadOffset = FVector(0.f, 0.f, 200.f);
+	
+	/** 베지어 곡선 제어점의 추가 높이 */
+	UPROPERTY(EditDefaultsOnly, Category="PK|StrongThrow")
+	float StrongThrowCurveElevation = 150.f;
+
+	FName StrongThrowSectionName = TEXT("Throw");
 #pragma endregion
 };

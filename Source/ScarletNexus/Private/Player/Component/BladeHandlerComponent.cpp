@@ -9,6 +9,7 @@
 #include "Player/PlayerCharacterBase.h"
 #include "Player/Component/ComboComponent.h"
 #include "Player/Component/PlayerPerceptionComponent.h"
+#include "Player/Component/PsychokinesisComponent.h"
 #include "Data/ComboAttackDataAsset.h"
 
 
@@ -276,6 +277,20 @@ void UBladeHandlerComponent::HandleBladeHit(AKasaneBlade* HitBlade, UPrimitiveCo
 		if (!Perception->IsLockedOnActivate())
 		{
 			Perception->LockOnToTarget(HitActor);
+		}
+
+		// =============================================
+		// 7. 기본공격 히트 → 염동력 콤보 StrongThrow 플래그
+		// =============================================
+		if (UComboComponent* Combo = Player->GetComboComp())
+		{
+			if (const UComboAttackDataAsset* CurAttack = Combo->GetCurrentAttack())
+			{
+				if (CurAttack->AttackType == EAttackType::BasicAttack)
+				{
+					Player->GetPsychokinesisComp()->SetBasicAttackHitConfirmed(true);
+				}
+			}
 		}
 	}
 }
