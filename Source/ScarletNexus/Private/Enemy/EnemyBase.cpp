@@ -8,6 +8,7 @@
 #include "Components/ProgressBar.h"
 #include "Components/WidgetComponent.h"
 #include "Enemy/EnemyAIController.h"
+#include "Enemy/EnemyAttackCollision.h"
 #include "Enemy/EnemyManager.h"
 #include "FX/DissolveComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -44,6 +45,12 @@ AEnemyBase::AEnemyBase()
 	
 	// 디졸브 콤포넌트
 	DissolveComp = CreateDefaultSubobject<UDissolveComponent>(TEXT("DissolveComp"));
+	
+	// 공격 데미지 전달 콤포넌트
+	AttackCollision = CreateDefaultSubobject<UEnemyAttackCollision>(TEXT("AttackCollision"));
+	AttackCollision->AttachSocketName = FName("Attack"); // 공격할 본 이름
+	AttackCollision->DamageAmount = 30;
+	AttackCollision->SphereRadius = 80.f;
 }
 
 // Called when the game starts or when spawned
