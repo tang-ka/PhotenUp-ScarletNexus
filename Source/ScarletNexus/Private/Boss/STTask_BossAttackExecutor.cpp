@@ -16,6 +16,7 @@
 #include "DrawDebugHelpers.h"
 #include "Interface/Damageable.h"
 #include "NiagaraFunctionLibrary.h"
+#include "NiagaraComponent.h"
  
 
 // EnterState
@@ -623,7 +624,7 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickAerialElectric(
 					if (const USkeletalMeshComponent* BossMesh = Boss->GetMesh())
 					{
 						SpawnLoc = BossMesh->GetSocketLocation(FName("LeftHand"));
-						SpawnLoc.Z -= 400.f;
+						
 					}
 					UNiagaraFunctionLibrary::SpawnSystemAtLocation(
 						Boss->GetWorld(),
@@ -691,16 +692,27 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickIceSpikes(
 		break;
 	case EISPhase::Warning:
 		{
-			const FVector RV = FVector(-Data.ISDirection.Y, Data.ISDirection.X, 0.f);
-			const FVector AC = Data.ISOrigin + Data.ISDirection * (IS_AreaStartOffset + IS_AreaLength * 0.5f);
-			const FVector FH = Data.ISDirection * (IS_AreaLength * 0.5f), RH = RV * (IS_AreaWidth * 0.5f);
-			const FVector G(0, 0, 5);
-#if ENABLE_DRAW_DEBUG
-			DrawDebugLine(Boss->GetWorld(), AC - FH - RH + G, AC - FH + RH + G, FColor::Red, false, DeltaTime * 2.f, 0, 4.f);
-			DrawDebugLine(Boss->GetWorld(), AC - FH + RH + G, AC + FH + RH + G, FColor::Red, false, DeltaTime * 2.f, 0, 4.f);
-			DrawDebugLine(Boss->GetWorld(), AC + FH + RH + G, AC + FH - RH + G, FColor::Red, false, DeltaTime * 2.f, 0, 4.f);
-			DrawDebugLine(Boss->GetWorld(), AC + FH - RH + G, AC - FH - RH + G, FColor::Red, false, DeltaTime * 2.f, 0, 4.f);
-#endif
+			if (Data.PhaseTimer <= DeltaTime)
+			{
+				if (const ABossCharacterBase* BossChar = Cast<ABossCharacterBase>(Boss))
+				{
+					if (BossChar->IceSpikeWarningVFX)
+					{
+						const float HalfHeight = Boss->GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
+						const FVector SpawnLoc = Data.ISOrigin 
+							+ Data.ISDirection * (IS_AreaStartOffset + IS_AreaLength * 0.5f)
+							+ FVector(0, 0, -HalfHeight + 1.f);
+						const FRotator SpawnRot = Data.ISDirection.Rotation();
+						UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+							Boss->GetWorld(),
+							BossChar->IceSpikeWarningVFX,
+							SpawnLoc,
+							SpawnRot
+						);
+					}
+				}
+			}
+
 			if (Data.PhaseTimer >= IS_WarningDuration)
 			{
 				Data.ISPhase = EISPhase::Spawning;
@@ -710,7 +722,7 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickIceSpikes(
 		break;
 	case EISPhase::Spawning:
 		{
-			// 데미지 판정 (기존 유지)
+			// 데미지 판정
 			const FVector RV = FVector(-Data.ISDirection.Y, Data.ISDirection.X, 0.f);
 			for (int32 i = 0; i < IS_SpikeCount; i++)
 			{
@@ -725,7 +737,10 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickIceSpikes(
 				if (BossChar->IceSpikeVFX)
 				{
 					
-					const FVector SpawnLoc = Data.ISOrigin + Data.ISDirection * (IS_AreaStartOffset + IS_AreaLength * 0.5f);
+					const float HalfHeight = Boss->GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
+					const FVector SpawnLoc = Data.ISOrigin 
+						+ Data.ISDirection * (IS_AreaStartOffset + IS_AreaLength * 0.5f)
+						+ FVector(0, 0, -HalfHeight);
 					const FRotator SpawnRot = Data.ISDirection.Rotation();
 					UE_LOG(LogTemp, Log, TEXT("[IceSpikes] 나이아가라 VFX 스폰!"));
 					UNiagaraFunctionLibrary::SpawnSystemAtLocation(
@@ -766,7 +781,7 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickIceSpikes(
 	}
 	return EStateTreeRunStatus::Running;
 }
- 
+
  
 
 // 전류구 (ElectricOrbs) — Phase2+
@@ -833,19 +848,30 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickElectricOrbs(
 					+ FVector(0, 0, ZOffset);
 
     			Data.OOOrbPositions.Add(OrbPos);
+    			if (const ABossCharacterBase* BossChar = Cast<ABossCharacterBase>(Boss))
+    			{
+    				if (BossChar->ElectricOrbVFX)
+    				{
+    					UNiagaraComponent* VFXComp = UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+							Boss->GetWorld(),
+							BossChar->ElectricOrbVFX,
+							OrbPos,
+							FRotator::ZeroRotator
+						);
+    					Data.OOOrbVFXComponents.Add(VFXComp);
+    				}
+    				else
+    				{
+    					Data.OOOrbVFXComponents.Add(nullptr);
+    				}
+    			}
     			Data.OOOrbDirections.Add(FVector::ZeroVector);
     			Data.OOOrbHit.Add(false);
 
     			Data.OOLaunchedCount++;
     			UE_LOG(LogTemp, Log, TEXT("[ElectricOrbs] 전류구 %d/%d 생성!"), Data.OOLaunchedCount, OO_OrbCount);
     		}
-
-    		// 생성된 전류구 보스 앞에서 표시만
-    		for (int32 i = 0; i < Data.OOOrbPositions.Num(); i++)
-    		{
-    			DrawDebugSphere(Boss->GetWorld(), Data.OOOrbPositions[i], 30.f,
-					12, FColor::Purple, false, 0.1f, 0, 3.f);
-    		}
+    		
 
     		// 전부 생성 완료 → 발사 방향 계산 후 Flying 전환
     		if (Data.OOLaunchedCount >= OO_OrbCount)
@@ -885,10 +911,22 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickElectricOrbs(
             }
 
             Data.OOOrbPositions[i] += Data.OOOrbDirections[i] * OO_OrbSpeed * DeltaTime;
+        	
+        	// VFX 위치 업데이트
+        	if (Data.OOOrbVFXComponents.IsValidIndex(i) && Data.OOOrbVFXComponents[i])
+        	{
+        		Data.OOOrbVFXComponents[i]->SetWorldLocation(Data.OOOrbPositions[i]);
+        	}
 
             // 수명 초과
             if (Data.PhaseTimer >= OO_MaxLifetime)
             {
+            	if (Data.OOOrbVFXComponents.IsValidIndex(i) && Data.OOOrbVFXComponents[i])
+            	{
+            		Data.OOOrbVFXComponents[i]->DestroyComponent();
+            		Data.OOOrbVFXComponents[i] = nullptr;
+            	}
+            	
                 Data.OOOrbHit[i] = true;
                 continue;
             }
@@ -911,15 +949,30 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickElectricOrbs(
                             if (auto* M = HitChar->GetCharacterMovement())
                                 M->AddImpulse(Data.OOOrbDirections[i] * OO_KnockbackForce, true);
                         UE_LOG(LogTemp, Log, TEXT("[ElectricOrbs] %s 히트! %.0f 데미지"), *HitActor->GetName(), OO_Damage);
+                    	
+                    	// 히트 VFX
+                    	if (Data.OOOrbVFXComponents.IsValidIndex(i) && Data.OOOrbVFXComponents[i])
+                    	{
+                    		Data.OOOrbVFXComponents[i]->DestroyComponent();
+                    		Data.OOOrbVFXComponents[i] = nullptr;
+                    	}
+                    	if (const ABossCharacterBase* BossChar = Cast<ABossCharacterBase>(Boss))
+                    	{
+                    		if (BossChar->ElectricOrbHitVFX)
+                    		{
+                    			UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+									Boss->GetWorld(),
+									BossChar->ElectricOrbHitVFX,
+									Data.OOOrbPositions[i],
+									FRotator::ZeroRotator
+								);
+                    		}
+                    	}
                         Data.OOOrbHit[i] = true;
                         break;
                     }
                 }
             }
-
-            if (!Data.OOOrbHit[i])
-                DrawDebugSphere(Boss->GetWorld(), Data.OOOrbPositions[i], 50.f,
-                    12, FColor::Purple, false, 0.1f, 0, 3.f);
         }
 
         if (bAllDone)

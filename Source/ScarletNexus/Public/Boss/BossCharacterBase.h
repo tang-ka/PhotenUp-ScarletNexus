@@ -72,9 +72,7 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Boss|Teleport")
 	TObjectPtr<UAnimMontage> TeleportAppearMontage;
 	
-	// 분신잔상 머티리얼
-	UPROPERTY(EditDefaultsOnly, Category = "Boss|GhostTrail")
-	TObjectPtr<UMaterialInterface> GhostTrailMaterial;
+	
 	
 	// 스폰함수
 	void SpawnGhostTrail(float Lifetime = 0.5f);
@@ -82,12 +80,25 @@ public:
 	// 머티리얼
 	void StartDissolve(float Duration, bool bDissolveOut);
 	
+	UPROPERTY(EditDefaultsOnly, Category = "Boss|VFX")
+	TObjectPtr<UMaterialInterface> IceSpikeWarningMaterial;
+	
 	// 나이아가라
 	UPROPERTY(EditDefaultsOnly, Category = "Boss|VFX")
 	TObjectPtr<UNiagaraSystem> IceSpikeVFX;
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Boss|VFX")
 	TObjectPtr<UNiagaraSystem> LightningVFX;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Boss|VFX")
+	TObjectPtr<UNiagaraSystem> ElectricOrbVFX;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Boss|VFX")
+	TObjectPtr<UNiagaraSystem> ElectricOrbHitVFX;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Boss|VFX")
+	TObjectPtr<UNiagaraSystem> IceSpikeWarningVFX;
+	
 	
 private:
 	UPROPERTY()
