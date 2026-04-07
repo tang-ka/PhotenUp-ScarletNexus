@@ -337,6 +337,7 @@ void AKasaneBlade::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AAc
 	if (bHit)
 	{
 		TriggerHitStop();
+		OnBladeHit.ExecuteIfBound(this, OtherActor); // 충돌 델리게이트 호출
 	}
 }
 

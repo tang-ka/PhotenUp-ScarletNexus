@@ -6,6 +6,7 @@
 #include "AttackType.h"
 #include "ScarletNexus.h"
 #include "Engine/DataAsset.h"
+#include "Player/Animation/KasaneAnimInstance.h"
 #include "ComboAttackDataAsset.generated.h"
 
 USTRUCT(BlueprintType)
@@ -66,6 +67,9 @@ public:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
 	float MontagePlayRate = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
+	EAttackState AnimAttackState = EAttackState::None;
 	
 	// ===== 콤보 연결 =====
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combo")

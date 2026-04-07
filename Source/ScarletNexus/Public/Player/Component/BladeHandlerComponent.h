@@ -8,6 +8,7 @@
 
 
 class AKasaneBlade;
+class UCameraShakeBase;
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class SCARLETNEXUS_API UBladeHandlerComponent : public UActorComponent
@@ -31,6 +32,9 @@ public:
 private:
 	void SpawnBladePool();
 	void ActivateIdleBlades();
+
+	// 블레이드 충돌 처리 핸들러 (Blade의 OnBladeHit 델리게이트에 바인딩)
+	void HandleBladeHit(AKasaneBlade* HitBlade, AActor* HitActor);
 
 private:
 #pragma region Blade Pool Settings
@@ -56,5 +60,11 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Blade|AttackA1")
 	float A1Speed = 2000.f;
+#pragma endregion
+
+#pragma region CameraShake
+	// 블레이드 충돌 시 재생할 카메라 쉐이크
+	UPROPERTY(EditDefaultsOnly, Category = "Blade|CameraShake")
+	TSubclassOf<UCameraShakeBase> HitCameraShakeClass;
 #pragma endregion
 };
