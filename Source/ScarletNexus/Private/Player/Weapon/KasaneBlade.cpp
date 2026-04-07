@@ -5,7 +5,6 @@
 
 #include "ScarletNexus.h"
 #include "Components/SphereComponent.h"
-#include "Interface/DamageableHelper.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/WorldSettings.h"
 
@@ -332,13 +331,8 @@ void AKasaneBlade::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AAc
 		return;
 	}
 
-	// 임시 데미지 수치 10
-	const bool bHit = DamageableHelpers::ApplyDamage(OtherActor, OwnerActor.Get(), 10);
-	if (bHit)
-	{
-		TriggerHitStop();
-		OnBladeHit.ExecuteIfBound(this, OtherActor); // 충돌 델리게이트 호출
-	}
+	// 데미지 처리 및 HitStop 호출은 BladeHandlerComponent의 HandleBladeHit에서 담당
+	OnBladeHit.ExecuteIfBound(this, OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
 }
 
 void AKasaneBlade::TriggerHitStop()

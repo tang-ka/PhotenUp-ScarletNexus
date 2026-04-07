@@ -50,6 +50,7 @@ void UPsychokinesisComponent::TickComponent(float DeltaTime, ELevelTick TickType
 		if (DistRemaining <= ThrowSpeed * DeltaTime + 1.f)
 		{
 			bThrowing = false;
+			// PickedObject = nullptr; // 던지기 완료 → 참조 해제
 		}
 	}
 }
@@ -57,7 +58,11 @@ void UPsychokinesisComponent::TickComponent(float DeltaTime, ELevelTick TickType
 void UPsychokinesisComponent::SetPickedObject(AActor* NewPickedObject)
 {
 	// TODO 상혁 확인 : 파티 캐릭이 선점했을 때 Null로 들어옴
-	if (!IsValid(NewPickedObject)) return;
+	if (!IsValid(NewPickedObject))
+	{
+		return;
+	}
+	
 	if (NewPickedObject->GetClass()->ImplementsInterface(UPKInteractable::StaticClass()))
 	{
 		PickedObject = NewPickedObject;
@@ -79,7 +84,9 @@ void UPsychokinesisComponent::StartHold()
 	// {
 	// 	return;
 	// }
-	
+
+	// 이전 던지기 상태가 남아있을 경우 초기화
+	// bThrowing = false;
 	bHolding = true;
 	HoldStartLocation = PickedObject->GetActorLocation();
 	HoldElapsedTime = 0.f;
@@ -99,14 +106,17 @@ void UPsychokinesisComponent::StartHold()
 void UPsychokinesisComponent::ReleaseHold()
 {
 	bHolding = false;
+	// bThrowing = false;
+
+	// ClearTimer는 PickedObject 유효 여부와 무관하게 항상 실행해야 함
+	GetWorld()->GetTimerManager().ClearTimer(HoldTimerHandle);
+	Me->GetPerceptionComp()->SetActivePsychokinesisTargetUpdate(true);
 	
 	// TODO 상혁 확인 : 파티 캐릭이 선점했을 때 Null로 들어옴
 	if (!IsValid(PickedObject.Get())) return;
 	
 	IPKInteractable::Execute_OnPKReleased(PickedObject.Get());
-	
-	GetWorld()->GetTimerManager().ClearTimer(HoldTimerHandle);
-	Me->GetPerceptionComp()->SetActivePsychokinesisTargetUpdate(true);
+	PickedObject = nullptr;
 }
 
 void UPsychokinesisComponent::Throw()
@@ -117,8 +127,10 @@ void UPsychokinesisComponent::Throw()
 	if (!HasTarget())
 	{
 		ThrowDirection = Me->GetCameraComp()->GetForwardVector();
-		// 타겟이 없으면 전방 1000 units 지점을 임시 목표로 설정
-		ThrowDirection.Z = 50.f;
+		// GetForwardVector()는 크기 1인 단위벡터 → Z에 직접 50 대입 금지
+		// 약간 위쪽을 향하도록 Z 성분을 보정 후 다시 정규화
+		ThrowDirection += FVector(0.f, 0.f, 0.3f);
+		ThrowDirection.Normalize();
 		ThrowTargetLocation = PickedObject->GetActorLocation() + ThrowDirection * 3000.f;
 	}
 	else
