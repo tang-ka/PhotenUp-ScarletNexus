@@ -111,6 +111,7 @@ void APKObject::OnPKThrownPS_Implementation(const FVector& ThrowDir, float Throw
 	// 물리 활성화 
 	BoxComp->SetSimulatePhysics(true);
 	// 충돌 재활성화
+	BoxComp->SetCollisionProfileName(TEXT("PKObject"));
 	BoxComp->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	bUsedObject = true;
 	
