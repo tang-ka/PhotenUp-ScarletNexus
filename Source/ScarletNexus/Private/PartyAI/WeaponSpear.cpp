@@ -21,7 +21,7 @@ AWeaponSpear::AWeaponSpear()
 	// 창 끝 콜리전 : 소켓 "SpearTip에 붙힘"
 	TipCollision = CreateDefaultSubobject<USphereComponent>(TEXT("TipCollision"));
 	TipCollision->SetupAttachment(SpearMesh, FName(TEXT("SpearTip")));
-	TipCollision->SetSphereRadius(20.f);
+	TipCollision->SetSphereRadius(50.f);
 	TipCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	TipCollision->SetCollisionProfileName(TEXT("PlayerWeapon"));
 
