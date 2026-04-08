@@ -33,6 +33,14 @@ struct FPKPoolEntry
 	// SpawnOffsetList가 비어있을 때 랜덤 배치 반경
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Pool", meta=(ClampMin = "0.0"))
 	float  RandomSpawnRadius = 300.f;
+
+	// 오브젝트 간 최소 간격 (겹침 방지)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Pool", meta = (ClampMin = "0.0"))
+	float MinSpacing = 250.f;
+
+	// 지면 탐색용 트레이스 거리 (上 -> 下)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Pool", meta = (ClampMin = "0.0"))
+	float GroundTraceDistance = 1000.f;
 };
 
 // pool 내부에서 개별 슬롯 상태 추적

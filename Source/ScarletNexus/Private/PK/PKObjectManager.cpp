@@ -3,6 +3,8 @@
 
 #include "PK/PKObjectManager.h"
 
+#include <ThirdParty/ShaderConductor/ShaderConductor/External/DirectXShaderCompiler/include/dxc/DXIL/DxilConstants.h>
+
 #include "Kismet/GameplayStatics.h"
 #include "PK/PKObject.h"
 
@@ -205,7 +207,23 @@ void APKObjectManager::SpawnSlot(FPKPoolSlot& Slot)
 	
 	UWorld* world = GetWorld();
 	if (!world) return;
+
+	// 지면 높이 보정
+	FVector spawnLoc = Slot.SpawnLocation;
+
+	FHitResult groundHit;
+	FVector traceStart = spawnLoc + FVector(0, 0, entry.GroundTraceDistance * 0.5f);
+	FVector traceEnd = spawnLoc - FVector(0, 0, entry.GroundTraceDistance);
+
+	FCollisionQueryParams traceParams;
+	traceParams.bTraceComplex = true;
+
+	if (world->LineTraceSingleByChannel(groundHit, traceStart, traceEnd, ECC_Visibility, traceParams))
+	{
+		spawnLoc.Z = groundHit.ImpactPoint.Z;
+	}
 	
+	// 스폰
 	FActorSpawnParameters spawnParams;
 	spawnParams.Owner = this;
 	spawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
@@ -218,6 +236,13 @@ void APKObjectManager::SpawnSlot(FPKPoolSlot& Slot)
 	
 	if (newObj)
 	{
+		// 바운드 절반 높이만큼 올려서 땅 위에 얹기
+		FVector origin, boxExtent;
+		newObj->GetActorBounds(false, origin, boxExtent);
+		newObj->AddActorWorldOffset(FVector(0,0,boxExtent.Z));
+
+		// 보정된 위치를 슬롯에 기록 (리스폰 시에도 동일 위치 사용)
+		Slot.SpawnLocation = newObj->GetActorLocation();
 		Slot.Object = newObj;
 		Slot.bActive = true;
 		Slot.bWaitingRespawn = false;
@@ -278,9 +303,35 @@ FVector APKObjectManager::CalcSpawnLocation(const FPKPoolEntry& Entry, int32 Slo
 	{
 		return managerLoc + Entry.SpawnOffsetList[SlotIdx];
 	}
+
+	// 랜덤 배치 : 기존 슬롯과 겹치지 않을 때까지 재시도
+	const int32 maxAttempts = 30;
+	for (int32 attempts = 0; attempts < maxAttempts; ++attempts)
+	{
+		const float angle = FMath::RandRange(0.f, 2.f * PI);
+		const float radius = FMath::RandRange(Entry.MinSpacing * 0.5f, Entry.RandomSpawnRadius);
+		const FVector candidate = managerLoc+FVector(FMath::Cos(angle) * radius, FMath::Sin(angle) * radius, 0.f);
+
+		// 이미 배정된 슬롯들과의 거리 비교
+		bool bTooClose = false;
+		for (const FPKPoolSlot& existing : AllSlots)
+		{
+			if (existing.SpawnLocation.IsZero()) continue;
+			if (FVector::Dist2D(candidate, existing.SpawnLocation) < Entry.MinSpacing)
+			{
+				bTooClose = true;
+				break;
+			}
+		}
+
+		if (!bTooClose)
+		{
+			return candidate;
+		}
+	}
 	
-	// 없으면 랜덤 반경 내 배치
+	// maxAttempts 초과 시 반경 넓혀서 강제 배치
 	const float angle = FMath::RandRange(0.f, 2.f * PI);
-	const float radius = FMath::RandRange(0.f, Entry.RandomSpawnRadius);
+	const float radius = Entry.RandomSpawnRadius + Entry.MinSpacing * SlotIdx;
 	return managerLoc + FVector(FMath::Cos(angle) * radius, FMath::Sin(angle) * radius, 0.f);
 }
