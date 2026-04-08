@@ -8,6 +8,8 @@
 #include "PK/PKObjectManager.h"
 #include "PKObject.generated.h"
 
+class UNiagaraSystem;
+class UNiagaraComponent;
 class UDissolveComponent;
 
 UENUM()
@@ -81,6 +83,34 @@ public:
 	// Dissolve
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="FX")
 	UDissolveComponent* DissolveComp;
+	
+	// Throw Niagara : 잡혀있을 때 오브젝트 주변 오라
+	UPROPERTY(VisibleAnywhere, Category="FX")
+	TObjectPtr<UNiagaraComponent> PKAuraFXComp; 
+	UPROPERTY(EditAnywhere, Category="FX")
+	TObjectPtr<UNiagaraSystem> PKAuraFXAsset;
+	
+	// Throw Niagara : 던져질 때 트레일
+	UPROPERTY(EditAnywhere, Category="FX")
+	TObjectPtr<UNiagaraSystem> ThrowTrailFXAsset;
+	
+	UFUNCTION(BlueprintCallable, Category="FX")
+	void SetActivePKAuraFX(bool IsActive);
+	UFUNCTION(BlueprintCallable, Category="FX")
+	void SpawnPKAuraFX();
+	
+	// PK 잡혔을 때 글로우
+	UPROPERTY(EditAnywhere, Category="FX")
+	FLinearColor PKGlowColor = FLinearColor(0.6f, 0.1f, 1.0f, 1.0f);
+	UPROPERTY(EditAnywhere, Category="FX")
+	float PKGlowStrength = 15.f;
+	UPROPERTY()
+	TArray<TObjectPtr<UMaterialInstanceDynamic>> OriginalMIDs;
+	
+	void EnablePKGlow(bool bEnable);
+	
+	// 트레일 이펙트 스폰
+	void SpawnTrailFX();
 	
 	// PK 인터페이스 구현
 	virtual bool CanBePickeduped_Implementation() const override;
