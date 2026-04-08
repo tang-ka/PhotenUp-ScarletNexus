@@ -30,7 +30,7 @@ APKObject::APKObject()
 void APKObject::BeginPlay()
 {
 	Super::BeginPlay();
-	
+	SetActorTickEnabled(false); 
 	PRINTLOG_SH(TEXT("PKObject Spawned: %s"), *GetName());
 	if (BoxComp)
 	{
@@ -44,6 +44,27 @@ void APKObject::BeginPlay()
 void APKObject::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	// 던지기 틸트 처리 — 목표 각도에 도달하면 각속도 제거
+	if (bIsTilting)
+	{
+		if (GetActorQuat().Equals(ThrowTiltTargetQuat, 0.05f))
+		{
+			bIsTilting = false;
+			BoxComp->SetPhysicsAngularVelocityInDegrees(FVector::ZeroVector);
+		}
+		return;
+	}
+	
+	if (ObjectState == EPKObjectState::CanBePickedUp && BoxComp->IsSimulatingPhysics())
+	{
+		if (BoxComp->GetPhysicsLinearVelocity().SizeSquared() < 10.f)
+		{
+			BoxComp->SetSimulatePhysics(false);
+			BoxComp->SetEnableGravity(false);
+			SetActorTickEnabled(false); // 정지 확인 후 다시 off
+		}
+	}
 }
 
 bool APKObject::CanBePickeduped_Implementation() const
@@ -81,13 +102,13 @@ void APKObject::OnPKReleased_Implementation()
 		
 		// 물리, 중력 on
 		BoxComp->SetSimulatePhysics(true);
+		BoxComp->SetNotifyRigidBodyCollision(true);
 		BoxComp->SetEnableGravity(true);
 
 		// 홀드 풀리면 다시 충돌 켜기
-		// BoxComp->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 		BoxComp->SetCollisionProfileName(TEXT("PKObject"));
 		BoxComp->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-		ObjectState = EPKObjectState::CanBePickedUp;
+		// ObjectState = EPKObjectState::CanBePickedUp;
 #if WITH_EDITOR
 		PRINTLOG_GT(TEXT("PK오브젝트: %s 해제"), *this->GetName());
 #endif
@@ -97,10 +118,38 @@ void APKObject::OnPKReleased_Implementation()
 void APKObject::OnPKThrown_Implementation(const FVector& ThrowDir, float ThrowForce)
 {
 	ObjectState = EPKObjectState::IsUsed;
-	
-	// 충돌 재활성화
-	BoxComp->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	bUsedObject = true;
+
+	// 목표 회전: WorldUp × ThrowDir 축의 -방향으로 TiltAngleDeg도
+	const FVector RotationAxis = FVector::CrossProduct(FVector::UpVector, ThrowDir).GetSafeNormal();
+	const FQuat TiltQuat = FQuat(RotationAxis, FMath::DegreesToRadians(-TiltAngleDeg));
+	ThrowTiltTargetQuat = TiltQuat * GetActorQuat();
+
+	// 물리 즉시 활성화 + 선형 속도
+	BoxComp->SetSimulatePhysics(true);
+	BoxComp->SetNotifyRigidBodyCollision(true);
+	BoxComp->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	BoxComp->SetPhysicsLinearVelocity(ThrowDir * ThrowForce);
+
+	// 현재 회전 → 목표 회전까지의 실제 각도 차이를 TiltDuration으로 나눠 각속도 동적 계산
+	// (각도 차이 / 시간 = 도/초)
+	const float AngleDiffDeg = FMath::RadiansToDegrees(GetActorQuat().AngularDistance(ThrowTiltTargetQuat));
+	const float DynamicDegreesPerSec = (TiltDuration > KINDA_SMALL_NUMBER)
+		? (AngleDiffDeg / TiltDuration)
+		: AngleDiffDeg;
+	BoxComp->SetPhysicsAngularVelocityInDegrees(RotationAxis * (-DynamicDegreesPerSec));
+
+	bIsTilting = true;
+	SetActorTickEnabled(true);
+
+	// 최대 비행 시간 타이머 시작 — 타겟을 못 맞히고 멀리 날아가도 자동 디졸브
+	GetWorld()->GetTimerManager().SetTimer(
+		FlightTimerHandle,
+		this,
+		&APKObject::OnFlightTimeout,
+		MaxFlightTime,
+		false
+	);
 }
 
 // 물리 적용 전용 던지기
@@ -128,29 +177,49 @@ void APKObject::OnPKThrownPS_Implementation(const FVector& ThrowDir, float Throw
 	BoxComp->SetPhysicsLinearVelocity(BoxComp->GetPhysicsLinearVelocity() + impulse);
 }
 
+void APKObject::OnFlightTimeout()
+{
+	if (ObjectState != EPKObjectState::IsUsed) return;
+
+	if (DissolveComp)
+	{
+		DissolveComp->StartDissolve();
+	}
+}
+
 void APKObject::OnBoxHit(UPrimitiveComponent* HitComponent, AActor* OtherActor,
                          UPrimitiveComponent* OtherComp, FVector NormalImpulse,
                          const FHitResult& Hit)
 {
+	UE_LOG(LogTemp, Warning, TEXT("OnBoxHit - State: %s, NormalZ: %f"),
+		*UEnum::GetValueAsString(ObjectState), Hit.ImpactNormal.Z);
 	// CoolDown(릴리즈 후 낙하) 또는 IsUsed(던져진 후) 상태에서
 	// 충돌 노말이 위쪽(바닥 또는 지면)을 향할 때 다시 집을 수 있는 상태로 복귀
-	if (ObjectState == EPKObjectState::CoolDown || ObjectState == EPKObjectState::IsUsed)
+	if (ObjectState == EPKObjectState::CoolDown )
 	{
 		// Hit.ImpactNormal.Z > 0.5f : 충돌면이 충분히 수평(바닥)에 가까울 때
 		if (Hit.ImpactNormal.Z > 0.5f)
 		{
 			ObjectState = EPKObjectState::CanBePickedUp;
 			bUsedObject = false;
+			SetActorTickEnabled(true);
 		}
+	}
 		
-		// 사용되면 (던져짐) 부딪혔을 때 사라지게 함
-		if (ObjectState == EPKObjectState::IsUsed)
+	// 사용되면 (던져짐) 부딪혔을 때 사라지게 함
+	if (ObjectState == EPKObjectState::IsUsed)
+	{
+		// 바닥 충돌(수평면)만 무시 → 타겟까지 계속 날아감
+		// 벽, 적 등 수직 방향 충돌에는 모두 디졸브
+		if (Hit.ImpactNormal.Z > 0.5f)
 		{
-			// 디졸브 효과
-			if (DissolveComp)
-			{
-				DissolveComp->StartDissolve();
-			}
+			return;
+		}
+
+		if (DissolveComp)
+		{
+			GetWorld()->GetTimerManager().ClearTimer(FlightTimerHandle);
+			DissolveComp->StartDissolve();
 		}
 	}
 

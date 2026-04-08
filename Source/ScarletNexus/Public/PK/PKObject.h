@@ -94,4 +94,25 @@ private:
 	void OnBoxHit(UPrimitiveComponent* HitComponent, AActor* OtherActor,
 	              UPrimitiveComponent* OtherComp, FVector NormalImpulse,
 	              const FHitResult& Hit);
+
+	// 비행 시간 초과 → 디졸브
+	void OnFlightTimeout();
+
+#pragma region Flight Timeout
+	UPROPERTY(EditDefaultsOnly, Category="PK")
+	float MaxFlightTime = 5.f;  // 던진 후 이 시간이 지나면 자동 디졸브 (초)
+
+	FTimerHandle FlightTimerHandle;
+#pragma endregion
+
+#pragma region Throw Tilt
+	UPROPERTY(EditDefaultsOnly, Category="PK|Tilt")
+	float TiltAngleDeg = 45.f;    // 목표 틸트 각도 (도)
+
+	UPROPERTY(EditDefaultsOnly, Category="PK|Tilt")
+	float TiltDuration = 0.3f;    // 목표 각도까지 도달하는 시간 (초)
+
+	bool bIsTilting = false;
+	FQuat ThrowTiltTargetQuat = FQuat::Identity;
+#pragma endregion
 };

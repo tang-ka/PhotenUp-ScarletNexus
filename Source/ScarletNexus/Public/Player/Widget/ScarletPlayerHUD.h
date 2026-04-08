@@ -6,6 +6,7 @@
 #include "GameFramework/HUD.h"
 #include "ScarletPlayerHUD.generated.h"
 
+class UDamageAmountWidget;
 class UPlayerStatWidget;
 class UPlayerHUDViewModel;
 
@@ -27,6 +28,9 @@ protected:
 private:
 	UPROPERTY(Transient)
 	TObjectPtr<UPlayerStatWidget> PlayerStatWidget;
+	
+	UPROPERTY(Transient)
+	TObjectPtr<UDamageAmountWidget> DamageAmountWidget;
 
 	UPROPERTY(Transient)
 	TObjectPtr<UPlayerHUDViewModel> HUDViewModel;

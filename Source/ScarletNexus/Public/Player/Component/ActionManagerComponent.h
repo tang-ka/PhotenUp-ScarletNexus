@@ -15,6 +15,7 @@ enum class EActionState : uint8
 	Staggered       UMETA(DisplayName = "Staggered"),
 	Jumping         UMETA(DisplayName = "Jumping"),
 	Dead            UMETA(DisplayName = "Dead"),
+	PKHolding       UMETA(DisplayName = "PK Holding"),
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(

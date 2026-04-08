@@ -4,11 +4,16 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Player/Widget/Data/DamageWidgetData.h"
 #include "BladeHandlerComponent.generated.h"
 
 
 class AKasaneBlade;
 class UCameraShakeBase;
+class UPrimitiveComponent;
+
+// 데미지가 실제로 적용됐을 때 브로드캐스트 (FDamageWidgetData 전달)
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnBladeDamageDealt, const FDamageWidgetData&);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class SCARLETNEXUS_API UBladeHandlerComponent : public UActorComponent
@@ -29,12 +34,17 @@ public:
 	void SetAttackStateAllBlades();
 	void SetDefaultStateAllBlades();
 
+	// 데미지 적용 시 브로드캐스트 (SNPlayerController 등에서 바인딩)
+	FOnBladeDamageDealt OnBladeDamageDealt;
+
 private:
 	void SpawnBladePool();
 	void ActivateIdleBlades();
 
 	// 블레이드 충돌 처리 핸들러 (Blade의 OnBladeHit 델리게이트에 바인딩)
-	void HandleBladeHit(AKasaneBlade* HitBlade, AActor* HitActor);
+	void HandleBladeHit(AKasaneBlade* HitBlade, UPrimitiveComponent* OverlappedComponent,
+	                    AActor* HitActor, UPrimitiveComponent* OtherComp,
+	                    int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
 private:
 #pragma region Blade Pool Settings

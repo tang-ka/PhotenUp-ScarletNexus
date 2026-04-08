@@ -6,6 +6,9 @@
 #include "GameFramework/PlayerController.h"
 #include "SNPlayerController.generated.h"
 
+class UDamageAmountWidgetPoolComponent;
+struct FDamageWidgetData;
+
 /**
  * 
  */
@@ -16,5 +19,16 @@ class SCARLETNEXUS_API ASNPlayerController : public APlayerController
 
 public:
 	ASNPlayerController();
+
+protected:
+	virtual void OnPossess(APawn* InPawn) override;
+
+private:
+	// BladeHandlerComponent::OnBladeDamageDealt 수신 핸들러
+	void HandleBladeDamageDealt(const FDamageWidgetData& DamageData);
+	
+private:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cheat", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UDamageAmountWidgetPoolComponent> DamageWidgetPoolComp;
 	
 };

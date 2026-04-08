@@ -77,6 +77,10 @@ EStateTreeRunStatus FSTTask_BossIdle::Tick(
 	// 쿨다운 감소
 	InstanceData.EvadeCooldownTimer -= DeltaTime;
 	InstanceData.PatrolCooldownTimer -= DeltaTime;
+	if (ABossCharacterBase* BossBasePtr = Cast<ABossCharacterBase>(BossChar))
+	{
+		BossBasePtr->PostAttackTeleportCooldown -= DeltaTime;
+	}
  
 	
 	// 1. 회피 텔레포트 진행 중
@@ -100,10 +104,10 @@ EStateTreeRunStatus FSTTask_BossIdle::Tick(
 			}
 			
 			// 나타나는 몽타주 재생
-			if (ABossCharacterBase* BossBase = Cast<ABossCharacterBase>(BossChar))
+			if (ABossCharacterBase* BossBasePtr = Cast<ABossCharacterBase>(BossChar))
 			{
-				if (BossBase->TeleportAppearMontage)
-					BossChar->PlayAnimMontage(BossBase->TeleportAppearMontage);
+				if (BossBasePtr->TeleportAppearMontage)
+					BossChar->PlayAnimMontage(BossBasePtr->TeleportAppearMontage);
 			}
  
 			InstanceData.bIsEvadeTeleporting = false;
@@ -134,10 +138,10 @@ EStateTreeRunStatus FSTTask_BossIdle::Tick(
 			}
 			
 			// 나타나는 몽타주 재생
-			if (ABossCharacterBase* BossBase = Cast<ABossCharacterBase>(BossChar))
+			if (ABossCharacterBase* BossBasePtr = Cast<ABossCharacterBase>(BossChar))
 			{
-				if (BossBase->TeleportAppearMontage)
-					BossChar->PlayAnimMontage(BossBase->TeleportAppearMontage);
+				if (BossBasePtr->TeleportAppearMontage)
+					BossChar->PlayAnimMontage(BossBasePtr->TeleportAppearMontage);
 			}
  
 			InstanceData.bIsPatrolTeleporting = false;
@@ -173,7 +177,10 @@ EStateTreeRunStatus FSTTask_BossIdle::Tick(
 	
 	// 4. 회피 텔레포트 발동 (플레이어가 너무 가까울 때)
 	
-	if (Distance < EvadeTriggerDistance && InstanceData.EvadeCooldownTimer <= 0.f)
+	const ABossCharacterBase* BossBase = Cast<ABossCharacterBase>(BossChar);
+	const bool bCanTeleport = !BossBase || BossBase->PostAttackTeleportCooldown <= 0.f;
+
+	if (Distance < EvadeTriggerDistance && InstanceData.EvadeCooldownTimer <= 0.f && bCanTeleport)
 	{
 		FVector BackDir = (BossLocation - PlayerLocation).GetSafeNormal();
 		FVector TeleportTarget = BossLocation + BackDir * EvadeTeleportDistance;
@@ -193,10 +200,10 @@ EStateTreeRunStatus FSTTask_BossIdle::Tick(
 		InstanceData.EvadeTeleportTarget = TeleportTarget;
 		
 		// 사라지는 몽타주
-		if (ABossCharacterBase* BossBase = Cast<ABossCharacterBase>(BossChar))
+		if (ABossCharacterBase* BossBasePtr = Cast<ABossCharacterBase>(BossChar))
 		{
-			if (BossBase->TeleportVanishMontage)
-				BossBase->PlayAnimMontage(BossBase->TeleportVanishMontage);
+			if (BossBasePtr->TeleportVanishMontage)
+				BossBasePtr->PlayAnimMontage(BossBasePtr->TeleportVanishMontage);
 		}
  
 		BossChar->SetActorHiddenInGame(true);
@@ -241,10 +248,10 @@ EStateTreeRunStatus FSTTask_BossIdle::Tick(
 		InstanceData.PatrolTeleportTarget = TeleportTarget;
 		
 		// 사라지는 몽타주 재생
-		if (ABossCharacterBase* BossBase = Cast<ABossCharacterBase>(BossChar))
+		if (ABossCharacterBase* BossBasePtr = Cast<ABossCharacterBase>(BossChar))
 		{
-			if (BossBase->TeleportVanishMontage)
-				BossChar->PlayAnimMontage(BossBase->TeleportVanishMontage);
+			if (BossBasePtr->TeleportVanishMontage)
+				BossChar->PlayAnimMontage(BossBasePtr->TeleportVanishMontage);
 		}
  
 		BossChar->SetActorHiddenInGame(true);

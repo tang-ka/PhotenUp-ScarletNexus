@@ -8,7 +8,7 @@
 #include "STTask_BossAttackExecutor.generated.h"
  
 class ABossCharacterBase;
- 
+class UNiagaraComponent;
 UENUM()
 enum class EActiveAttackType : uint8
 {
@@ -131,6 +131,8 @@ struct FSTTask_BossAttackExecutorInstanceData
 	UPROPERTY()
 	TArray<FVector> OOOrbDirections;
 	UPROPERTY()
+	TArray<TObjectPtr<UNiagaraComponent>> OOOrbVFXComponents;
+	UPROPERTY()
 	TArray<bool> OOOrbHit;
 	UPROPERTY()
 	TArray<float> OOOrbSpawnTime;
@@ -138,6 +140,7 @@ struct FSTTask_BossAttackExecutorInstanceData
 	FVector OOSpawnOrigin = FVector::ZeroVector;
 	UPROPERTY()
 	FVector OOSpawnForward = FVector::ZeroVector;
+	
 	
 	// 염동력 투척
 	UPROPERTY()
