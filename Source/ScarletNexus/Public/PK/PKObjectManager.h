@@ -69,6 +69,9 @@ struct FPKPoolSlot
 	
 	// 슬롯 인덱스 (엔트리 내)
 	int32 SlotIndex = INDEX_NONE;
+	
+	// 스폰된 오브젝트의 2D 바운드 반경 (겹침 체크용)
+	float BoundsRadius2D = 0.f;
 };
 
 UCLASS()

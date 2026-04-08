@@ -57,22 +57,6 @@ void APKObjectManager::Tick(float DeltaTime)
 			if (AllSlots.IsValidIndex(timer.SlotIndex))
 			{
 				// 실제 비활성화 + 리스폰 예약
-				ReturnObject(AllSlots[timer.SlotIndex].Object);
-			}
-			DeactivateTimers.RemoveAt(i);
-		}
-	}
-	
-	// 리스폰 타이머 처리
-	for (int32 i = DeactivateTimers.Num() - 1; i >= 0; --i)
-	{
-		FRespawnTimer& timer = RespawnTimers[i];
-		timer.RemainingTime -= DeltaTime;
-		
-		if (timer.RemainingTime <= 0.f)
-		{
-			if (AllSlots.IsValidIndex(timer.SlotIndex))
-			{
 				ReactivateSlot(AllSlots[timer.SlotIndex]);
 			}
 			RespawnTimers.RemoveAt(i);
@@ -246,6 +230,9 @@ void APKObjectManager::SpawnSlot(FPKPoolSlot& Slot)
 		Slot.Object = newObj;
 		Slot.bActive = true;
 		Slot.bWaitingRespawn = false;
+		
+		// XY 평면 바운드 반경 기록
+		Slot.BoundsRadius2D = FMath::Sqrt(boxExtent.X * boxExtent.X + boxExtent.Y * boxExtent.Y);
 	}
 }
 
@@ -304,6 +291,18 @@ FVector APKObjectManager::CalcSpawnLocation(const FPKPoolEntry& Entry, int32 Slo
 		return managerLoc + Entry.SpawnOffsetList[SlotIdx];
 	}
 
+	// CDO에서 이번에 스폰할 오브젝트의 대략적 바운드 계산
+	float newObjRadius = Entry.MinSpacing * 0.5f;
+	if (Entry.PKObjectClass)
+	{
+		if (const AActor* cdo = Entry.PKObjectClass->GetDefaultObject<AActor>())
+		{
+			FVector origin, boxExtent;
+			cdo->GetActorBounds(false, origin, boxExtent);
+			newObjRadius = FMath::Sqrt(boxExtent.X * boxExtent.X + boxExtent.Y * boxExtent.Y);
+		}	
+	}	
+	
 	// 랜덤 배치 : 기존 슬롯과 겹치지 않을 때까지 재시도
 	const int32 maxAttempts = 30;
 	for (int32 attempts = 0; attempts < maxAttempts; ++attempts)
@@ -317,6 +316,9 @@ FVector APKObjectManager::CalcSpawnLocation(const FPKPoolEntry& Entry, int32 Slo
 		for (const FPKPoolSlot& existing : AllSlots)
 		{
 			if (existing.SpawnLocation.IsZero()) continue;
+			
+			// 양쪽 바운드 반경 합 + 여유값으로 비교
+			const float requiredDist = existing.BoundsRadius2D + newObjRadius + Entry.MinSpacing;
 			if (FVector::Dist2D(candidate, existing.SpawnLocation) < Entry.MinSpacing)
 			{
 				bTooClose = true;
