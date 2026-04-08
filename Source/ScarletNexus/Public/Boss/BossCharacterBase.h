@@ -86,6 +86,31 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Boss|VFX")
 	TObjectPtr<UMaterialInterface> IceSpikeWarningMaterial;
 	
+	UPROPERTY(EditDefaultsOnly, Category = "Boss|VFX")
+	TObjectPtr<UMaterialInterface> GlitchOverlayMaterial;
+	
+	
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<USkeletalMeshComponent> GlitchMeshComp = nullptr;
+	
+	UPROPERTY()
+	TObjectPtr<UMaterialInstanceDynamic> GlitchMID = nullptr;
+
+	UPROPERTY()
+	TArray<TObjectPtr<UMaterialInterface>> OriginalMaterials;
+	
+	UPROPERTY(EditAnywhere, Category = "Teleport")
+	TArray<TObjectPtr<UAnimMontage>> TeleportVanishMontages;
+
+	UPROPERTY(EditAnywhere, Category = "Teleport")
+	TArray<TObjectPtr<UAnimMontage>> TeleportAppearMontages;
+
+	// 현재 선택된 인덱스
+	int32 CurrentTeleportMontageIndex = -1;
+	
+	void StartGlitchEffect();
+	void StopGlitchEffect();
+	
 	// 나이아가라
 	UPROPERTY(EditDefaultsOnly, Category = "Boss|VFX")
 	TObjectPtr<UNiagaraSystem> IceSpikeVFX;

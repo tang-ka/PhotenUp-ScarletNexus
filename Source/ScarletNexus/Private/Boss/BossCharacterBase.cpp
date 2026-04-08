@@ -43,6 +43,14 @@ ABossCharacterBase::ABossCharacterBase()
 	LeftHandCollision = CreateDefaultSubobject<UBossAttackCollisionComponent>(TEXT("LeftHandCollision"));
 	LeftHandCollision->SetupAttachment(GetMesh(), FName("LeftHand"));
 	LeftHandCollision->SetSphereRadius(20.f);
+	
+	GlitchMeshComp = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("GlitchMesh"));
+	GlitchMeshComp->SetupAttachment(GetMesh());
+	GlitchMeshComp->SetLeaderPoseComponent(GetMesh());
+	GlitchMeshComp->SetVisibility(false);
+	GlitchMeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	GlitchMeshComp->SetRenderInMainPass(true);
+	GlitchMeshComp->SetCastShadow(false);
 }
  
 void ABossCharacterBase::BeginPlay()
@@ -75,7 +83,40 @@ void ABossCharacterBase::Tick(float DeltaTime)
 		}
 	}
 }
- 
+
+
+void ABossCharacterBase::StartGlitchEffect()
+{
+	USkeletalMeshComponent* BossMesh = GetMesh();
+	if (!BossMesh || !GlitchOverlayMaterial) return;
+
+	GlitchMID = UMaterialInstanceDynamic::Create(GlitchOverlayMaterial, this);
+
+	OriginalMaterials.Empty();
+	for (int32 i = 0; i < BossMesh->GetNumMaterials(); i++)
+	{
+		OriginalMaterials.Add(BossMesh->GetMaterial(i));
+		BossMesh->SetMaterial(i, GlitchMID);
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("[Boss] Glitch MID applied to %d slots"), 
+		BossMesh->GetNumMaterials());
+}
+
+void ABossCharacterBase::StopGlitchEffect()
+{
+	USkeletalMeshComponent* BossMesh = GetMesh();
+	if (!BossMesh) return;
+
+	for (int32 i = 0; i < OriginalMaterials.Num(); i++)
+	{
+		BossMesh->SetMaterial(i, OriginalMaterials[i]);
+	}
+	OriginalMaterials.Empty();
+	GlitchMID = nullptr;
+
+	UE_LOG(LogTemp, Warning, TEXT("[Boss] Glitch effect removed"));
+}
  
 void ABossCharacterBase::StartDissolve(float Duration, bool bOut)
 {
