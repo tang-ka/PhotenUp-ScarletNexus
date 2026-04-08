@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Interface/PKInteractable.h"
+#include "PK/PKObjectManager.h"
 #include "PKObject.generated.h"
 
 class UDissolveComponent;
@@ -97,6 +98,10 @@ private:
 
 	// 비행 시간 초과 → 디졸브
 	void OnFlightTimeout();
+	
+	// 풀 매니저에 지연 반환 (2초 후 사라짐 -> 리스폰 예약
+	UFUNCTION()
+	void ReturnObjectDelayed(float delay);
 
 #pragma region Flight Timeout
 	UPROPERTY(EditDefaultsOnly, Category="PK")

@@ -150,6 +150,9 @@ void APKObject::OnPKThrown_Implementation(const FVector& ThrowDir, float ThrowFo
 		MaxFlightTime,
 		false
 	);
+	
+	// Pool 반환
+	ReturnObjectDelayed(2.f);
 }
 
 // 물리 적용 전용 던지기
@@ -175,6 +178,9 @@ void APKObject::OnPKThrownPS_Implementation(const FVector& ThrowDir, float Throw
 	
 	FVector deltaV = impulse / mass;*/
 	BoxComp->SetPhysicsLinearVelocity(BoxComp->GetPhysicsLinearVelocity() + impulse);
+	
+	// Pool 반환
+	ReturnObjectDelayed(2.f);
 }
 
 void APKObject::OnFlightTimeout()
@@ -184,6 +190,14 @@ void APKObject::OnFlightTimeout()
 	if (DissolveComp)
 	{
 		DissolveComp->StartDissolve();
+	}
+}
+
+void APKObject::ReturnObjectDelayed(float delay)
+{
+	if (APKObjectManager* pjObjMgr = APKObjectManager::Get(this))
+	{
+		pjObjMgr->ReturnObjectDelayed(this, delay);
 	}
 }
 
