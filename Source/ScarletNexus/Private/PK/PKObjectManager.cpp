@@ -151,9 +151,11 @@ void APKObjectManager::InitPool()
 	AllSlots.Empty();
 	ObjectToSlotIndex.Empty();
 	RespawnTimers.Empty();
+	DeactivateTimers.Empty();
 	
 	int32 globalSlotIdx = 0;
 	
+	// 1패스 : 일단 전부 스폰하고 실제 바운드 기록
 	for (int32 entryIdx = 0; entryIdx < PoolEntries.Num(); ++entryIdx)
 	{
 		const FPKPoolEntry& entry = PoolEntries[entryIdx];
@@ -178,6 +180,77 @@ void APKObjectManager::InitPool()
 			++globalSlotIdx;
 		}
 	}
+	
+	// 2패스 : 실제 바운드 기반으로 겹치지 않는 위치 재배치
+	for (int32 i = 0; i < AllSlots.Num(); ++i)
+	{
+		FPKPoolSlot slot = AllSlots[i];
+		if (!slot.Object) continue;
+		if (!PoolEntries.IsValidIndex(slot.EntryIndex)) continue;
+		
+		const FPKPoolEntry& entry = PoolEntries[slot.EntryIndex];
+		
+		// 이 오브젝트의 XY 반경 (긴 쪽 기준)
+		const float myRadius = FMath::Max(slot.BoundsExtent.X, slot.BoundsExtent.Y);
+		
+		// 명시적 오프셋
+		if (entry.SpawnOffsetList.IsValidIndex(slot.SlotIndex))
+		{
+			FVector finalLoc = GetActorLocation() + entry.SpawnOffsetList[slot.SlotIndex];
+			SnapToGround(finalLoc, entry.GroundTraceDistance);
+			finalLoc.Z += slot.BoundsExtent.Z;
+			slot.Object->SetActorLocation(finalLoc);
+			slot.SpawnLocation = slot.Object->GetActorLocation();
+			continue;
+		}
+		
+		// 랜덤 배치 : 이미 배치된 슬롯들의 실제 바운드와 비교
+		const int32 maxAttempts = 50;
+		FVector bestLoc = GetActorLocation();
+		
+		for (int32 attempt = 0; attempt < maxAttempts; ++attempt)
+		{
+			const float angle = FMath::RandRange(0.f, 2.0f * PI);
+			const float radius = FMath::RandRange(myRadius * 2.f, entry.RandomSpawnRadius);
+			FVector candidate = GetActorLocation() + FVector(FMath::Cos(angle) * radius, FMath::Sin(angle) * radius, 0.f);
+			
+			bool bTooClose = false;
+			for (int32 j = 0; j < i; ++j)
+			{
+				const FPKPoolSlot& other = AllSlots[j];
+				if (!other.Object) continue;
+				
+				// 양쪽의 긴 쪽 extent 합산 + 여유값
+				const float otherRadius = FMath::Max(other.BoundsExtent.X + slot.BoundsExtent.Y);
+				const float requiredDist = myRadius + otherRadius + entry.MinSpacing;
+				
+				if (FVector::Dist2D(candidate, other.SpawnLocation) < requiredDist)
+				{
+					bTooClose = true;
+					break;
+				}
+			}
+			
+			if (!bTooClose)
+			{
+				bestLoc = candidate;
+				break;
+			}
+			
+			// 마지막 시도면 강제 배치
+			if (attempt == maxAttempts - 1)
+			{
+				const float fallbackRadius = entry.RandomSpawnRadius + myRadius * 2.f * (slot.SlotIndex + 1);
+				bestLoc = GetActorLocation() + FVector(FMath::Cos(angle) * fallbackRadius, FMath::Sin(angle) * fallbackRadius, 0.f);
+			}
+		}
+		
+		// 지면 스냅 + Z extent로 정확히 지면 위에 배치
+		SnapToGround(bestLoc, entry.GroundTraceDistance);
+		bestLoc.Z += slot.BoundsExtent.Z;
+		slot.Object->SetActorLocation(bestLoc);
+		slot.SpawnLocation = slot.Object->GetActorLocation();
+	}
 }
 
 // ──────────────────────────────────────────────
@@ -191,21 +264,6 @@ void APKObjectManager::SpawnSlot(FPKPoolSlot& Slot)
 	
 	UWorld* world = GetWorld();
 	if (!world) return;
-
-	// 지면 높이 보정
-	FVector spawnLoc = Slot.SpawnLocation;
-
-	FHitResult groundHit;
-	FVector traceStart = spawnLoc + FVector(0, 0, entry.GroundTraceDistance * 0.5f);
-	FVector traceEnd = spawnLoc - FVector(0, 0, entry.GroundTraceDistance);
-
-	FCollisionQueryParams traceParams;
-	traceParams.bTraceComplex = true;
-
-	if (world->LineTraceSingleByChannel(groundHit, traceStart, traceEnd, ECC_Visibility, traceParams))
-	{
-		spawnLoc.Z = groundHit.ImpactPoint.Z;
-	}
 	
 	// 스폰
 	FActorSpawnParameters spawnParams;
@@ -223,16 +281,11 @@ void APKObjectManager::SpawnSlot(FPKPoolSlot& Slot)
 		// 바운드 절반 높이만큼 올려서 땅 위에 얹기
 		FVector origin, boxExtent;
 		newObj->GetActorBounds(false, origin, boxExtent);
-		newObj->AddActorWorldOffset(FVector(0,0,boxExtent.Z));
-
-		// 보정된 위치를 슬롯에 기록 (리스폰 시에도 동일 위치 사용)
-		Slot.SpawnLocation = newObj->GetActorLocation();
+		
+		Slot.BoundsExtent = boxExtent;
 		Slot.Object = newObj;
 		Slot.bActive = true;
 		Slot.bWaitingRespawn = false;
-		
-		// XY 평면 바운드 반경 기록
-		Slot.BoundsRadius2D = FMath::Sqrt(boxExtent.X * boxExtent.X + boxExtent.Y * boxExtent.Y);
 	}
 }
 
@@ -290,50 +343,11 @@ FVector APKObjectManager::CalcSpawnLocation(const FPKPoolEntry& Entry, int32 Slo
 	{
 		return managerLoc + Entry.SpawnOffsetList[SlotIdx];
 	}
-
-	// CDO에서 이번에 스폰할 오브젝트의 대략적 바운드 계산
-	float newObjRadius = Entry.MinSpacing * 0.5f;
-	if (Entry.PKObjectClass)
-	{
-		if (const AActor* cdo = Entry.PKObjectClass->GetDefaultObject<AActor>())
-		{
-			FVector origin, boxExtent;
-			cdo->GetActorBounds(false, origin, boxExtent);
-			newObjRadius = FMath::Sqrt(boxExtent.X * boxExtent.X + boxExtent.Y * boxExtent.Y);
-		}	
-	}	
 	
-	// 랜덤 배치 : 기존 슬롯과 겹치지 않을 때까지 재시도
-	const int32 maxAttempts = 30;
-	for (int32 attempts = 0; attempts < maxAttempts; ++attempts)
-	{
-		const float angle = FMath::RandRange(0.f, 2.f * PI);
-		const float radius = FMath::RandRange(Entry.MinSpacing * 0.5f, Entry.RandomSpawnRadius);
-		const FVector candidate = managerLoc+FVector(FMath::Cos(angle) * radius, FMath::Sin(angle) * radius, 0.f);
+	// 1패스 임시 위치 : 겹침 체크는 2패스에서 실제 바운드로 처리
+	return managerLoc;
+}
 
-		// 이미 배정된 슬롯들과의 거리 비교
-		bool bTooClose = false;
-		for (const FPKPoolSlot& existing : AllSlots)
-		{
-			if (existing.SpawnLocation.IsZero()) continue;
-			
-			// 양쪽 바운드 반경 합 + 여유값으로 비교
-			const float requiredDist = existing.BoundsRadius2D + newObjRadius + Entry.MinSpacing;
-			if (FVector::Dist2D(candidate, existing.SpawnLocation) < Entry.MinSpacing)
-			{
-				bTooClose = true;
-				break;
-			}
-		}
-
-		if (!bTooClose)
-		{
-			return candidate;
-		}
-	}
-	
-	// maxAttempts 초과 시 반경 넓혀서 강제 배치
-	const float angle = FMath::RandRange(0.f, 2.f * PI);
-	const float radius = Entry.RandomSpawnRadius + Entry.MinSpacing * SlotIdx;
-	return managerLoc + FVector(FMath::Cos(angle) * radius, FMath::Sin(angle) * radius, 0.f);
+void APKObjectManager::SnapToGround(FVector& Location, float TraceDistance) const
+{
 }

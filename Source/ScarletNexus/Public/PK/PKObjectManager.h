@@ -70,8 +70,8 @@ struct FPKPoolSlot
 	// 슬롯 인덱스 (엔트리 내)
 	int32 SlotIndex = INDEX_NONE;
 	
-	// 스폰된 오브젝트의 2D 바운드 반경 (겹침 체크용)
-	float BoundsRadius2D = 0.f;
+	// 실제 바운드 박스 크기 (XY 겹침 체크 + Z 지면 배치용)
+	FVector BoundsExtent = FVector::ZeroVector;
 };
 
 UCLASS()
@@ -150,4 +150,6 @@ private:
 	
 	// 스폰 위치 계산
 	FVector CalcSpawnLocation(const FPKPoolEntry& Entry, int32 SlotIdx) const;
+	
+	void SnapToGround(FVector& Location, float TraceDistance) const;
 };
