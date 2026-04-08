@@ -7,6 +7,7 @@
 #include "Interface/Damageable.h"
 #include "EnemyBase.generated.h"
 
+class UEnemyAttackCollision;
 class UDissolveComponent;
 class UBossOverheadWidget;
 class UWidgetComponent;
@@ -101,6 +102,10 @@ public:
 	// Dissolve
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="FX")
 	UDissolveComponent* DissolveComp;
+	
+	//**Attack Damage Collision
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Attack")
+	TObjectPtr<UEnemyAttackCollision> AttackCollision;
 	
 #pragma region IDamageable
 	bool ReceiveDamage_Implementation(FDamageInfo DamageInfo) override;
