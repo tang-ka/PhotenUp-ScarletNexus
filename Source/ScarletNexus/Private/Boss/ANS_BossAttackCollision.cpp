@@ -22,8 +22,7 @@ void UANS_BossAttackCollision::NotifyBegin(USkeletalMeshComponent* MeshComp, UAn
 	{
 		if (Comp && Comp->GetName() == CollisionComponentName.ToString())
 		{
-			Comp->SetDamageAmount(Damage);
-			Comp->ActivateCollision();
+			Comp->EnableAttackCollision(Damage, Knockback);
 
 			UE_LOG(LogTemp, Log, TEXT("[ANS_AttackCollision] Begin: %s 활성화"), *CollisionComponentName.ToString());
 			return;
@@ -50,7 +49,7 @@ void UANS_BossAttackCollision::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnim
 	{
 		if (Comp && Comp->GetName() == CollisionComponentName.ToString())
 		{
-			Comp->DeactivateCollision();
+			Comp->DisableAttackCollision();
 			UE_LOG(LogTemp, Log, TEXT("[ANS_AttackCollision] End: %s 비활성화"), *CollisionComponentName.ToString());
 			return;
 		}

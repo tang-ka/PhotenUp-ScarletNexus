@@ -264,6 +264,7 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickTeleportKick(
 		// 준비 동작 시간 후 사라짐
 		if (Data.PhaseTimer >= TK_VanishDuration)
 		{
+			UE_LOG(LogTemp, Warning, TEXT("[TeleportKick] Vanishing → Teleporting"));
 			Boss->SetActorHiddenInGame(true);
 			Boss->SetActorEnableCollision(false);
 			Boss->SetActorLocation(Data.TKTarget);
@@ -280,6 +281,7 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickTeleportKick(
 	case ETKPhase::Teleporting:
 		if (Data.PhaseTimer >= TK_AppearDelay)
 		{
+			UE_LOG(LogTemp, Warning, TEXT("[TeleportKick] Teleporting → Kicking"));
 			Boss->SetActorHiddenInGame(false);
 			Boss->SetActorEnableCollision(true);
 			Data.TKPhase = ETKPhase::Kicking;
@@ -288,6 +290,11 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickTeleportKick(
 		break;
 		
 	case ETKPhase::Kicking:
+		{
+			const UAnimInstance* AnimInst = Boss->GetMesh()->GetAnimInstance();
+			UE_LOG(LogTemp, Warning, TEXT("[TeleportKick] Kicking phase, Montage playing: %s"),
+				AnimInst && AnimInst->IsAnyMontagePlaying() ? TEXT("YES") : TEXT("NO"));
+		}
 		if (Data.PhaseTimer >= TK_KickDuration)
 		{
 			if (ABossCharacterBase* BossBase = Cast<ABossCharacterBase>(Boss))

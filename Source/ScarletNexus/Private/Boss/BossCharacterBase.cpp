@@ -26,12 +26,12 @@ ABossCharacterBase::ABossCharacterBase()
 	
 	// 오른발 콜리전
 	RightFootCollision = CreateDefaultSubobject<UBossAttackCollisionComponent>(TEXT("RightFootCollision"));
-	RightFootCollision->AttachSocketName = FName("RightFoot");
-	RightFootCollision->SphereRadius = 25.f;
-	
+	RightFootCollision->SetupAttachment(GetMesh(), FName("RightFoot"));
+	RightFootCollision->SetSphereRadius(25.f);
+
 	AttackCollision = CreateDefaultSubobject<UBossAttackCollisionComponent>(TEXT("AttackCollision"));
-	AttackCollision->AttachSocketName = FName("Attack");
-	AttackCollision->SphereRadius = 30.f;
+	AttackCollision->SetupAttachment(GetMesh(), FName("Attack"));
+	AttackCollision->SetSphereRadius(100.f);
 	
 	GlitchMeshComp = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("GlitchMesh"));
 	GlitchMeshComp->SetupAttachment(GetMesh());
