@@ -24,6 +24,7 @@ public:
 	// 넉백 힘
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attack")
 	float Knockback = 50.f;
+	
 
 	virtual void NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,
 		float TotalDuration, const FAnimNotifyEventReference& EventReference) override;

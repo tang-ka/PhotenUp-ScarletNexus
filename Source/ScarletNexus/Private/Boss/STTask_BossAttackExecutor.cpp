@@ -249,20 +249,7 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::EnterTeleportKick(
 		if (NavSys->ProjectPointToNavigation(Target, NavLoc, FVector(300.f))) Target = NavLoc.Location;
 	}
 	Data.TKTarget = Target;
-
-	// 글리치 + 사라지는 몽타주 추가
-	if (ABossCharacterBase* BossBase = Cast<ABossCharacterBase>(Boss))
-	{
-		BossBase->StartGlitchEffect();
-		if (BossBase->TeleportVanishMontages.Num() > 0)
-		{
-			BossBase->CurrentTeleportMontageIndex = 
-				FMath::RandRange(0, BossBase->TeleportVanishMontages.Num() - 1);
-			Boss->PlayAnimMontage(
-				BossBase->TeleportVanishMontages[BossBase->CurrentTeleportMontageIndex]);
-		}
-	}
-
+	
 	UE_LOG(LogTemp, Log, TEXT("[TeleportKick] 시작"));
 	return EStateTreeRunStatus::Running;
 }
@@ -295,19 +282,6 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickTeleportKick(
 		{
 			Boss->SetActorHiddenInGame(false);
 			Boss->SetActorEnableCollision(true);
-
-			// 글리치 해제 + 나타나는 몽타주
-			if (ABossCharacterBase* BossBase = Cast<ABossCharacterBase>(Boss))
-			{
-				BossBase->StopGlitchEffect();
-				if (BossBase->CurrentTeleportMontageIndex >= 0
-					&& BossBase->TeleportAppearMontages.IsValidIndex(BossBase->CurrentTeleportMontageIndex))
-				{
-					Boss->PlayAnimMontage(
-						BossBase->TeleportAppearMontages[BossBase->CurrentTeleportMontageIndex]);
-				}
-			}
-
 			Data.TKPhase = ETKPhase::Kicking;
 			Data.PhaseTimer = 0.f;
 		}
