@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Interface/PKInteractable.h"
+#include "PK/PKObjectManager.h"
 #include "PKObject.generated.h"
 
 class UDissolveComponent;
@@ -94,4 +95,29 @@ private:
 	void OnBoxHit(UPrimitiveComponent* HitComponent, AActor* OtherActor,
 	              UPrimitiveComponent* OtherComp, FVector NormalImpulse,
 	              const FHitResult& Hit);
+
+	// 비행 시간 초과 → 디졸브
+	void OnFlightTimeout();
+	
+	// 풀 매니저에 지연 반환 (2초 후 사라짐 -> 리스폰 예약
+	UFUNCTION()
+	void ReturnObjectDelayed(float delay);
+
+#pragma region Flight Timeout
+	UPROPERTY(EditDefaultsOnly, Category="PK")
+	float MaxFlightTime = 5.f;  // 던진 후 이 시간이 지나면 자동 디졸브 (초)
+
+	FTimerHandle FlightTimerHandle;
+#pragma endregion
+
+#pragma region Throw Tilt
+	UPROPERTY(EditDefaultsOnly, Category="PK|Tilt")
+	float TiltAngleDeg = 45.f;    // 목표 틸트 각도 (도)
+
+	UPROPERTY(EditDefaultsOnly, Category="PK|Tilt")
+	float TiltDuration = 0.3f;    // 목표 각도까지 도달하는 시간 (초)
+
+	bool bIsTilting = false;
+	FQuat ThrowTiltTargetQuat = FQuat::Identity;
+#pragma endregion
 };

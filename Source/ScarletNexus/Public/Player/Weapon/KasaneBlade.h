@@ -8,6 +8,7 @@
 
 class USphereComponent;
 class AKasaneBlade;
+class UPrimitiveComponent;
 
 UENUM(BlueprintType)
 enum class EBladeState : uint8
@@ -28,8 +29,15 @@ enum class EBladeAttackPattern : uint8
 	A3 // 추후
 };
 
-// 블레이드 충돌 시 호출되는 델리게이트 (충돌한 블레이드, 충돌 대상 액터)
-DECLARE_DELEGATE_TwoParams(FOnBladeHit, AKasaneBlade*, AActor*);
+// 블레이드 충돌 시 호출되는 델리게이트 (OnSphereOverlap 인자 전달)
+DECLARE_DELEGATE_SevenParams(FOnBladeHit,
+	AKasaneBlade*,
+	UPrimitiveComponent*,
+	AActor*,
+	UPrimitiveComponent*,
+	int32,
+	bool,
+	const FHitResult&);
 
 UCLASS()
 class SCARLETNEXUS_API AKasaneBlade : public AActor
@@ -70,6 +78,9 @@ public:
 	// === 충돌 델리게이트 (BladeHandler에서 바인딩) ===
 	FOnBladeHit OnBladeHit;
 
+	// === HitStop ===
+	void TriggerHitStop();
+	
 private:
 	void BeginInactive();
 	void BeginIdle();
@@ -84,7 +95,6 @@ private:
 	void TickReturn(float DeltaTime);
 
 	// === HitStop ===
-	void TriggerHitStop();
 	void EndHitStop();
 	
 public:

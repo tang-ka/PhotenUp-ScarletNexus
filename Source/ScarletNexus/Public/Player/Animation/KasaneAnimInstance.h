@@ -32,6 +32,7 @@ public:
 	void SetIsJumpEnd(bool bInJumpEnd) { bIsJumpEnd = bInJumpEnd; }
 	void SetIsBasicAttacking(bool bAttacking) { bIsBasicAttacking = bAttacking; }
 	void SetAttackState(EAttackState InState);
+	void SetIsPKHolding(bool bHolding) { bIsPKHolding = bHolding; }
 
 	UFUNCTION()
 	void AnimNotify_JumpStart();
@@ -72,4 +73,7 @@ private:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Animation, meta=(AllowPrivateAccess=true))
 	float BlendWeight = 1;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Animation, meta=(AllowPrivateAccess=true))
+	bool bIsPKHolding = false;  // Hold 중 상태 (루프 포즈용)
 };
