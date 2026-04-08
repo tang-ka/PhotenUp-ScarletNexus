@@ -9,6 +9,11 @@
 
 class USphereComponent;
 
+// HardTarget이 설정되거나 해제(nullptr)될 때 브로드캐스트
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnHardTargetChanged, AActor*);
+// PsychokinesisTarget이 변경되거나 해제(nullptr)될 때 브로드캐스트
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnPsychokinesisTargetChanged, AActor*);
+
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class SCARLETNEXUS_API UPlayerPerceptionComponent : public UActorComponent
 {
@@ -49,6 +54,11 @@ public:
 	// 특정 액터를 직접 락온 타겟으로 설정
 	void LockOnToTarget(AActor* Target);
 #pragma endregion
+
+public:
+	// TargetingViewModel이 구독하는 타겟 변경 델리게이트
+	FOnHardTargetChanged OnHardTargetChanged;
+	FOnPsychokinesisTargetChanged OnPsychokinesisTargetChanged;
 
 private:
 	void InitDetectionSphere();

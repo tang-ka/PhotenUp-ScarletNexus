@@ -125,6 +125,9 @@ void UPlayerPerceptionComponent::ActivateLockOn()
 	{
 		HardTarget = SoftTarget;
 	}
+
+	// ViewModel → Widget에 HardTarget 변경을 알림
+	OnHardTargetChanged.Broadcast(HardTarget.Get());
 }
 
 void UPlayerPerceptionComponent::DeactivateLockOn()
@@ -135,6 +138,9 @@ void UPlayerPerceptionComponent::DeactivateLockOn()
 	{
 		HardTarget.Reset();
 	}
+
+	// ViewModel → Widget에 HardTarget 해제를 알림
+	OnHardTargetChanged.Broadcast(nullptr);
 }
 
 void UPlayerPerceptionComponent::LockOnToTarget(AActor* Target)
@@ -146,6 +152,9 @@ void UPlayerPerceptionComponent::LockOnToTarget(AActor* Target)
 
 	HardTarget = Target;
 	bIsLockedOn = true;
+
+	// 직접 타겟 지정 시 브로드캐스트
+	OnHardTargetChanged.Broadcast(Target);
 }
 
 void UPlayerPerceptionComponent::InitDetectionSphere()
@@ -216,7 +225,13 @@ void UPlayerPerceptionComponent::UpdatePerception()
 	
 	if (bNeedPsychokinesisTargetUpdate)
 	{
-		PsychokinesisTarget = EvaluateCandidates(CandidatePsychokinesisTargets, 0.1f, 0.2f, 0.7f);
+		// 변경된 경우에만 브로드캐스트 (불필요한 이벤트 억제)
+		AActor* NewPKTarget = EvaluateCandidates(CandidatePsychokinesisTargets, 0.1f, 0.2f, 0.7f);
+		if (NewPKTarget != PsychokinesisTarget.Get())
+		{
+			PsychokinesisTarget = NewPKTarget;
+			OnPsychokinesisTargetChanged.Broadcast(NewPKTarget);
+		}
 	}
 }
 
@@ -377,4 +392,10 @@ void UPlayerPerceptionComponent::OnEndOverlap(UPrimitiveComponent* OverlappedCom
 	}
 
 	CandidatePsychokinesisTargets.Remove(OtherActor);
+	if (GetPsychokinesisTarget() == OtherActor)
+	{
+		PsychokinesisTarget.Reset();
+		// PKTarget이 범위를 벗어나면 즉시 nullptr 브로드캐스트
+		OnPsychokinesisTargetChanged.Broadcast(nullptr);
+	}
 }
