@@ -130,7 +130,7 @@ void FSTTask_BossAttackExecutor::ExitState(
 		Boss->SetActorHiddenInGame(false);
 		Boss->SetActorEnableCollision(true);
  
-		// ★ 몽타주 정지 — Slot 해제되어야 Walk로 돌아감
+		// 몽타주 정지 — Slot 해제되면 Walk로 돌아감
 		if (UAnimInstance* AnimInst = Boss->GetMesh()->GetAnimInstance())
 		{
 			AnimInst->StopAllMontages(0.25f);
@@ -285,9 +285,15 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickTeleportKick(
 		}
 		break;
 	case ETKPhase::Kicking:
-		if (Data.PhaseTimer >= TK_KickDuration) return EStateTreeRunStatus::Succeeded;
+		if (Data.PhaseTimer >= TK_KickDuration)
+		{
+			if (ABossCharacterBase* BossBase = Cast<ABossCharacterBase>(Boss))
+			{
+				BossBase->PostAttackTeleportCooldown = 2.f;
+			}
+			return EStateTreeRunStatus::Succeeded;
+		}
 		break;
-	default: return EStateTreeRunStatus::Succeeded;
 	}
 	return EStateTreeRunStatus::Running;
 }
@@ -624,13 +630,14 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickAerialElectric(
 					if (const USkeletalMeshComponent* BossMesh = Boss->GetMesh())
 					{
 						SpawnLoc = BossMesh->GetSocketLocation(FName("LeftHand"));
-						
+						SpawnLoc.Z -= 0.f;
+						SpawnLoc += Boss->GetActorForwardVector() * 150.f;
 					}
 					UNiagaraFunctionLibrary::SpawnSystemAtLocation(
 						Boss->GetWorld(),
 						BossChar->LightningVFX,
 						SpawnLoc,
-						FRotator::ZeroRotator
+						FRotator(180.f, 0.f, 0.f)
 					);
 				}
 			}

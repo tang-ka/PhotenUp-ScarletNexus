@@ -72,6 +72,9 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Boss|Teleport")
 	TObjectPtr<UAnimMontage> TeleportAppearMontage;
 	
+	// 텔레포트킥 쿨타임
+	UPROPERTY()
+	float PostAttackTeleportCooldown = 0.f;
 	
 	
 	// 스폰함수

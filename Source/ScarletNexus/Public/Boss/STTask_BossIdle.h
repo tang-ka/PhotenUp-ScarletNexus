@@ -39,6 +39,7 @@ struct FSTTask_BossIdleInstanceData
  
 	UPROPERTY()
 	float EvadeCooldownTimer = 0.f;
+	
  
 	// --- 순찰 텔레포트 상태 ---
 	UPROPERTY()
