@@ -91,6 +91,8 @@ EStateTreeRunStatus FSTTask_BossIdle::Tick(
  
 		if (InstanceData.EvadeTeleportTimer >= EvadeVanishDuration)
 		{
+			BossChar->SetActorHiddenInGame(true);
+			BossChar->SetActorEnableCollision(false);
 			BossChar->SetActorLocation(InstanceData.EvadeTeleportTarget);
 			BossChar->SetActorHiddenInGame(false);
 			BossChar->SetActorEnableCollision(true);
@@ -100,14 +102,20 @@ EStateTreeRunStatus FSTTask_BossIdle::Tick(
 			{
 				const FVector Dir = (Player->GetActorLocation()
 					- InstanceData.EvadeTeleportTarget).GetSafeNormal();
+				
 				BossChar->SetActorRotation(FRotator(0.f, Dir.Rotation().Yaw, 0.f));
 			}
 			
 			// 나타나는 몽타주 재생
 			if (ABossCharacterBase* BossBasePtr = Cast<ABossCharacterBase>(BossChar))
 			{
-				if (BossBasePtr->TeleportAppearMontage)
-					BossChar->PlayAnimMontage(BossBasePtr->TeleportAppearMontage);
+				BossBasePtr->StopGlitchEffect();
+				if (BossBasePtr->CurrentTeleportMontageIndex >= 0 
+	&& BossBasePtr->TeleportAppearMontages.IsValidIndex(BossBasePtr->CurrentTeleportMontageIndex))
+				{
+					BossChar->PlayAnimMontage(
+						BossBasePtr->TeleportAppearMontages[BossBasePtr->CurrentTeleportMontageIndex]);
+				}
 			}
  
 			InstanceData.bIsEvadeTeleporting = false;
@@ -125,6 +133,8 @@ EStateTreeRunStatus FSTTask_BossIdle::Tick(
  
 		if (InstanceData.PatrolTeleportTimer >= PatrolVanishDuration)
 		{
+			BossChar->SetActorHiddenInGame(true);
+			BossChar->SetActorEnableCollision(false);
 			BossChar->SetActorLocation(InstanceData.PatrolTeleportTarget);
 			BossChar->SetActorHiddenInGame(false);
 			BossChar->SetActorEnableCollision(true);
@@ -140,8 +150,13 @@ EStateTreeRunStatus FSTTask_BossIdle::Tick(
 			// 나타나는 몽타주 재생
 			if (ABossCharacterBase* BossBasePtr = Cast<ABossCharacterBase>(BossChar))
 			{
-				if (BossBasePtr->TeleportAppearMontage)
-					BossChar->PlayAnimMontage(BossBasePtr->TeleportAppearMontage);
+				BossBasePtr->StopGlitchEffect();
+				if (BossBasePtr->CurrentTeleportMontageIndex >= 0 
+	&& BossBasePtr->TeleportAppearMontages.IsValidIndex(BossBasePtr->CurrentTeleportMontageIndex))
+				{
+					BossChar->PlayAnimMontage(
+						BossBasePtr->TeleportAppearMontages[BossBasePtr->CurrentTeleportMontageIndex]);
+				}
 			}
  
 			InstanceData.bIsPatrolTeleporting = false;
@@ -202,12 +217,17 @@ EStateTreeRunStatus FSTTask_BossIdle::Tick(
 		// 사라지는 몽타주
 		if (ABossCharacterBase* BossBasePtr = Cast<ABossCharacterBase>(BossChar))
 		{
-			if (BossBasePtr->TeleportVanishMontage)
-				BossBasePtr->PlayAnimMontage(BossBasePtr->TeleportVanishMontage);
+			BossBasePtr->StartGlitchEffect();
+			if (BossBasePtr->TeleportVanishMontages.Num() > 0)
+			{
+				BossBasePtr->CurrentTeleportMontageIndex = 
+					FMath::RandRange(0, BossBasePtr->TeleportVanishMontages.Num() - 1);
+				BossChar->PlayAnimMontage(
+					BossBasePtr->TeleportVanishMontages[BossBasePtr->CurrentTeleportMontageIndex]);
+			}
 		}
  
-		BossChar->SetActorHiddenInGame(true);
-		BossChar->SetActorEnableCollision(false);
+		
  
 		UE_LOG(LogTemp, Log, TEXT("[BossIdle] 회피 텔레포트! → %s"), *TeleportTarget.ToString());
 		return EStateTreeRunStatus::Running;
@@ -250,12 +270,16 @@ EStateTreeRunStatus FSTTask_BossIdle::Tick(
 		// 사라지는 몽타주 재생
 		if (ABossCharacterBase* BossBasePtr = Cast<ABossCharacterBase>(BossChar))
 		{
-			if (BossBasePtr->TeleportVanishMontage)
-				BossChar->PlayAnimMontage(BossBasePtr->TeleportVanishMontage);
+			BossBasePtr->StartGlitchEffect();
+			if (BossBasePtr->TeleportVanishMontages.Num() > 0)
+			{
+				BossBasePtr->CurrentTeleportMontageIndex = 
+					FMath::RandRange(0, BossBasePtr->TeleportVanishMontages.Num() - 1);
+				BossChar->PlayAnimMontage(
+					BossBasePtr->TeleportVanishMontages[BossBasePtr->CurrentTeleportMontageIndex]);
+			}
 		}
- 
-		BossChar->SetActorHiddenInGame(true);
-		BossChar->SetActorEnableCollision(false);
+		
  
 		return EStateTreeRunStatus::Running;
 	}
