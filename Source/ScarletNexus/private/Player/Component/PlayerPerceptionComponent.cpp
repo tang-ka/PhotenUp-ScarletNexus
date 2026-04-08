@@ -157,6 +157,16 @@ void UPlayerPerceptionComponent::LockOnToTarget(AActor* Target)
 	OnHardTargetChanged.Broadcast(Target);
 }
 
+void UPlayerPerceptionComponent::SetActivePsychokinesisTargetUpdate(bool bIsActivate)
+{
+	// 픽업 시작(false) → 현재 PKTarget 하이라이트 즉시 해제
+	if (!bIsActivate)
+	{
+		SetPKTargetHighlight(PsychokinesisTarget.Get(), false);
+	}
+	bNeedPsychokinesisTargetUpdate = bIsActivate;
+}
+
 void UPlayerPerceptionComponent::InitDetectionSphere()
 {
 	if (DetectionSphere)
@@ -229,6 +239,8 @@ void UPlayerPerceptionComponent::UpdatePerception()
 		AActor* NewPKTarget = EvaluateCandidates(CandidatePsychokinesisTargets, 0.1f, 0.2f, 0.7f);
 		if (NewPKTarget != PsychokinesisTarget.Get())
 		{
+			SetPKTargetHighlight(PsychokinesisTarget.Get(), false); // 이전 타겟 하이라이트 해제
+			SetPKTargetHighlight(NewPKTarget, true);                // 새 타겟 하이라이트 활성화
 			PsychokinesisTarget = NewPKTarget;
 			OnPsychokinesisTargetChanged.Broadcast(NewPKTarget);
 		}
@@ -359,6 +371,16 @@ float UPlayerPerceptionComponent::CalcScreenCenterScore(AActor* Target) const
 	return Score;
 }
 
+void UPlayerPerceptionComponent::SetPKTargetHighlight(AActor* Target, bool bHighlight) const
+{
+	if (!IsValid(Target)) return;
+
+	if (UStaticMeshComponent* MeshComp = Target->FindComponentByClass<UStaticMeshComponent>())
+	{
+		MeshComp->SetRenderCustomDepth(bHighlight);
+	}
+}
+
 void UPlayerPerceptionComponent::OnBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
                                                 UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep,
                                                 const FHitResult& SweepResult)
@@ -394,6 +416,7 @@ void UPlayerPerceptionComponent::OnEndOverlap(UPrimitiveComponent* OverlappedCom
 	CandidatePsychokinesisTargets.Remove(OtherActor);
 	if (GetPsychokinesisTarget() == OtherActor)
 	{
+		SetPKTargetHighlight(OtherActor, false); // 범위 이탈 시 하이라이트 해제
 		PsychokinesisTarget.Reset();
 		// PKTarget이 범위를 벗어나면 즉시 nullptr 브로드캐스트
 		OnPsychokinesisTargetChanged.Broadcast(nullptr);

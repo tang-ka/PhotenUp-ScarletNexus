@@ -5,14 +5,32 @@
 
 #include "ScarletNexus.h"
 #include "Camera/CameraComponent.h"
+#include "Interface/DamageableHelper.h"
 #include "Interface/PKInteractable.h"
+#include "Kismet/GameplayStatics.h"
+#include "PK/PKObject.h"
 #include "Player/PlayerCharacterBase.h"
 #include "Player/Animation/KasaneAnimInstance.h"
 #include "Player/Component/PlayerPerceptionComponent.h"
+#include "Player/Widget/Data/DamageWidgetData.h"
 
 UPsychokinesisComponent::UPsychokinesisComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
+	
+	ConstructorHelpers::FClassFinder<UCameraShakeBase> NormalShakeAsset(
+		TEXT("/Game/SSH/Blueprints/BP_CameraShakeNormal.BP_CameraShakeNormal_C"));
+	if (NormalShakeAsset.Succeeded())
+	{
+		PKNormalHitCameraShakeClass = NormalShakeAsset.Class;
+	}
+	
+	ConstructorHelpers::FClassFinder<UCameraShakeBase> StrongShakeAsset(
+		TEXT("/Game/SSH/Blueprints/BP_CameaShakeStrong.BP_CameaShakeStrong_C"));
+	if (StrongShakeAsset.Succeeded())
+	{
+		PKStrongHitCameraShakeClass = StrongShakeAsset.Class;
+	}
 }
 
 void UPsychokinesisComponent::BeginPlay()
@@ -83,6 +101,30 @@ void UPsychokinesisComponent::SetPickedObject(AActor* NewPickedObject)
 	else
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Attempted to set a non-PKInteractable object as PickedObject"));
+	}
+}
+
+void UPsychokinesisComponent::SetBasicAttackHitConfirmed(bool bConfirmed)
+{
+	bBasicAttackHitConfirmed = bConfirmed;
+
+	// 기존 타이머 항상 초기화
+	GetWorld()->GetTimerManager().ClearTimer(BasicAttackHitConfirmedTimerHandle);
+
+	if (bConfirmed)
+	{
+		// 콤보 허용 시간이 지나면 자동으로 플래그 해제
+		GetWorld()->GetTimerManager().SetTimer(
+			BasicAttackHitConfirmedTimerHandle,
+			[this]()
+			{
+				bBasicAttackHitConfirmed = false;
+				PRINTLOG_SH(TEXT("[Psychokinesis] 콤보 허용 시간 만료 — bBasicAttackHitConfirmed 리셋"));
+			},
+			ComboWindowDuration,
+			false
+		);
+		PRINTLOG_SH(TEXT("[Psychokinesis] 기본공격 히트 확인 — 콤보 허용 시간 %.1fs 시작"), ComboWindowDuration);
 	}
 }
 
@@ -181,6 +223,13 @@ void UPsychokinesisComponent::Throw()
 	FVector LaunchVelocity = CalculateLaunchVelocity(
 		PickedObject->GetActorLocation(),
 		ThrowTargetLocation, ThrowSpeed);
+
+	// 충돌 델리게이트 바인딩 (일반 Throw)
+	if (APKObject* PKObj = Cast<APKObject>(PickedObject.Get()))
+	{
+		bCurrentThrowIsStrong = false;
+		PKObj->OnPKObjectHit.BindUObject(this, &UPsychokinesisComponent::HandlePKObjectHit);
+	}
 
 	IPKInteractable::Execute_OnPKThrown(PickedObject.Get(), ThrowDirection, ThrowSpeed);
 
@@ -290,6 +339,13 @@ void UPsychokinesisComponent::ExecuteStrongThrowLaunch()
 		ThrowDirection = (ThrowTargetLocation - PickedObject->GetActorLocation()).GetSafeNormal();
 	}
 
+	// 충돌 델리게이트 바인딩 (StrongThrow)
+	if (APKObject* PKObj = Cast<APKObject>(PickedObject.Get()))
+	{
+		bCurrentThrowIsStrong = true;
+		PKObj->OnPKObjectHit.BindUObject(this, &UPsychokinesisComponent::HandlePKObjectHit);
+	}
+
 	// StrongThrowSpeed로 발사
 	IPKInteractable::Execute_OnPKThrown(PickedObject.Get(), ThrowDirection, StrongThrowSpeed);
 
@@ -305,6 +361,97 @@ void UPsychokinesisComponent::ExecuteStrongThrowLaunch()
 	}
 
 	PRINTLOG_SH(TEXT("[Psychokinesis] StrongThrow 발사 완료 (Speed: %.0f)"), StrongThrowSpeed);
+}
+
+void UPsychokinesisComponent::HandlePKObjectHit(APKObject* HitObject, AActor* HitActor,
+                                                UPrimitiveComponent* OtherComp, const FHitResult& Hit)
+{
+	if (!GetWorld() || !IsValid(HitActor))
+	{
+		return;
+	}
+
+	// =============================================
+	// 1. 데미지 가능 여부 확인
+	// =============================================
+	if (!DamageableHelpers::IsDamageable(HitActor))
+	{
+		return;
+	}
+
+	// =============================================
+	// 2. 데미지 적용
+	// =============================================
+	const int32 DamageAmount = bCurrentThrowIsStrong ? PKStrongThrowHitDamage : PKHitDamage;
+	const bool bHit = DamageableHelpers::ApplyDamage(HitActor, Me, DamageAmount);
+	if (!bHit)
+	{
+		return;
+	}
+
+	// =============================================
+	// 3. 카메라 쉐이크 (Normal / Strong 분기)
+	// =============================================
+	if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
+	{
+		TSubclassOf<UCameraShakeBase> ShakeClass = bCurrentThrowIsStrong
+			? PKStrongHitCameraShakeClass
+			: PKNormalHitCameraShakeClass;
+
+		if (ShakeClass)
+		{
+			PC->ClientStartCameraShake(ShakeClass);
+		}
+	}
+
+	// =============================================
+	// 4. HitStop (Normal / Strong 분기)
+	// =============================================
+	TriggerPKHitStop(bCurrentThrowIsStrong);
+
+	// =============================================
+	// 5. 데미지 위젯 브로드캐스트
+	// =============================================
+	FDamageWidgetData WidgetData;
+	WidgetData.DamageAmount = DamageAmount;
+	if (IsValid(OtherComp) && IsValid(HitObject))
+	{
+		OtherComp->GetClosestPointOnCollision(HitObject->GetActorLocation(), WidgetData.WorldLocation);
+	}
+	else
+	{
+		WidgetData.WorldLocation = Hit.ImpactPoint;
+	}
+	OnPKDamageDealt.Broadcast(WidgetData);
+}
+
+void UPsychokinesisComponent::TriggerPKHitStop(bool bStrong)
+{
+	if (!GetWorld()) return;
+
+	const float Dilation = bStrong ? PKStrongHitStopTimeDilation : PKNormalHitStopTimeDilation;
+	const float Duration = bStrong ? PKStrongHitStopDuration     : PKNormalHitStopDuration;
+
+	UGameplayStatics::SetGlobalTimeDilation(GetWorld(), Dilation);
+
+	// 타이머는 TimeDilation 영향을 받으므로 실시간 기준으로 역산
+	const float AdjustedDuration = (Dilation > KINDA_SMALL_NUMBER)
+		? Duration * Dilation
+		: Duration;
+
+	GetWorld()->GetTimerManager().SetTimer(
+		PKHitStopTimerHandle,
+		this,
+		&UPsychokinesisComponent::EndPKHitStop,
+		AdjustedDuration,
+		false
+	);
+}
+
+void UPsychokinesisComponent::EndPKHitStop()
+{
+	if (!GetWorld()) return;
+	UGameplayStatics::SetGlobalTimeDilation(GetWorld(), 1.0f);
 }
 
 FVector UPsychokinesisComponent::CalculateLaunchVelocity(const FVector& StartLocation, const FVector& TargetLocation,

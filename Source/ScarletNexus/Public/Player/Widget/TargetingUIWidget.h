@@ -28,15 +28,6 @@ protected:
 	virtual void NativeDestruct() override;
 	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 
-protected:
-	// LockOn 활성화 시 HardTarget 위에 표시
-	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UUserWidget> wbp_HardTargetingUI;
-
-	// PsychokinesisTarget 위에 표시
-	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UOverlay> icon_RightClick;
-
 private:
 	/** ViewModel → HardTarget 변경 콜백 : 가시성만 제어 */
 	void OnHardTargetUpdated(AActor* NewTarget);
@@ -46,6 +37,21 @@ private:
 
 	/** 월드 좌표 → 스크린 좌표 변환 후 CanvasPanelSlot 위치 갱신 */
 	void UpdateWidgetScreenPosition(UWidget* Widget, AActor* Target);
+
+protected:
+	// LockOn 활성화 시 HardTarget 위에 표시
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UUserWidget> wbp_HardTargetingUI;
+
+	// PsychokinesisTarget 위에 표시
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UOverlay> icon_RightClick;
+	
+	UPROPERTY(meta = (BindWidgetAnim), Transient)
+	TObjectPtr<UWidgetAnimation> FlickerAnim;
+	
+	UPROPERTY(meta = (BindWidgetAnim), Transient)
+	TObjectPtr<UWidgetAnimation> FadeInAnim;
 
 private:
 	UPROPERTY()

@@ -4,10 +4,16 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Player/Widget/Data/DamageWidgetData.h"
 #include "PsychokinesisComponent.generated.h"
 
 
 class APlayerCharacterBase;
+class APKObject;
+class UCameraShakeBase;
+
+// PK 데미지 적용 시 브로드캐스트 (위젯 풀 등 외부에서 구독)
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnPKDamageDealt, const FDamageWidgetData&);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class SCARLETNEXUS_API UPsychokinesisComponent : public UActorComponent
@@ -40,8 +46,8 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SetTarget(AActor* NewTarget) { ThrowTarget = NewTarget; }
 
-	/** 기본공격 히트 확인 플래그 설정 */
-	void SetBasicAttackHitConfirmed(bool bConfirmed) { bBasicAttackHitConfirmed = bConfirmed; }
+	/** 기본공격 히트 확인 플래그 설정 (true 시 콤보 허용 시간 타이머 시작) */
+	void SetBasicAttackHitConfirmed(bool bConfirmed);
 
 	/** 기본공격 히트 확인 플래그를 읽고 즉시 소비(false로 리셋) */
 	bool ConsumeBasicAttackHitConfirmed()
@@ -63,6 +69,9 @@ public:
 	
 	UFUNCTION(BlueprintCallable)
 	void StrongThrow(); // 기본 공격을 맞췄을 경우 발동
+
+	// PK 데미지 적용 시 브로드캐스트 (DamageAmountWidgetPoolComponent 등에서 구독)
+	FOnPKDamageDealt OnPKDamageDealt;
 	
 private:
 	FVector CalculateLaunchVelocity(const FVector& StartLocation, const FVector& TargetLocation, float Speed) const;
@@ -72,6 +81,16 @@ private:
 
 	/** StrongThrow 베지어 리프트 완료 후 실제 발사 */
 	void ExecuteStrongThrowLaunch();
+
+	/** PKObject 충돌 델리게이트 핸들러 — 데미지/카메라쉐이크/위젯 처리 */
+	void HandlePKObjectHit(APKObject* HitObject, AActor* HitActor,
+	                       UPrimitiveComponent* OtherComp, const FHitResult& Hit);
+
+	/** HitStop 실행 */
+	void TriggerPKHitStop(bool bStrong);
+
+	/** HitStop 종료 (TimeDilation 복원) */
+	void EndPKHitStop();
 	
 private:
 	UPROPERTY()
@@ -120,6 +139,13 @@ private:
 #pragma region Strong Throw Properties
 	/** 기본공격이 적에게 적중했는지 여부 */
 	bool bBasicAttackHitConfirmed = false;
+
+	/** 콤보 허용 시간 (이 시간 안에 PK를 시작해야 StrongThrow로 전환) */
+	UPROPERTY(EditDefaultsOnly, Category="PK|StrongThrow")
+	float ComboWindowDuration = 2.f;
+
+	/** 콤보 허용 시간 만료 타이머 */
+	FTimerHandle BasicAttackHitConfirmedTimerHandle;
 	
 	/** 베지어 리프트 진행 중 여부 */
 	bool bStrongThrowing = false;
@@ -143,5 +169,46 @@ private:
 	float StrongThrowCurveElevation = 150.f;
 
 	FName StrongThrowSectionName = TEXT("Throw");
+#pragma endregion
+
+#pragma region PK Hit
+	/** 일반 Throw 적중 시 데미지 */
+	UPROPERTY(EditDefaultsOnly, Category="PK|Hit")
+	int32 PKHitDamage = 87;
+
+	/** StrongThrow 적중 시 데미지 */
+	UPROPERTY(EditDefaultsOnly, Category="PK|Hit")
+	int32 PKStrongThrowHitDamage = 124;
+
+	/** 일반 Throw 적중 시 카메라 쉐이크 */
+	UPROPERTY(EditDefaultsOnly, Category="PK|Hit")
+	TSubclassOf<UCameraShakeBase> PKNormalHitCameraShakeClass;
+
+	/** StrongThrow 적중 시 카메라 쉐이크 */
+	UPROPERTY(EditDefaultsOnly, Category="PK|Hit")
+	TSubclassOf<UCameraShakeBase> PKStrongHitCameraShakeClass;
+
+	/** 현재 던지기가 StrongThrow인지 여부 (HandlePKObjectHit 내부에서 데미지 분기용) */
+	bool bCurrentThrowIsStrong = false;
+#pragma endregion
+
+#pragma region PK HitStop
+	/** 일반 Throw HitStop 시간 배율 */
+	UPROPERTY(EditDefaultsOnly, Category="PK|HitStop")
+	float PKNormalHitStopTimeDilation = 0.05f;
+
+	/** 일반 Throw HitStop 실시간 지속 시간 (초) */
+	UPROPERTY(EditDefaultsOnly, Category="PK|HitStop")
+	float PKNormalHitStopDuration = 0.2f;
+
+	/** StrongThrow HitStop 시간 배율 */
+	UPROPERTY(EditDefaultsOnly, Category="PK|HitStop")
+	float PKStrongHitStopTimeDilation = 0.02f;
+
+	/** StrongThrow HitStop 실시간 지속 시간 (초) */
+	UPROPERTY(EditDefaultsOnly, Category="PK|HitStop")
+	float PKStrongHitStopDuration = 0.6f;
+
+	FTimerHandle PKHitStopTimerHandle;
 #pragma endregion
 };

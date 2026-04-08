@@ -7,6 +7,8 @@
 #include "BossHUDWidget.generated.h"
 
 
+class UTextBlock;
+class UProgressBar;
 
 UCLASS()
 class SCARLETNEXUS_API UBossHUDWidget : public UUserWidget
@@ -50,4 +52,10 @@ protected:
 	// 보스 이름 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "BossUI")
 	FText BossDisplayName = FText::FromString(TEXT("KAREN TRAVERS"));
+	
+	UPROPERTY(meta=(BindWidget))
+	TObjectPtr<UProgressBar> pb_BossHP;
+	
+	UPROPERTY(meta=(BindWidget))
+	TObjectPtr<UTextBlock> txt_Phase;
 };

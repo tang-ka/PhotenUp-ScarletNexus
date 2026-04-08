@@ -17,6 +17,7 @@ class UPsychokinesisComponent;
 class UPlayerPerceptionComponent;
 class UPlayerStateComponent;
 class UPlayerStatsComponent;
+class UPartyHandlerComponent;
 class UCameraComponent;
 class USpringArmComponent;
 class UInputMappingContext;
@@ -65,6 +66,7 @@ public:
 	FORCEINLINE UActionManagerComponent* GetActionManagerComp() const { return ActionManagerComp; }
 	FORCEINLINE UComboComponent* GetComboComp() const { return ComboComp; }
 	FORCEINLINE UDashSkillComponent* GetDashSkillComp() const { return DashSkillComp; }
+	FORCEINLINE UPartyHandlerComponent* GetPartyHandlerComp() const { return PartyHandlerComp; }
 #pragma endregion
 
 protected:
@@ -168,5 +170,8 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UDashSkillComponent> DashSkillComp;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UPartyHandlerComponent> PartyHandlerComp;
 #pragma endregion
 };

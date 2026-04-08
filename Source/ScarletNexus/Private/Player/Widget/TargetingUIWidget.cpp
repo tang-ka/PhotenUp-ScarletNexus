@@ -96,6 +96,11 @@ void UTargetingUIWidget::OnHardTargetUpdated(AActor* NewTarget)
 	{
 		wbp_HardTargetingUI->SetVisibility(
 			bShowHardTarget ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
+		
+		if (bShowHardTarget && FlickerAnim)
+		{
+			PlayAnimation(FlickerAnim);
+		}
 	}
 }
 
@@ -107,6 +112,11 @@ void UTargetingUIWidget::OnPKTargetUpdated(AActor* NewTarget)
 	{
 		icon_RightClick->SetVisibility(
 			bShowPKTarget ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
+		
+		if (bShowPKTarget && FadeInAnim)
+		{
+			PlayAnimation(FadeInAnim);
+		}
 	}
 }
 

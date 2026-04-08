@@ -8,6 +8,14 @@
 #include "PKObject.generated.h"
 
 class UDissolveComponent;
+class APKObject;
+
+// PK 던지기 충돌 시 호출되는 델리게이트 (PsychokinesisComponent에서 바인딩)
+DECLARE_DELEGATE_FourParams(FOnPKObjectHit,
+	APKObject*,             // 충돌한 PK 오브젝트
+	AActor*,                // 충돌 대상 액터
+	UPrimitiveComponent*,   // 충돌 대상 컴포넌트
+	const FHitResult&);     // 충돌 결과
 
 UENUM()
 enum class EPKObjectState : uint8
@@ -87,6 +95,9 @@ public:
 	virtual void OnPKReleased_Implementation() override;
 	virtual void OnPKThrown_Implementation(const FVector& ThrowDir, float ThrowForce) override;
 	virtual void OnPKThrownPS_Implementation(const FVector& ThrowDir, float ThrowForce) override;
+
+	// === 충돌 델리게이트 (PsychokinesisComponent에서 바인딩) ===
+	FOnPKObjectHit OnPKObjectHit;
 
 private:
 	// 충돌 감지 → 땅에 닿으면 CanBePickedUp으로 복귀

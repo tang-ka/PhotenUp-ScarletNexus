@@ -25,6 +25,7 @@
 #include "Player/Component/PlayerStatsComponent.h"
 #include "Player/Component/PsychokinesisComponent.h"
 #include "Player/Component/DashSkillComponent.h"
+#include "Player/Component/PartyHandlerComponent.h"
 
 APlayerCharacterBase::APlayerCharacterBase(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer.SetDefaultSubobjectClass<UPlayerCharacterMovementComponent>(ACharacter::CharacterMovementComponentName))
@@ -131,6 +132,7 @@ APlayerCharacterBase::APlayerCharacterBase(const FObjectInitializer& ObjectIniti
 	ActionManagerComp = CreateDefaultSubobject<UActionManagerComponent>(TEXT("ActionManagerComp"));
 	ComboComp = CreateDefaultSubobject<UComboComponent>(TEXT("ComboComp"));
 	DashSkillComp = CreateDefaultSubobject<UDashSkillComponent>(TEXT("DashSkillComp"));
+	PartyHandlerComp = CreateDefaultSubobject<UPartyHandlerComponent>(TEXT("PartyHandlerComp"));
 }
 
 void APlayerCharacterBase::BeginPlay()

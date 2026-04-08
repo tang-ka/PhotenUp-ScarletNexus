@@ -10,6 +10,7 @@
 #include "Player/Component/BladeHandlerComponent.h"
 #include "Player/Component/DamageAmountWidgetPoolComponent.h"
 #include "Player/Component/PlayerPerceptionComponent.h"
+#include "Player/Component/PsychokinesisComponent.h"
 #include "Player/Widget/Data/DamageWidgetData.h"
 #include "Player/Widget/TargetingUIWidget.h"
 #include "Player/Widget/TargetingViewModel.h"
@@ -30,6 +31,15 @@ void ASNPlayerController::OnPossess(APawn* InPawn)
 		if (UBladeHandlerComponent* BladeHandler = Kasane->GetBladeHandlerComp())
 		{
 			BladeHandler->OnBladeDamageDealt.AddUObject(this, &ASNPlayerController::HandleBladeDamageDealt);
+		}
+	}
+
+	// ── DamageUI : PK 전용 ──────────────────────────────────────
+	if (APlayerCharacterBase* PlayerChar = Cast<APlayerCharacterBase>(InPawn))
+	{
+		if (UPsychokinesisComponent* PKComp = PlayerChar->GetPsychokinesisComp())
+		{
+			PKComp->OnPKDamageDealt.AddUObject(this, &ASNPlayerController::HandleBladeDamageDealt);
 		}
 	}
 

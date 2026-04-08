@@ -40,7 +40,7 @@ public:
 	AActor* GetCurrentTarget() const;
 	AActor* GetPsychokinesisTarget() const { return PsychokinesisTarget.IsValid() ? PsychokinesisTarget.Get() : nullptr; }
 	
-	void SetActivePsychokinesisTargetUpdate(bool bIsActivate) { bNeedPsychokinesisTargetUpdate = bIsActivate; }
+	void SetActivePsychokinesisTargetUpdate(bool bIsActivate);
 #pragma endregion
 
 #pragma region Lock-On
@@ -67,7 +67,10 @@ private:
 	                           float InDistWeight = -1.f,
 	                           float InAngleWeight = -1.f,
 	                           float InScreenWeight = -1.f) const;
-	float CalcScreenCenterScore(AActor* Target) const;	
+	float CalcScreenCenterScore(AActor* Target) const;
+
+	/** PKTarget의 StaticMeshComponent CustomDepth 하이라이트 ON/OFF */
+	void SetPKTargetHighlight(AActor* Target, bool bHighlight) const;
 
 	UFUNCTION()
 	void OnBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
@@ -119,5 +122,5 @@ private:
 	bool bNeedPsychokinesisTargetUpdate{true};
 	
 	UPROPERTY(EditAnywhere, Category = "Perception|Debug")
-	bool bDrawDebug{true};
+	bool bDrawDebug{false};
 };
