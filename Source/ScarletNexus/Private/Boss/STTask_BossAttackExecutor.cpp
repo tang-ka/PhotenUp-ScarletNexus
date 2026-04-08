@@ -261,6 +261,13 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickTeleportKick(
 	switch (Data.TKPhase)
 	{
 	case ETKPhase::Vanishing:
+		if (Data.PhaseTimer < DeltaTime)  // 첫 틱에서만
+		{
+			if (ABossCharacterBase* BossBase = Cast<ABossCharacterBase>(Boss))
+			{
+				BossBase->StartGlitchEffect();
+			}
+		}
 		// 준비 동작 시간 후 사라짐
 		if (Data.PhaseTimer >= TK_VanishDuration)
 		{
@@ -281,9 +288,12 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickTeleportKick(
 	case ETKPhase::Teleporting:
 		if (Data.PhaseTimer >= TK_AppearDelay)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("[TeleportKick] Teleporting → Kicking"));
 			Boss->SetActorHiddenInGame(false);
 			Boss->SetActorEnableCollision(true);
+			if (ABossCharacterBase* BossBase = Cast<ABossCharacterBase>(Boss))
+			{
+				BossBase->StopGlitchEffect();
+			}
 			Data.TKPhase = ETKPhase::Kicking;
 			Data.PhaseTimer = 0.f;
 		}

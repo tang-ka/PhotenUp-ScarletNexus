@@ -24,14 +24,11 @@ ABossCharacterBase::ABossCharacterBase()
  
 	bUseControllerRotationYaw = false;
 	
-	// 오른발 콜리전
-	RightFootCollision = CreateDefaultSubobject<UBossAttackCollisionComponent>(TEXT("RightFootCollision"));
-	RightFootCollision->SetupAttachment(GetMesh(), FName("RightFoot"));
-	RightFootCollision->SetSphereRadius(25.f);
+	//콜리전(어택 발차기)
 
 	AttackCollision = CreateDefaultSubobject<UBossAttackCollisionComponent>(TEXT("AttackCollision"));
 	AttackCollision->SetupAttachment(GetMesh(), FName("Attack"));
-	AttackCollision->SetSphereRadius(100.f);
+	AttackCollision->SetSphereRadius(30.f);
 	
 	GlitchMeshComp = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("GlitchMesh"));
 	GlitchMeshComp->SetupAttachment(GetMesh());

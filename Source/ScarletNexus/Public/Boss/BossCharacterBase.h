@@ -155,8 +155,6 @@ protected:
 	EBossCombatState CurrentCombatState = EBossCombatState::Idle;
 	
 	// 공격 콜리전 컴포넌트 (본에 부착)
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Boss|Combat")
-	TObjectPtr<UBossAttackCollisionComponent> RightFootCollision;
 	UPROPERTY(VisibleAnywhere, Category = "Combat")
 	TObjectPtr<UBossAttackCollisionComponent> AttackCollision;
 	
