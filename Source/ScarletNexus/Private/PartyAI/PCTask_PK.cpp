@@ -122,11 +122,11 @@ EStateTreeRunStatus FPCTask_PK::Tick(FStateTreeExecutionContext& Context, const 
 					- data.FoundObject->GetActorLocation()).GetSafeNormal();
 			data.FoundObject->Execute_OnPKThrownPS(data.FoundObject, throwDir, data.ThrowSpeed);
 			
-			// 던진 후 2초 후 비활성 -> 리스폰 예약
-			if (APKObjectManager* mgr = APKObjectManager::Get(owner))
+			// 던진 후 2초 후 비활성 -> 리스폰 예약 -> PKObject 자체에서 반환
+			/*if (APKObjectManager* mgr = APKObjectManager::Get(owner))
 			{
 				mgr->ReturnObjectDelayed(data.FoundObject, 2.f);
-			}
+			}*/
 			break;
 		case EPKObjectType::Crumplable:
 			break;
@@ -161,10 +161,10 @@ void FPCTask_PK::ExitState(FStateTreeExecutionContext& Context, const FStateTree
 	{
 		data.FoundObject->Execute_OnPKReleased(data.FoundObject);
 		
-		// 중단된 오브젝트도 풀에 반환 (즉시 비활성 -> 리스폰 예약)
-		if (APKObjectManager* mgr = APKObjectManager::Get(owner))
+		// 중단된 오브젝트도 풀에 반환 (즉시 비활성 -> 리스폰 예약) -> PKObject 자체에서 반환
+		/*if (APKObjectManager* mgr = APKObjectManager::Get(owner))
 		{
 			mgr->ReturnObject(data.FoundObject);
-		}
+		}*/
 	}
 }
