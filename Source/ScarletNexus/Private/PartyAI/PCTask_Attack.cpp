@@ -76,9 +76,15 @@ EStateTreeRunStatus FPCTask_Attack::Tick(FStateTreeExecutionContext& Context, co
 	data.ElapsedTime += DeltaTime;
 	
 	// 쿨다운 중간 시점에 한 번 공격
-	if (!data.bAttacked && data.ElapsedTime >= data.AttackCooldown * 0.3f)
+	if (!data.bAttacked && data.ElapsedTime >= data.MontageLength * 0.3f)
 	{
+		// 타겟 방향으로 접근
+		FVector dir = (data.Target->GetActorLocation() - owner->GetActorLocation()).GetSafeNormal2D();
+		float speed = 300.f;
+		owner->SetActorLocation(owner->GetActorLocation() + dir * speed * DeltaTime, true);
+		
 		const float dist = FVector::Dist(owner->GetActorLocation(), data.Target->GetActorLocation());
+		PRINTLOG_GT(TEXT("Dist: %.1f | Radius: %.1f"), dist, data.AttackRadius);
 		APartyMemberBase* partyMember = Cast<APartyMemberBase>(owner);
 		if (!partyMember) return EStateTreeRunStatus::Failed;
 		if (dist <= data.AttackRadius)
@@ -94,7 +100,8 @@ EStateTreeRunStatus FPCTask_Attack::Tick(FStateTreeExecutionContext& Context, co
 	}
 	
 	// 쿨다운 완료 -> Succeeded로 Combat 루프 재진입
-	if (data.ElapsedTime >= data.AttackCooldown) return EStateTreeRunStatus::Succeeded;
+	PRINTLOG_GT(TEXT("ElapsedTime: %.2f, MontageLength: %.2f"), data.ElapsedTime, data.MontageLength);
+	if (data.ElapsedTime >= data.MontageLength) return EStateTreeRunStatus::Succeeded;
 	return EStateTreeRunStatus::Running;
 }
 

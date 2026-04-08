@@ -39,7 +39,7 @@ EStateTreeRunStatus FPCTask_PK::EnterState(FStateTreeExecutionContext& Context, 
 		AActor* actor = hit.GetActor();
 		if (!actor) continue;
 		if (!actor->Implements<UPKInteractable>()) continue;
-		if (!data.FoundObject->Execute_CanBePickeduped(actor)) continue;
+		if (!IPKInteractable::Execute_CanBePickeduped(actor)) continue;
 
 		APKObject* pkActor = Cast<APKObject>(actor);
 		if (!pkActor) continue;
@@ -85,7 +85,7 @@ EStateTreeRunStatus FPCTask_PK::Tick(FStateTreeExecutionContext& Context, const 
 			+ owner->GetActorForwardVector() * 150.f 
 			+ FVector(0, 0, data.LiftHeight);
 		
-		data.FoundObject->Execute_OnPKPickuped(data.FoundObject);
+		//data.FoundObject->Execute_OnPKPickuped(data.FoundObject);
 		// 타겟까지 끌고 가기
 		data.FoundObject->SetActorLocation(FMath::VInterpTo(data.FoundObject->GetActorLocation(), hoverTarget, DeltaTime, data.LiftInterpSpeed), true);
 
@@ -150,5 +150,8 @@ void FPCTask_PK::ExitState(FStateTreeExecutionContext& Context, const FStateTree
 	}
 	
 	if (!data.FoundObject) return;
-	data.FoundObject->Execute_OnPKReleased(data.FoundObject);
+	if (data.Phase != EPKPhase::Throw)
+	{
+		data.FoundObject->Execute_OnPKReleased(data.FoundObject);
+	}
 }

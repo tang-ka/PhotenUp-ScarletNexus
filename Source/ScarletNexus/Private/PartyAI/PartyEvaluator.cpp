@@ -41,6 +41,17 @@ void FPartyEvaluator::Tick(FStateTreeExecutionContext& Context, const float Delt
 		FCollisionShape::MakeSphere(data.DetectRadius),
 		params);
 	
+	// 플레이어 참조
+	APlayerController* pc = owner->GetWorld()->GetFirstPlayerController();
+	if (pc)
+	{
+		APlayerCharacterBase* player = Cast<APlayerCharacterBase>(pc->GetPawn());
+		if (player)
+		{
+			data.TrackedPlayer = player;
+		}
+	}
+	
 	// 파티
 	APlayerCharacterBase* nearest = nullptr;
 	float bestDist = FLT_MAX;
@@ -54,8 +65,9 @@ void FPartyEvaluator::Tick(FStateTreeExecutionContext& Context, const float Delt
 		AActor* actor = hit.GetActor();
 		if (!actor) continue;
 		
-		// 파티 (플레이 캐릭터) 탐색
-		if (APlayerCharacterBase* player = Cast<APlayerCharacterBase>(actor))
+		// 파티 (플레이 캐릭터) 탐색 -> 스킵
+		if (APlayerCharacterBase* player = Cast<APlayerCharacterBase>(actor)) continue;
+		/*if (APlayerCharacterBase* player = Cast<APlayerCharacterBase>(actor))
 		{
 			float dist = FVector::DistSquared(owner->GetActorLocation(), player->GetActorLocation());
 			if (dist < bestDist)
@@ -65,7 +77,7 @@ void FPartyEvaluator::Tick(FStateTreeExecutionContext& Context, const float Delt
 				//RINTLOG_GT(TEXT("최근접 플레이어: %s"), *nearest->GetName());
 			}
 			continue; // 플레이어 탐색하면 적 탐색 스킵
-		}
+		}*/
 		
 		// 적 탐색
 		//if (Cast<ABossCharacterBase>(actor))
@@ -97,7 +109,7 @@ void FPartyEvaluator::Tick(FStateTreeExecutionContext& Context, const float Delt
 		}
 	}
 	
-	data.TrackedPlayer = nearest;
+	//data.TrackedPlayer = nearest;
 	data.bInAttackRange = nearestEnemy ? (FVector::Dist(owner->GetActorLocation(), nearestEnemy->GetActorLocation()) <= data.AttackRange) : false;
 	
 #if WITH_EDITOR

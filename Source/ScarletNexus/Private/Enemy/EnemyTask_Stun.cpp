@@ -21,7 +21,7 @@ static AEnemyBase* GetEnemyFromContext_Stun(FStateTreeExecutionContext& Context)
 EStateTreeRunStatus FEnemyTask_Stun::EnterState(FStateTreeExecutionContext& Context,
                                                 const FStateTreeTransitionResult& Transition) const
 {
-	auto data = Context.GetInstanceData(*this);
+	auto& data = Context.GetInstanceData(*this);
 	data.ElapsedTime = 0.f;
 	
 	AEnemyBase* enemy = GetEnemyFromContext_Stun(Context);
@@ -46,7 +46,7 @@ EStateTreeRunStatus FEnemyTask_Stun::EnterState(FStateTreeExecutionContext& Cont
 
 EStateTreeRunStatus FEnemyTask_Stun::Tick(FStateTreeExecutionContext& Context, const float DeltaTime) const
 {
-	auto data = Context.GetInstanceData(*this);
+	auto& data = Context.GetInstanceData(*this);
 	data.ElapsedTime += DeltaTime;
 	
 	// 스턴 시간 지나면 Succeeded -> 이전 행동으로 복귀

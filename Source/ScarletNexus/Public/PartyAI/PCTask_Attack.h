@@ -19,7 +19,7 @@ struct FPCTask_AttackInstanceData
 	
 	// 공격 범위 
 	UPROPERTY(EditAnywhere)
-	float AttackRadius = 150.f;
+	float AttackRadius = 300.f;
 	
 	// 데미지
 	UPROPERTY(EditAnywhere)
