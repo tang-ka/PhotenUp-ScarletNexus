@@ -5,8 +5,11 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Interface/PKInteractable.h"
+#include "PK/PKObjectManager.h"
 #include "PKObject.generated.h"
 
+class UNiagaraSystem;
+class UNiagaraComponent;
 class UDissolveComponent;
 class APKObject;
 
@@ -89,6 +92,34 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="FX")
 	UDissolveComponent* DissolveComp;
 	
+	// Throw Niagara : 잡혀있을 때 오브젝트 주변 오라
+	UPROPERTY(VisibleAnywhere, Category="FX")
+	TObjectPtr<UNiagaraComponent> PKAuraFXComp; 
+	UPROPERTY(EditAnywhere, Category="FX")
+	TObjectPtr<UNiagaraSystem> PKAuraFXAsset;
+	
+	// Throw Niagara : 던져질 때 트레일
+	UPROPERTY(EditAnywhere, Category="FX")
+	TObjectPtr<UNiagaraSystem> ThrowTrailFXAsset;
+	
+	UFUNCTION(BlueprintCallable, Category="FX")
+	void SetActivePKAuraFX(bool IsActive);
+	UFUNCTION(BlueprintCallable, Category="FX")
+	void SpawnPKAuraFX();
+	
+	// PK 잡혔을 때 글로우
+	UPROPERTY(EditAnywhere, Category="FX")
+	FLinearColor PKGlowColor = FLinearColor(0.6f, 0.1f, 1.0f, 1.0f);
+	UPROPERTY(EditAnywhere, Category="FX")
+	float PKGlowStrength = 15.f;
+	UPROPERTY()
+	TArray<TObjectPtr<UMaterialInstanceDynamic>> OriginalMIDs;
+	
+	void EnablePKGlow(bool bEnable);
+	
+	// 트레일 이펙트 스폰
+	void SpawnTrailFX();
+	
 	// PK 인터페이스 구현
 	virtual bool CanBePickeduped_Implementation() const override;
 	virtual void OnPKPickuped_Implementation() override;
@@ -108,6 +139,10 @@ private:
 
 	// 비행 시간 초과 → 디졸브
 	void OnFlightTimeout();
+	
+	// 풀 매니저에 지연 반환 (2초 후 사라짐 -> 리스폰 예약
+	UFUNCTION()
+	void ReturnObjectDelayed(float delay);
 
 #pragma region Flight Timeout
 	UPROPERTY(EditDefaultsOnly, Category="PK")
