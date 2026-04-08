@@ -6,6 +6,7 @@
 #include "Data/AttackType.h"
 #include "GameFramework/Character.h"
 #include "Interface/Damageable.h"
+#include "Camera/CameraShakeBase.h"
 #include "PlayerCharacterBase.generated.h"
 
 class UComboAttackDataAsset;
@@ -111,6 +112,12 @@ private:
 	void LockOnToggle();
 
 protected:
+#pragma region Camera Shake
+	/** 피격 시 재생할 카메라 쉐이크 클래스. Blueprint에서 재정의 가능 */
+	UPROPERTY(EditDefaultsOnly, Category = "Camera")
+	TSubclassOf<UCameraShakeBase> DamageCameraShakeClass;
+#pragma endregion
+
 #pragma region Input Action Properties
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	TObjectPtr<UInputMappingContext> IMC_Player;

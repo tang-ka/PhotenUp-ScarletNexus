@@ -39,6 +39,9 @@ public:
  
 	UFUNCTION(BlueprintCallable, Category = "Boss")
 	EBossPhase GetCurrentPhase() const { return CurrentPhase; }
+
+	UFUNCTION(BlueprintCallable, Category = "Boss")
+	float GetMaxHP() const { return MaxHPValue; }
  
 	// IDamageable 구현 (데미지 + HP 조회)
 	

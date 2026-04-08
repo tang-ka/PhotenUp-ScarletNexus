@@ -6,12 +6,15 @@
 #include "GameFramework/HUD.h"
 #include "ScarletPlayerHUD.generated.h"
 
+class UBossHUDWidget;
+class UBossHUDViewModel;
 class UPartyHUDViewModel;
 class UPartyCharacterStatWidget;
 class UDamageAmountWidget;
 class UPlayerStatWidget;
 class UPlayerHUDViewModel;
 class APartyMemberBase;
+class ABossCharacterBase;
 
 /**
  * 
@@ -22,8 +25,6 @@ class SCARLETNEXUS_API AScarletPlayerHUD : public AHUD
 	GENERATED_BODY()
 	
 public:
-	virtual void BeginPlay() override;
-
 	/** 파티 가입 시 PartyCharacterWidget을 Visible 상태로 전환하고 ViewModel 바인딩 */
 	UFUNCTION()
 	void ShowPartyWidget(APartyMemberBase* PartyMember);
@@ -32,12 +33,24 @@ public:
 	UFUNCTION()
 	void HidePartyWidget(APartyMemberBase* PartyMember);
 
+	/**
+	 * 보스 등록 — 레벨 시작 시 자동 탐색되지만,
+	 * 보스가 동적으로 스폰될 경우 외부에서 수동 호출 가능
+	 */
+	UFUNCTION(BlueprintCallable, Category = "BossUI")
+	void RegisterBoss(ABossCharacterBase* BossCharacter);
+
 protected:
+	virtual void BeginPlay() override;
+
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	TSubclassOf<UPlayerStatWidget> PlayerStatWidgetClass;
 
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	TSubclassOf<UPartyCharacterStatWidget> PartyCharacterWidgetClass;
+
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UBossHUDWidget> BossHUDWidgetClass;
 
 private:
 	/** 파티 HP 변경 중계 핸들러 */
@@ -51,10 +64,20 @@ private:
 	TObjectPtr<UPlayerHUDViewModel> PlayerStatViewModel;
 	
 	UPROPERTY(Transient)
-	TObjectPtr<UPartyCharacterStatWidget> PartyCharacterWidget;
+	TObjectPtr<UPartyCharacterStatWidget> PartyCharacterStatWidget;
 
 	UPROPERTY(Transient)
-	TObjectPtr<UPartyHUDViewModel> PartyViewModel;
+	TObjectPtr<UPartyHUDViewModel> PartyCharacterStatViewModel;
+	
+	UPROPERTY(Transient)
+	TObjectPtr<UBossHUDWidget> BossHUDWidget;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UBossHUDViewModel> BossHUDViewModel;
+
+	/** 현재 등록된 보스 (언바인딩용) */
+	UPROPERTY(Transient)
+	TObjectPtr<ABossCharacterBase> CurrentBoss;
 
 	/** 현재 파티원 (언바인딩용) */
 	UPROPERTY(Transient)

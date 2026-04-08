@@ -390,6 +390,11 @@ void UPsychokinesisComponent::HandlePKObjectHit(APKObject* HitObject, AActor* Hi
 	}
 
 	// =============================================
+	// 2-1. 염동력으로 적중한 적을 자동 락온
+	// =============================================
+	Me->GetPerceptionComp()->LockOnToTarget(HitActor);
+
+	// =============================================
 	// 3. 카메라 쉐이크 (Normal / Strong 분기)
 	// =============================================
 	if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
