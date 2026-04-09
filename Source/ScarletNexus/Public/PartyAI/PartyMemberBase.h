@@ -6,6 +6,9 @@
 #include "GameFramework/Character.h"
 #include "PartyMemberBase.generated.h"
 
+/** CurrHP, MaxHP */
+DECLARE_MULTICAST_DELEGATE_TwoParams(FOnPartyMemberHPChangedDelegate, int32, int32);
+
 UCLASS()
 class SCARLETNEXUS_API APartyMemberBase : public ACharacter
 {
@@ -48,6 +51,11 @@ public:
 	virtual void TakeDamage_Party(int Damage);
 	UFUNCTION(BlueprintCallable, Category = "Status")
 	bool IsAlive() const { return CurrHP > 0; }
+	UFUNCTION(BlueprintCallable, Category = "Status")
+	float GetHPPercent() const { return MaxHP > 0 ? static_cast<float>(CurrHP) / static_cast<float>(MaxHP) : 0.f; }
+
+	/** HP가 변경될 때 브로드캐스트 (CurrHP, MaxHP) */
+	FOnPartyMemberHPChangedDelegate OnHPChanged;
 	
 	// 쿨타임
 	// 스킬 쿨타임 등록

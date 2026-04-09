@@ -25,6 +25,14 @@ APlayerKasane::APlayerKasane()
 		GetMesh()->SetRelativeScale3D(FVector(0.42f, 0.42f, 0.42f));
 	}
 	
+	ConstructorHelpers::FObjectFinder<UAnimMontage> DamageMontageAsset(
+		TEXT("/Game/SSH/Animations/AM_HitReaction.AM_HitReaction")
+	);
+	if (DamageMontageAsset.Succeeded())
+	{
+		DamageMontage = DamageMontageAsset.Object;
+	}
+	
 	BladeHandlerComp = CreateDefaultSubobject<UBladeHandlerComponent>(TEXT("BladeHandlerComp"));
 }
 
@@ -84,6 +92,16 @@ void APlayerKasane::BackStepAttack()
 	Super::BackStepAttack();
 	
 	// GetInputBufferComp()->BufferInput(EAttackType::BackStepAttack);
+}
+
+bool APlayerKasane::ReceiveDamage_Implementation(FDamageInfo DamageInfo)
+{
+	const bool bApplied = Super::ReceiveDamage_Implementation(DamageInfo);
+	if (bApplied && DamageMontage)
+	{
+		PlayAnimMontage(DamageMontage);
+	}
+	return bApplied;
 }
 
 

@@ -125,8 +125,13 @@ void AEnemyBase::Die()
 		HealthBarComp->SetVisibility(false);
 	}
 	
+	// 디졸브 효과
+	if (DissolveComp)
+	{
+		DissolveComp->StartDissolve();
+	}
 	// Ragdoll
-	if (bEnableRagdollOnDeath)
+	else if (bEnableRagdollOnDeath)
 	{
 		EnableRagdoll();
 	}
@@ -144,12 +149,6 @@ void AEnemyBase::Die()
 			[this]() {Destroy();}, 
 			DestroyDelay,
 			false);
-	}
-	
-	// 디졸브 효과
-	if (DissolveComp)
-	{
-		DissolveComp->StartDissolve();
 	}
 }
 

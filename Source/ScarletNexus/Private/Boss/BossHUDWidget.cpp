@@ -2,72 +2,63 @@
 
 
 #include "Boss/BossHUDWidget.h"
-#include "Boss/BossCharacterBase.h"
-#include "Interface/Damageable.h"
- 
-void UBossHUDWidget::SetBossActor(AActor* InBossActor)
+#include "Player/Widget/BossHUDViewModel.h"
+#include "Components/ProgressBar.h"
+#include "Components/TextBlock.h"
+
+void UBossHUDWidget::InitViewModel(UViewModel* InViewModel)
 {
-	BossActor = InBossActor;
+	Super::InitViewModel(InViewModel);
+
+	UBossHUDViewModel* VM = Cast<UBossHUDViewModel>(OwnerViewModel);
+	if (!VM) return;
+
+	// ViewModel 델리게이트 구독
+	VM->OnHPUpdated.AddUObject(this, &UBossHUDWidget::UpdateHP);
+	VM->OnPhaseUpdated.AddUObject(this, &UBossHUDWidget::UpdatePhase);
+
+	// 위젯 생성 시점에 ViewModel 캐시값으로 초기 동기화
+	UpdateHP(VM->GetCachedCurrentHP(), VM->GetCachedMaxHP(), VM->GetCachedHPPercent());
+	UpdatePhase(VM->GetCachedPhase(), VM->GetCachedPhase());
 }
- 
-float UBossHUDWidget::GetHPPercent() const
+
+void UBossHUDWidget::UpdateHP(float CurrentHP, float MaxHP, float Percent)
 {
-	if (!BossActor || !BossActor->GetClass()->ImplementsInterface(UDamageable::StaticClass()))
+	CachedCurrentHP = CurrentHP;
+	CachedMaxHP     = MaxHP;
+	CachedHPPercent = Percent;
+	bIsBossAlive    = (CurrentHP > 0.f);
+
+	if (pb_BossHP)
 	{
-		return 0.f;
+		pb_BossHP->SetPercent(Percent);
 	}
-	return IDamageable::Execute_GetHPPercent(BossActor);
 }
- 
+
+void UBossHUDWidget::UpdatePhase(EBossPhase /*OldPhase*/, EBossPhase NewPhase)
+{
+	CachedPhase = NewPhase;
+
+	if (txt_Phase)
+	{
+		txt_Phase->SetText(GetPhaseText());
+	}
+}
+
 FText UBossHUDWidget::GetHPText() const
 {
-	if (!BossActor || !BossActor->GetClass()->ImplementsInterface(UDamageable::StaticClass()))
-	{
-		return FText::FromString(TEXT("0 / 0"));
-	}
- 
-	const int32 CurrentHP = IDamageable::Execute_GetHP(BossActor);
- 
-
-	int32 MaxHP = 10000;
-	if (const ABossCharacterBase* BossChar = Cast<ABossCharacterBase>(BossActor))
-	{
-		MaxHP = static_cast<int32>(BossChar->GetHP_Implementation() / FMath::Max(BossChar->GetHPPercent_Implementation(), 0.01f));
-	}
- 
-	return FText::FromString(FString::Printf(TEXT("%d / %d"), CurrentHP, MaxHP));
+	return FText::FromString(
+		FString::Printf(TEXT("%.0f / %.0f"), CachedCurrentHP, CachedMaxHP));
 }
- 
+
 FText UBossHUDWidget::GetPhaseText() const
 {
-	if (const ABossCharacterBase* BossChar = Cast<ABossCharacterBase>(BossActor))
+	switch (CachedPhase)
 	{
-		switch (BossChar->GetCurrentPhase())
-		{
-		case EBossPhase::Phase1:          return FText::FromString(TEXT("Phase 1"));
-		case EBossPhase::Phase2:          return FText::FromString(TEXT("Phase 2"));
-		case EBossPhase::Phase2_Enhanced: return FText::FromString(TEXT("Phase 2-2"));
-		case EBossPhase::Phase3_Cutscene: return FText::FromString(TEXT("Phase 3"));
-		}
+	case EBossPhase::Phase1:          return FText::FromString(TEXT("Phase 1"));
+	case EBossPhase::Phase2:          return FText::FromString(TEXT("Phase 2"));
+	case EBossPhase::Phase2_Enhanced: return FText::FromString(TEXT("Phase 2-2"));
+	case EBossPhase::Phase3_Cutscene: return FText::FromString(TEXT("Phase 3"));
+	default:                          return FText::FromString(TEXT("---"));
 	}
-	return FText::FromString(TEXT("---"));
-}
- 
-FText UBossHUDWidget::GetBossName() const
-{
-	return BossDisplayName;
-}
- 
-bool UBossHUDWidget::IsBossValid() const
-{
-	return IsValid(BossActor);
-}
- 
-bool UBossHUDWidget::IsBossDead() const
-{
-	if (!BossActor || !BossActor->GetClass()->ImplementsInterface(UDamageable::StaticClass()))
-	{
-		return true;
-	}
-	return IDamageable::Execute_IsDead(BossActor);
 }

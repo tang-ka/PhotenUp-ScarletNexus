@@ -8,7 +8,17 @@
 #include "PK/PKObjectManager.h"
 #include "PKObject.generated.h"
 
+class UNiagaraSystem;
+class UNiagaraComponent;
 class UDissolveComponent;
+class APKObject;
+
+// PK 던지기 충돌 시 호출되는 델리게이트 (PsychokinesisComponent에서 바인딩)
+DECLARE_DELEGATE_FourParams(FOnPKObjectHit,
+	APKObject*,             // 충돌한 PK 오브젝트
+	AActor*,                // 충돌 대상 액터
+	UPrimitiveComponent*,   // 충돌 대상 컴포넌트
+	const FHitResult&);     // 충돌 결과
 
 UENUM()
 enum class EPKObjectState : uint8
@@ -82,12 +92,43 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="FX")
 	UDissolveComponent* DissolveComp;
 	
+	// Throw Niagara : 잡혀있을 때 오브젝트 주변 오라
+	UPROPERTY(VisibleAnywhere, Category="FX")
+	TObjectPtr<UNiagaraComponent> PKAuraFXComp; 
+	UPROPERTY(EditAnywhere, Category="FX")
+	TObjectPtr<UNiagaraSystem> PKAuraFXAsset;
+	
+	// Throw Niagara : 던져질 때 트레일
+	UPROPERTY(EditAnywhere, Category="FX")
+	TObjectPtr<UNiagaraSystem> ThrowTrailFXAsset;
+	
+	UFUNCTION(BlueprintCallable, Category="FX")
+	void SetActivePKAuraFX(bool IsActive);
+	UFUNCTION(BlueprintCallable, Category="FX")
+	void SpawnPKAuraFX();
+	
+	// PK 잡혔을 때 글로우
+	UPROPERTY(EditAnywhere, Category="FX")
+	FLinearColor PKGlowColor = FLinearColor(0.6f, 0.1f, 1.0f, 1.0f);
+	UPROPERTY(EditAnywhere, Category="FX")
+	float PKGlowStrength = 15.f;
+	UPROPERTY()
+	TArray<TObjectPtr<UMaterialInstanceDynamic>> OriginalMIDs;
+	
+	void EnablePKGlow(bool bEnable);
+	
+	// 트레일 이펙트 스폰
+	void SpawnTrailFX();
+	
 	// PK 인터페이스 구현
 	virtual bool CanBePickeduped_Implementation() const override;
 	virtual void OnPKPickuped_Implementation() override;
 	virtual void OnPKReleased_Implementation() override;
 	virtual void OnPKThrown_Implementation(const FVector& ThrowDir, float ThrowForce) override;
 	virtual void OnPKThrownPS_Implementation(const FVector& ThrowDir, float ThrowForce) override;
+
+	// === 충돌 델리게이트 (PsychokinesisComponent에서 바인딩) ===
+	FOnPKObjectHit OnPKObjectHit;
 
 private:
 	// 충돌 감지 → 땅에 닿으면 CanBePickedUp으로 복귀

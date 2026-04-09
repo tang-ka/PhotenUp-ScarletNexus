@@ -23,6 +23,14 @@ UBladeHandlerComponent::UBladeHandlerComponent()
 	{
 		BladeClass = BladeBPClass.Class;
 	}
+	
+	// 카메라 쉐이크 찾아서 할당 하고 싶다.
+	ConstructorHelpers::FClassFinder<UCameraShakeBase> NormalShakeAsset(
+		TEXT("/Game/SSH/Blueprints/BP_CameraShakeNormal.BP_CameraShakeNormal_C"));
+	if (NormalShakeAsset.Succeeded())
+	{
+		HitCameraShakeClass = NormalShakeAsset.Class;
+	}
 }
 
 void UBladeHandlerComponent::BeginPlay()

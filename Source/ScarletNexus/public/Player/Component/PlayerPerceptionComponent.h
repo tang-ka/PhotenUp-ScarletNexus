@@ -9,6 +9,11 @@
 
 class USphereComponent;
 
+// HardTarget이 설정되거나 해제(nullptr)될 때 브로드캐스트
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnHardTargetChanged, AActor*);
+// PsychokinesisTarget이 변경되거나 해제(nullptr)될 때 브로드캐스트
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnPsychokinesisTargetChanged, AActor*);
+
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class SCARLETNEXUS_API UPlayerPerceptionComponent : public UActorComponent
 {
@@ -35,7 +40,7 @@ public:
 	AActor* GetCurrentTarget() const;
 	AActor* GetPsychokinesisTarget() const { return PsychokinesisTarget.IsValid() ? PsychokinesisTarget.Get() : nullptr; }
 	
-	void SetActivePsychokinesisTargetUpdate(bool bIsActivate) { bNeedPsychokinesisTargetUpdate = bIsActivate; }
+	void SetActivePsychokinesisTargetUpdate(bool bIsActivate);
 #pragma endregion
 
 #pragma region Lock-On
@@ -50,6 +55,11 @@ public:
 	void LockOnToTarget(AActor* Target);
 #pragma endregion
 
+public:
+	// TargetingViewModel이 구독하는 타겟 변경 델리게이트
+	FOnHardTargetChanged OnHardTargetChanged;
+	FOnPsychokinesisTargetChanged OnPsychokinesisTargetChanged;
+
 private:
 	void InitDetectionSphere();
 	void UpdatePerception();
@@ -57,7 +67,10 @@ private:
 	                           float InDistWeight = -1.f,
 	                           float InAngleWeight = -1.f,
 	                           float InScreenWeight = -1.f) const;
-	float CalcScreenCenterScore(AActor* Target) const;	
+	float CalcScreenCenterScore(AActor* Target) const;
+
+	/** PKTarget의 StaticMeshComponent CustomDepth 하이라이트 ON/OFF */
+	void SetPKTargetHighlight(AActor* Target, bool bHighlight) const;
 
 	UFUNCTION()
 	void OnBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
@@ -109,5 +122,5 @@ private:
 	bool bNeedPsychokinesisTargetUpdate{true};
 	
 	UPROPERTY(EditAnywhere, Category = "Perception|Debug")
-	bool bDrawDebug{true};
+	bool bDrawDebug{false};
 };

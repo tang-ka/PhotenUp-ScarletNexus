@@ -25,6 +25,7 @@
 #include "Player/Component/PlayerStatsComponent.h"
 #include "Player/Component/PsychokinesisComponent.h"
 #include "Player/Component/DashSkillComponent.h"
+#include "Player/Component/PartyHandlerComponent.h"\
 
 APlayerCharacterBase::APlayerCharacterBase(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer.SetDefaultSubobjectClass<UPlayerCharacterMovementComponent>(ACharacter::CharacterMovementComponentName))
@@ -131,6 +132,14 @@ APlayerCharacterBase::APlayerCharacterBase(const FObjectInitializer& ObjectIniti
 	ActionManagerComp = CreateDefaultSubobject<UActionManagerComponent>(TEXT("ActionManagerComp"));
 	ComboComp = CreateDefaultSubobject<UComboComponent>(TEXT("ComboComp"));
 	DashSkillComp = CreateDefaultSubobject<UDashSkillComponent>(TEXT("DashSkillComp"));
+	PartyHandlerComp = CreateDefaultSubobject<UPartyHandlerComponent>(TEXT("PartyHandlerComp"));
+
+	ConstructorHelpers::FClassFinder<UCameraShakeBase> NormalShakeAsset(
+	TEXT("/Game/SSH/Blueprints/BP_CameraShakeNormal.BP_CameraShakeNormal_C"));
+	if (NormalShakeAsset.Succeeded())
+	{
+		DamageCameraShakeClass = NormalShakeAsset.Class;
+	}
 }
 
 void APlayerCharacterBase::BeginPlay()
@@ -197,6 +206,16 @@ bool APlayerCharacterBase::ReceiveDamage_Implementation(FDamageInfo DamageInfo)
 	}
 
 	StatsComp->ReceiveDamage(DamageInfo.DamageAmount);
+
+	// 피격 카메라 쉐이크 재생
+	if (DamageCameraShakeClass)
+	{
+		if (APlayerController* PC = Cast<APlayerController>(GetController()))
+		{
+			PC->ClientStartCameraShake(DamageCameraShakeClass);
+		}
+	}
+
 	return true;
 }
 

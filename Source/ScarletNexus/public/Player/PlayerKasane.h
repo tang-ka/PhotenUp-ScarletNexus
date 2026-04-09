@@ -23,6 +23,8 @@ protected:
 	virtual void BasicAttack() override;
 	virtual void PsychicAttack() override;
 	virtual void BackStepAttack() override;
+	
+	virtual bool ReceiveDamage_Implementation(FDamageInfo DamageInfo) override;
 
 public:
 	virtual void Tick(float DeltaTime) override;
@@ -37,6 +39,9 @@ protected:
 	virtual void OnMontageEnded(UAnimMontage* Montage, bool bInterrupted) override;
 
 private:
+	UPROPERTY(EditDefaultsOnly, Category = "Animation")
+	TObjectPtr<UAnimMontage> DamageMontage;
+	
 #pragma region Components
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UBladeHandlerComponent> BladeHandlerComp;

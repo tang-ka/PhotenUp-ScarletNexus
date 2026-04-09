@@ -6,6 +6,7 @@
 #include "Data/AttackType.h"
 #include "GameFramework/Character.h"
 #include "Interface/Damageable.h"
+#include "Camera/CameraShakeBase.h"
 #include "PlayerCharacterBase.generated.h"
 
 class UComboAttackDataAsset;
@@ -17,6 +18,7 @@ class UPsychokinesisComponent;
 class UPlayerPerceptionComponent;
 class UPlayerStateComponent;
 class UPlayerStatsComponent;
+class UPartyHandlerComponent;
 class UCameraComponent;
 class USpringArmComponent;
 class UInputMappingContext;
@@ -65,6 +67,7 @@ public:
 	FORCEINLINE UActionManagerComponent* GetActionManagerComp() const { return ActionManagerComp; }
 	FORCEINLINE UComboComponent* GetComboComp() const { return ComboComp; }
 	FORCEINLINE UDashSkillComponent* GetDashSkillComp() const { return DashSkillComp; }
+	FORCEINLINE UPartyHandlerComponent* GetPartyHandlerComp() const { return PartyHandlerComp; }
 #pragma endregion
 
 protected:
@@ -109,6 +112,12 @@ private:
 	void LockOnToggle();
 
 protected:
+#pragma region Camera Shake
+	/** 피격 시 재생할 카메라 쉐이크 클래스. Blueprint에서 재정의 가능 */
+	UPROPERTY(EditDefaultsOnly, Category = "Camera")
+	TSubclassOf<UCameraShakeBase> DamageCameraShakeClass;
+#pragma endregion
+
 #pragma region Input Action Properties
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	TObjectPtr<UInputMappingContext> IMC_Player;
@@ -168,5 +177,8 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UDashSkillComponent> DashSkillComp;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UPartyHandlerComponent> PartyHandlerComp;
 #pragma endregion
 };

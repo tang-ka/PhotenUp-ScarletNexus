@@ -3,6 +3,8 @@
 
 #include "PK/PKObject.h"
 
+#include "NiagaraComponent.h"
+#include "NiagaraFunctionLibrary.h"
 #include "ScarletNexus.h"
 #include "Components/BoxComponent.h"
 #include "FX/DissolveComponent.h"
@@ -24,6 +26,13 @@ APKObject::APKObject()
 	
 	// 디졸브 콤포넌트
 	DissolveComp = CreateDefaultSubobject<UDissolveComponent>(TEXT("DissolveComp"));
+	
+	// 나이아가라 시스템 에셋
+	static ConstructorHelpers::FObjectFinder<UNiagaraSystem> tempAuraFX(TEXT("/Script/Niagara.NiagaraSystem'/Game/Models/GS_UModel/Effect/NS/NS_PK_Aura.NS_PK_Aura'"));
+	if (tempAuraFX.Succeeded())
+	{
+		PKAuraFXAsset = tempAuraFX.Object;
+	}
 }
 
 // Called when the game starts or when spawned
@@ -67,6 +76,77 @@ void APKObject::Tick(float DeltaTime)
 	}
 }
 
+void APKObject::SetActivePKAuraFX(bool IsActive)
+{
+	if (PKAuraFXComp)
+	{
+		if (IsActive) PKAuraFXComp->Activate(true);
+		else PKAuraFXComp->Deactivate();
+	}
+}
+
+void APKObject::SpawnPKAuraFX()
+{
+	if (PKAuraFXAsset)
+	{
+		PKAuraFXComp = UNiagaraFunctionLibrary::SpawnSystemAttached(
+			PKAuraFXAsset,
+			GetRootComponent(),
+			NAME_None,
+			FVector::ZeroVector,
+			FRotator::ZeroRotator,
+			EAttachLocation::SnapToTarget,
+			false);
+	}
+}
+
+void APKObject::EnablePKGlow(bool bEnable)
+{
+	UStaticMeshComponent* mesh = FindComponentByClass<UStaticMeshComponent>();
+	if (!mesh) return;
+	
+	if (bEnable)
+	{
+		// 모든 머터리얼 슬롯에 Dynamic Material 생성
+		OriginalMIDs.Empty();
+		for (int32 i = 0; i < mesh->GetNumMaterials(); i++)
+		{
+			UMaterialInstanceDynamic* mid = mesh->CreateDynamicMaterialInstance(i);
+			if (mid)
+			{
+				mid->SetVectorParameterValue(FName("EmissiveColor"), PKGlowColor * PKGlowStrength);
+				OriginalMIDs.Add(mid);
+			}
+		}
+	}
+	else
+	{
+		// Emissive 끄기
+		for (auto& mid : OriginalMIDs)
+		{
+			if (mid)
+			{
+				mid->SetVectorParameterValue(FName("EmissiveColor"), FLinearColor::Black);
+			}
+		}
+	}
+}
+
+void APKObject::SpawnTrailFX()
+{
+	if (ThrowTrailFXAsset)
+	{
+		UNiagaraFunctionLibrary::SpawnSystemAttached(
+			ThrowTrailFXAsset,
+			GetRootComponent(),
+			NAME_None,
+			FVector::ZeroVector,
+			FRotator::ZeroRotator,
+			EAttachLocation::SnapToTarget,
+			true);
+	}
+}
+
 bool APKObject::CanBePickeduped_Implementation() const
 {
 	// 상태를 문자로 출력하고 싶다.
@@ -77,6 +157,14 @@ bool APKObject::CanBePickeduped_Implementation() const
 
 void APKObject::OnPKPickuped_Implementation()
 {
+	// 오라 이펙트 시작
+	EnablePKGlow(true);
+	if (!PKAuraFXComp)
+	{
+		SpawnPKAuraFX();
+	}
+	else SetActivePKAuraFX(true);
+	
 	if (BoxComp)
 	{
 		ObjectState = EPKObjectState::IsHeld;
@@ -96,6 +184,10 @@ void APKObject::OnPKPickuped_Implementation()
 
 void APKObject::OnPKReleased_Implementation()
 {
+	// 오라 이펙트 정지
+	EnablePKGlow(false);
+	SetActivePKAuraFX(false);
+	
 	if (BoxComp)
 	{
 		ObjectState = EPKObjectState::CoolDown;
@@ -117,6 +209,12 @@ void APKObject::OnPKReleased_Implementation()
 
 void APKObject::OnPKThrown_Implementation(const FVector& ThrowDir, float ThrowForce)
 {
+	EnablePKGlow(false);
+	SetActivePKAuraFX(false);
+	
+	// 트레일 이펙트 스폰
+	SpawnTrailFX();
+	
 	ObjectState = EPKObjectState::IsUsed;
 	bUsedObject = true;
 
@@ -158,6 +256,12 @@ void APKObject::OnPKThrown_Implementation(const FVector& ThrowDir, float ThrowFo
 // 물리 적용 전용 던지기
 void APKObject::OnPKThrownPS_Implementation(const FVector& ThrowDir, float ThrowForce)
 {
+	EnablePKGlow(false);
+	SetActivePKAuraFX(false);
+	
+	// 트레일 이펙트 스폰
+	SpawnTrailFX();
+	
 	ObjectState = EPKObjectState::IsUsed;
 	
 	// 물리 활성화 
@@ -230,6 +334,9 @@ void APKObject::OnBoxHit(UPrimitiveComponent* HitComponent, AActor* OtherActor,
 			return;
 		}
 
+		// 충돌 델리게이트 실행 — 데미지/카메라쉐이크/UI는 PsychokinesisComponent에서 처리
+		OnPKObjectHit.ExecuteIfBound(this, OtherActor, OtherComp, Hit);
+
 		if (DissolveComp)
 		{
 			GetWorld()->GetTimerManager().ClearTimer(FlightTimerHandle);
@@ -239,16 +346,16 @@ void APKObject::OnBoxHit(UPrimitiveComponent* HitComponent, AActor* OtherActor,
 
 #if WITH_EDITOR
 	// 디버그
-	if (DamageableHelpers::IsDamageable(OtherActor))
-	{
-		DrawDebugBox(
-			GetWorld(),
-			BoxComp->GetComponentLocation(),
-			BoxComp->GetScaledBoxExtent(),
-			BoxComp->GetComponentQuat(),
-			FColor::Magenta,
-			true,
-			2.f);
-	}
+	// if (DamageableHelpers::IsDamageable(OtherActor))
+	// {
+	// 	DrawDebugBox(
+	// 		GetWorld(),
+	// 		BoxComp->GetComponentLocation(),
+	// 		BoxComp->GetScaledBoxExtent(),
+	// 		BoxComp->GetComponentQuat(),
+	// 		FColor::Magenta,
+	// 		true,
+	// 		2.f);
+	// }
 #endif
 }
