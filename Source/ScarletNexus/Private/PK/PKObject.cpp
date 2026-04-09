@@ -23,6 +23,7 @@ APKObject::APKObject()
 	
 	StaticMeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMeshComp"));
 	StaticMeshComp->SetupAttachment(BoxComp);
+	StaticMeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	
 	// 디졸브 콤포넌트
 	DissolveComp = CreateDefaultSubobject<UDissolveComponent>(TEXT("DissolveComp"));
