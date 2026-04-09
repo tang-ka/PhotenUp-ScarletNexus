@@ -9,9 +9,9 @@ DECLARE_LOG_CATEGORY_EXTERN(SH, Warning, All)
 DECLARE_LOG_CATEGORY_EXTERN(JJ, Log, All)
 
 // --- 개별 로그 활성화 설정 (1: 켬, 0: 끔) ---
-#define USE_LOG_GT 1
-#define USE_LOG_SH 1
-#define USE_LOG_JJ 1
+#define USE_LOG_GT 0
+#define USE_LOG_SH 0
+#define USE_LOG_JJ 0
 // ------------------------------------------
 
 // Shipping 빌드에서는 무조건 비활성화, 그 외 빌드에서는 개별 설정 참조

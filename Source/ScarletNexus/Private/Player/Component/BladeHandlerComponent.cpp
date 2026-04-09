@@ -17,8 +17,9 @@ UBladeHandlerComponent::UBladeHandlerComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
 
-	// 블레이드 클래스 설정 (예시)
-	static ConstructorHelpers::FClassFinder<AKasaneBlade> BladeBPClass(TEXT("/Game/SSH/Blueprints/BP_KasaneBlade"));
+	// 블레이드 클래스 설정
+	static ConstructorHelpers::FClassFinder<AKasaneBlade> BladeBPClass(
+		TEXT("/Game/SSH/Blueprints/BP_KasaneBlade.BP_KasaneBlade_C"));
 	if (BladeBPClass.Succeeded())
 	{
 		BladeClass = BladeBPClass.Class;
@@ -132,6 +133,28 @@ void UBladeHandlerComponent::SetDefaultStateAllBlades()
 		if (Blade)
 		{
 			Blade->ChangeBladeState(Blade->GetDefaultState());
+		}
+	}
+}
+
+void UBladeHandlerComponent::OnBladeGlowBegin()
+{
+	for (AKasaneBlade* Blade : BladePool)
+	{
+		if (Blade)
+		{
+			Blade->SetBladeState(EBladeMaterialState::Glow);
+		}
+	}
+}
+
+void UBladeHandlerComponent::OnBladeGlowEnd()
+{
+	for (AKasaneBlade* Blade : BladePool)
+	{
+		if (Blade)
+		{
+			Blade->SetBladeState(EBladeMaterialState::Default);
 		}
 	}
 }
