@@ -737,6 +737,12 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickIceSpikes(
 			{
 				if (const ABossCharacterBase* BossChar = Cast<ABossCharacterBase>(Boss))
 				{
+					// 경고 사운드 추가
+					if (BossChar->IceSpikeWarningSound)
+					{
+						const FVector SoundLoc = Data.ISOrigin + Data.ISDirection * (IS_AreaStartOffset + IS_AreaLength * 0.5f);
+						UGameplayStatics::PlaySoundAtLocation(Boss->GetWorld(), BossChar->IceSpikeWarningSound, SoundLoc);
+					}
 					if (BossChar->IceSpikeWarningVFX)
 					{
 						const float HalfHeight = Boss->GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
@@ -775,6 +781,13 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickIceSpikes(
 			// 나이아가라 VFX 스폰
 			if (const ABossCharacterBase* BossChar = Cast<ABossCharacterBase>(Boss))
 			{
+				// 가시 사운드 추가
+				if (BossChar->IceSpikeSound)
+				{
+					const FVector SoundLoc = Data.ISOrigin + Data.ISDirection * (IS_AreaStartOffset + IS_AreaLength * 0.5f);
+					UGameplayStatics::PlaySoundAtLocation(Boss->GetWorld(), BossChar->IceSpikeSound, SoundLoc);
+				}
+				
 				if (BossChar->IceSpikeVFX)
 				{
 					
@@ -905,6 +918,13 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickElectricOrbs(
     				{
     					Data.OOOrbVFXComponents.Add(nullptr);
     				}
+    				
+    				// 전류구 사운드 추가
+    				if (BossChar->ElectricOrbSound)
+    				{
+    					UGameplayStatics::PlaySoundAtLocation(Boss->GetWorld(), BossChar->ElectricOrbSound, OrbPos);
+    				}
+    				
     			}
     			Data.OOOrbDirections.Add(FVector::ZeroVector);
     			Data.OOOrbHit.Add(false);
