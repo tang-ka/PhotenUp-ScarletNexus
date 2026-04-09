@@ -4,9 +4,12 @@
 #include "PartyAI/PartyMemberBase.h"
 
 #include "ScarletNexus.h"
+#include "Components/SphereComponent.h"
 #include "Interface/DamageableHelper.h"
 #include "PartyAI/PartyAIComponent.h"
 #include "PartyAI/PartyAIController.h"
+#include "Player/PlayerCharacterBase.h"
+#include "Player/Component/PartyHandlerComponent.h"
 
 // Sets default values
 APartyMemberBase::APartyMemberBase()
@@ -14,11 +17,17 @@ APartyMemberBase::APartyMemberBase()
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
+	//AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
+	AutoPossessAI = EAutoPossessAI::Disabled;
 	AIControllerClass = APartyAIController::StaticClass();
 	
 	PartyAIComp = CreateDefaultSubobject<UPartyAIComponent>(TEXT("PartyAIComp"));
 	StateTreeComp = CreateDefaultSubobject<UStateTreeComponent>(TEXT("StateTreeComp"));
+	
+	InteractionSphere = CreateDefaultSubobject<USphereComponent>(TEXT("InteractionSphere"));
+	InteractionSphere->SetupAttachment(RootComponent);
+	InteractionSphere->SetSphereRadius(300.f);
+	InteractionSphere->SetCollisionProfileName(TEXT("Trigger"));
 }
 
 // Called when the game starts or when spawned
@@ -28,6 +37,10 @@ void APartyMemberBase::BeginPlay()
 	CurrHP = MaxHP;
 	// 초기 HP 브로드캐스트
 	OnHPChanged.Broadcast(CurrHP, MaxHP);
+	
+	// 트리거 바인딩
+	InteractionSphere->OnComponentBeginOverlap.AddDynamic(this, &APartyMemberBase::OnInteractionBeginOverlap);
+	InteractionSphere->OnComponentEndOverlap.AddDynamic(this, &APartyMemberBase::OnInteractionEndOverlap);
 	
 	PRINTLOG_GT(TEXT("Controller: %s"), GetController() ? *GetController()->GetName() : TEXT("Null"));
 }
@@ -109,4 +122,74 @@ void APartyMemberBase::ApplyDamageToHitTarget(AActor* HitTarget, AActor* Causer,
 {
 	int finalATK = ATK + CauserATK;
 	DamageableHelpers::ApplyDamage(HitTarget, Causer, finalATK);
+}
+
+void APartyMemberBase::ActivatePartyAI()
+{
+	if (bPartyActive) return;
+	bPartyActive = true;
+	
+	// Controller가 없으면 스폰 -> OnPossess -> StartAI 자동 호출
+	if (!GetController())
+	{
+		SpawnDefaultController();
+	}
+}
+
+void APartyMemberBase::DeactivatePartyAI()
+{
+	if (!bPartyActive) return;
+	bPartyActive = false;
+	
+	// StateTree 정지
+	if (StateTreeComp)
+	{
+		StateTreeComp->StopLogic(TEXT("Party Removed"));
+	}
+	
+	// AIController 분리
+	if (AController* con = GetController())
+	{
+		con->UnPossess();
+		con->Destroyed();
+	}
+}
+
+void APartyMemberBase::OnInteract(APlayerCharacterBase* Requester)
+{
+	if (bPartyActive) return;
+	
+	// 여기서 대화 UI 띄우기 또는 바로 합류 처리
+	// 즉시 합류
+	if (UPartyHandlerComponent* Handler = Requester->FindComponentByClass<UPartyHandlerComponent>())
+	{
+		if (Handler->AddPartyMember(this))
+		{
+			bPlayerInRange = false;
+			InteractionSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		}
+	}
+}
+
+void APartyMemberBase::OnInteractionBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
+	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	auto* player = Cast<APlayerCharacterBase>(OtherActor);
+	if (player)
+	{
+		bPlayerInRange = true;
+		// TODO: F키로 말걸기 UI 표시
+		// 현재는 즉시 합류
+		OnInteract(player);
+	}
+}
+
+void APartyMemberBase::OnInteractionEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
+	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	if (Cast<APlayerCharacterBase>(OtherActor))
+	{
+		bPlayerInRange = false;
+		// TODO UI Hide
+	}
 }
