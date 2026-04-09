@@ -6,7 +6,7 @@
 #include "Blueprint/UserWidget.h"
 #include "Components/TextBlock.h"
 #include "BossOverheadWidget.generated.h"
- 
+
 UCLASS()
 class SCARLETNEXUS_API UBossOverheadWidget : public UUserWidget
 {
@@ -25,12 +25,23 @@ public:
 	UPROPERTY(meta=(BindWidget))
 	UTextBlock* TextName;
 	
+	// 프로그래스 바
+	UPROPERTY(meta=(BindWidget))
+	class UProgressBar* ProgressBarHP;
+	
 	// 이름 설정
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "BossUI")
+	UFUNCTION(BlueprintCallable, Category = "BossUI")
 	void SetTextName(const FText& Name);
 	
 protected:
+	virtual void NativeConstruct() override;
+	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
+	
 	UPROPERTY(BlueprintReadOnly, Category = "BossUI")
 	TObjectPtr<AActor> OwnerBoss = nullptr;
+	
+	// 현재 HP 비율 (위젯 초기화 시 1.0)
+	UPROPERTY(BlueprintReadOnly, Category = "BossUI")
+	float CachedHPPercent = 1.f;
 };
 
