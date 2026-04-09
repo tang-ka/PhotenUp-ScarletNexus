@@ -152,6 +152,7 @@ void AKasaneBlade::BeginInactive()
 void AKasaneBlade::BeginIdle()
 {
 	SetActive(true);
+	SetActiveCollision(false); // Idle 중에는 충돌 비활성화 — Notify에서만 ON
 }
 
 void AKasaneBlade::BeginAttack()
@@ -164,6 +165,7 @@ void AKasaneBlade::BeginReturn()
 {
 	ReturnElapsed = 0.f;
 	P0 = GetActorLocation();
+	SetActiveCollision(false); // 귀환 중에는 충돌 비활성화
 
 	// 구 위의 랜덤 오프셋을 BeginReturn에서 한 번만 결정
 	FVector RandomDir = FMath::VRand(); // 구면 균등 랜덤 방향

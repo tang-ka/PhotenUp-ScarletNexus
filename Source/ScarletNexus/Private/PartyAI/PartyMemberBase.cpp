@@ -26,6 +26,8 @@ void APartyMemberBase::BeginPlay()
 {
 	Super::BeginPlay();
 	CurrHP = MaxHP;
+	// 초기 HP 브로드캐스트
+	OnHPChanged.Broadcast(CurrHP, MaxHP);
 	
 	PRINTLOG_GT(TEXT("Controller: %s"), GetController() ? *GetController()->GetName() : TEXT("Null"));
 }
@@ -54,6 +56,7 @@ void APartyMemberBase::TakeDamage_Party(int Damage)
 {
 	if (!IsAlive()) return;
 	CurrHP = FMath::Clamp(CurrHP - Damage, 0, MaxHP);
+	OnHPChanged.Broadcast(CurrHP, MaxHP);
 	
 	// 데미지 감소 후 HP가 0 이하면 사망 처리
 	if (CurrHP <= 0)

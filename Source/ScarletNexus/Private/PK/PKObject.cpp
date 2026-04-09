@@ -334,6 +334,9 @@ void APKObject::OnBoxHit(UPrimitiveComponent* HitComponent, AActor* OtherActor,
 			return;
 		}
 
+		// 충돌 델리게이트 실행 — 데미지/카메라쉐이크/UI는 PsychokinesisComponent에서 처리
+		OnPKObjectHit.ExecuteIfBound(this, OtherActor, OtherComp, Hit);
+
 		if (DissolveComp)
 		{
 			GetWorld()->GetTimerManager().ClearTimer(FlightTimerHandle);
@@ -343,16 +346,16 @@ void APKObject::OnBoxHit(UPrimitiveComponent* HitComponent, AActor* OtherActor,
 
 #if WITH_EDITOR
 	// 디버그
-	if (DamageableHelpers::IsDamageable(OtherActor))
-	{
-		DrawDebugBox(
-			GetWorld(),
-			BoxComp->GetComponentLocation(),
-			BoxComp->GetScaledBoxExtent(),
-			BoxComp->GetComponentQuat(),
-			FColor::Magenta,
-			true,
-			2.f);
-	}
+	// if (DamageableHelpers::IsDamageable(OtherActor))
+	// {
+	// 	DrawDebugBox(
+	// 		GetWorld(),
+	// 		BoxComp->GetComponentLocation(),
+	// 		BoxComp->GetScaledBoxExtent(),
+	// 		BoxComp->GetComponentQuat(),
+	// 		FColor::Magenta,
+	// 		true,
+	// 		2.f);
+	// }
 #endif
 }
