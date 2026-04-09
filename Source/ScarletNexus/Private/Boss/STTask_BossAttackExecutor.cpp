@@ -13,7 +13,6 @@
 #include "Engine/DamageEvents.h"
 #include "Engine/OverlapResult.h"
 #include "NavigationSystem.h"
-#include "DrawDebugHelpers.h"
 #include "Interface/Damageable.h"
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraComponent.h"
