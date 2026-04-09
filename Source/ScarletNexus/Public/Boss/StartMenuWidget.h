@@ -6,9 +6,12 @@
 #include "Blueprint/UserWidget.h"
 #include "StartMenuWidget.generated.h"
 
+class UButton;
+class UImage;
+class UTextBlock;
 
 UCLASS()
-class UStartMenuWidget : public UUserWidget
+class SCARLETNEXUS_API UStartMenuWidget : public UUserWidget
 {
 	GENERATED_BODY()
 
@@ -18,6 +21,30 @@ public:
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UButton> Button_Exit;
+	
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UImage> FadeImage;
+
+	FTimerHandle FadeTimerHandle;
+	float FadeAlpha = 0.f;
+
+	void FadeTick();
+	
+	bool bGameStartSelected = false;
+	bool bExitSelected = false;
+	
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UTextBlock> Text_GameStart;
+
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UTextBlock> Text_Exit;
+	
+	FTimerHandle ColorFadeHandle;
+	float ColorFadeAlpha = 0.f;
+	bool bFadingGameStart = false;
+	bool bFadingExit = false;
+
+	void ColorFadeTick();
 
 protected:
 	virtual void NativeConstruct() override;
