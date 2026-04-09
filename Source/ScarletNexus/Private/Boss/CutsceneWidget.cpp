@@ -21,6 +21,11 @@ void UCutsceneWidget::NativeConstruct()
     {
         CutsceneText->SetText(FText::GetEmpty());
     }
+    // Media Player 초기화 추가
+    if (CutsceneMediaPlayer)
+    {
+        CutsceneMediaPlayer->Close();
+    }
 }
 
 void UCutsceneWidget::StartCutscene()
@@ -45,8 +50,17 @@ void UCutsceneWidget::ShowStep(int32 Index)
     bFadingIn = true;
     bFadingOut = false;
 
-    UE_LOG(LogTemp, Warning, TEXT("[Cutscene] Step %d, MediaIndex: %d, Text: %s"), 
-        Index, Step.MediaIndex, *Step.DisplayText.ToString());
+    // 먼저 완전히 검게
+    if (FadeImage)
+        FadeImage->SetColorAndOpacity(FLinearColor(0, 0, 0, 1.f));
+
+    // 배경 먼저 숨기기
+    if (BackgroundImage)
+        BackgroundImage->SetVisibility(ESlateVisibility::Hidden);
+
+    // 이전 영상 닫기
+    if (CutsceneMediaPlayer)
+        CutsceneMediaPlayer->Close();
 
     if (CutsceneText)
     {
@@ -54,17 +68,26 @@ void UCutsceneWidget::ShowStep(int32 Index)
         CutsceneText->SetColorAndOpacity(FSlateColor(FLinearColor(1, 1, 1, 0)));
     }
 
+    // 영상은 타이머로 0.1초 뒤에 시작 (페이드 검은 상태에서)
     if (Step.MediaIndex >= 0 && MediaSources.IsValidIndex(Step.MediaIndex) && CutsceneMediaPlayer)
     {
-        UE_LOG(LogTemp, Warning, TEXT("[Cutscene] 영상 재생: %s"), *MediaSources[Step.MediaIndex]->GetName());
-        CutsceneMediaPlayer->OpenSource(MediaSources[Step.MediaIndex]);
-        CutsceneMediaPlayer->Play();
-    }
-    else
-    {
-        UE_LOG(LogTemp, Warning, TEXT("[Cutscene] 검은 화면"));
-        if (CutsceneMediaPlayer)
-            CutsceneMediaPlayer->Close();
+        FTimerHandle MediaDelayHandle;
+        GetWorld()->GetTimerManager().SetTimer(
+            MediaDelayHandle,
+            [this, Index]()
+            {
+                if (!Steps.IsValidIndex(Index)) return;
+                const FCutsceneStep& DelayedStep = Steps[Index];
+                
+                if (BackgroundImage)
+                    BackgroundImage->SetVisibility(ESlateVisibility::Visible);
+                
+                CutsceneMediaPlayer->OpenSource(MediaSources[DelayedStep.MediaIndex]);
+                CutsceneMediaPlayer->Play();
+            },
+            0.1f,
+            false
+        );
     }
 }
 

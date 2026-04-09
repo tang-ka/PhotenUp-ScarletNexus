@@ -8,7 +8,9 @@
 #include "Boss/BossCharacterBase.h"
 #include "Components/CapsuleComponent.h"
 #include "NiagaraComponent.h"
- 
+#include "Kismet/GameplayStatics.h"
+
+
 EStateTreeRunStatus FSTTask_BossDeath::EnterState(
 	FStateTreeExecutionContext& Context,
 	const FStateTreeTransitionResult& Transition) const
@@ -104,6 +106,7 @@ EStateTreeRunStatus FSTTask_BossDeath::Tick(
 	if (SinkTimer >= DeathDuration + HideDelay)
 	{
 		Boss->SetActorHiddenInGame(true);
+		UGameplayStatics::OpenLevel(Boss->GetWorld(), FName("CutsceneLevel3"));
 		UE_LOG(LogTemp, Warning, TEXT("[BossDeath] 사망 완료 — 액터 숨김"));
 		return EStateTreeRunStatus::Succeeded;
 	}
