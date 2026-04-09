@@ -137,6 +137,16 @@ public:
 	FTimerHandle DeathDisappearHandle;
 	void StartDeathDisappear();
 	
+	// SFX
+	UPROPERTY(EditDefaultsOnly, Category = "Boss|Sound")
+	TObjectPtr<USoundBase> IceSpikeWarningSound;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Boss|Sound")
+	TObjectPtr<USoundBase> IceSpikeSound;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Boss|Sound")
+	TObjectPtr<USoundBase> ElectricOrbSound;
+	
 private:
 	UPROPERTY()
 	TArray<TObjectPtr<UMaterialInstanceDynamic>> DissolveMIDs;
