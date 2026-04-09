@@ -28,6 +28,9 @@ public:
 	UPROPERTY(EditAnywhere, Category="Dissolve")
 	bool bDestroyOnComplete = true;
 
+	UFUNCTION(BlueprintCallable, Category="Dissolve")
+	void SetDissolveMaterial(UMaterialInterface* NewMaterial) { DissolveMaterial = NewMaterial; }
+	
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;

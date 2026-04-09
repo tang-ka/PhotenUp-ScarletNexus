@@ -13,23 +13,40 @@
 // Sets default values
 APKObject::APKObject()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-	
+
 	BoxComp = CreateDefaultSubobject<UBoxComponent>(TEXT("BoxComp"));
 	SetRootComponent(BoxComp);
 	// BoxComp->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	BoxComp->SetCollisionProfileName(TEXT("PKObject"));
-	
+
 	StaticMeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMeshComp"));
 	StaticMeshComp->SetupAttachment(BoxComp);
 	StaticMeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	
+
 	// 디졸브 콤포넌트
 	DissolveComp = CreateDefaultSubobject<UDissolveComponent>(TEXT("DissolveComp"));
+	ConstructorHelpers::FObjectFinder<UMaterialInterface> tempDissolveMat(
+	TEXT("/Script/Engine.Material'/Game/Models/FX/MF_Dissolve.MF_Dissolve'"));
+	if (tempDissolveMat.Succeeded())
+	{
+		DissolveComp->SetDissolveMaterial(tempDissolveMat.Object);
+	}
 	
+	PsychicEffectComp = CreateDefaultSubobject<UNiagaraComponent>(TEXT("PsychicEffectComp"));
+	PsychicEffectComp->SetupAttachment(BoxComp);
+	PsychicEffectComp->bAutoActivate = false; // BeginPlay에서 TargetMesh 설정 후 수동 Activate
+	
+	ConstructorHelpers::FObjectFinder<UNiagaraSystem> tempPsychicFX(
+		TEXT("/Script/Niagara.NiagaraSystem'/Game/SSH/VFX/NS_Psychic.NS_Psychic'"));
+	if (tempPsychicFX.Succeeded())
+	{
+		PsychicEffectComp->SetAsset(tempPsychicFX.Object);
+	}
 	// 나이아가라 시스템 에셋
-	static ConstructorHelpers::FObjectFinder<UNiagaraSystem> tempAuraFX(TEXT("/Script/Niagara.NiagaraSystem'/Game/Models/GS_UModel/Effect/NS/NS_PK_Aura.NS_PK_Aura'"));
+	static ConstructorHelpers::FObjectFinder<UNiagaraSystem> tempAuraFX(
+		TEXT("/Script/Niagara.NiagaraSystem'/Game/Models/GS_UModel/Effect/NS/NS_PK_Aura.NS_PK_Aura'"));
 	if (tempAuraFX.Succeeded())
 	{
 		PKAuraFXAsset = tempAuraFX.Object;
@@ -40,14 +57,41 @@ APKObject::APKObject()
 void APKObject::BeginPlay()
 {
 	Super::BeginPlay();
-	SetActorTickEnabled(false); 
+	SetActorTickEnabled(false);
 	PRINTLOG_SH(TEXT("PKObject Spawned: %s"), *GetName());
 	if (BoxComp)
 	{
 		BoxComp->OnComponentHit.AddDynamic(this, &APKObject::OnBoxHit);
 	}
-	
+
 	ObjectState = EPKObjectState::CanBePickedUp;
+
+	SetupPsychicEffectTarget();
+}
+
+void APKObject::SetupPsychicEffectTarget()
+{
+	if (!PsychicEffectComp || !PsychicEffectComp->GetAsset() || !StaticMeshComp)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[PKObject] PsychicEffect 세팅 실패 — 컴포넌트 누락"));
+		return;
+	}
+
+	if (!StaticMeshComp->GetStaticMesh())
+	{
+		UE_LOG(LogTemp, Error, TEXT("[PKObject] StaticMesh 없음 — BP 기본값 확인 필요"));
+		return;
+	}
+
+	// User Parameter "TargetMesh"에 StaticMesh 할당
+	UNiagaraFunctionLibrary::OverrideSystemUserVariableStaticMesh(
+		PsychicEffectComp,
+		TEXT("TargetMesh"),
+		StaticMeshComp->GetStaticMesh()
+	);
+
+	UE_LOG(LogTemp, Warning, TEXT("[PKObject] TargetMesh 할당 성공: %s"),
+		*StaticMeshComp->GetStaticMesh()->GetName());
 }
 
 // Called every frame
@@ -65,7 +109,7 @@ void APKObject::Tick(float DeltaTime)
 		}
 		return;
 	}
-	
+
 	if (ObjectState == EPKObjectState::CanBePickedUp && BoxComp->IsSimulatingPhysics())
 	{
 		if (BoxComp->GetPhysicsLinearVelocity().SizeSquared() < 10.f)
@@ -105,7 +149,7 @@ void APKObject::EnablePKGlow(bool bEnable)
 {
 	UStaticMeshComponent* mesh = FindComponentByClass<UStaticMeshComponent>();
 	if (!mesh) return;
-	
+
 	if (bEnable)
 	{
 		// 모든 머터리얼 슬롯에 Dynamic Material 생성
@@ -152,7 +196,7 @@ bool APKObject::CanBePickeduped_Implementation() const
 {
 	// 상태를 문자로 출력하고 싶다.
 	UE_LOG(LogTemp, Warning, TEXT("Current Object State: %s"), *UEnum::GetValueAsString(ObjectState));
-	
+
 	return ObjectState == EPKObjectState::CanBePickedUp;
 }
 
@@ -165,11 +209,18 @@ void APKObject::OnPKPickuped_Implementation()
 		SpawnPKAuraFX();
 	}
 	else SetActivePKAuraFX(true);
-	
+
+	// 싸이킥 이펙트: User Variable 재설정 후 Reinitialize → 픽업마다 확실히 반영
+	if (PsychicEffectComp)
+	{
+		SetupPsychicEffectTarget();
+		PsychicEffectComp->ReinitializeSystem();
+	}
+
 	if (BoxComp)
 	{
 		ObjectState = EPKObjectState::IsHeld;
-		
+
 		// 물리, 중력 off
 		BoxComp->SetSimulatePhysics(false);
 		BoxComp->SetEnableGravity(false);
@@ -188,11 +239,14 @@ void APKObject::OnPKReleased_Implementation()
 	// 오라 이펙트 정지
 	EnablePKGlow(false);
 	SetActivePKAuraFX(false);
-	
+
+	// 싸이킥 이펙트 비활성화
+	if (PsychicEffectComp) PsychicEffectComp->Deactivate();
+
 	if (BoxComp)
 	{
 		ObjectState = EPKObjectState::CoolDown;
-		
+
 		// 물리, 중력 on
 		BoxComp->SetSimulatePhysics(true);
 		BoxComp->SetNotifyRigidBodyCollision(true);
@@ -212,10 +266,10 @@ void APKObject::OnPKThrown_Implementation(const FVector& ThrowDir, float ThrowFo
 {
 	EnablePKGlow(false);
 	SetActivePKAuraFX(false);
-	
+
 	// 트레일 이펙트 스폰
 	SpawnTrailFX();
-	
+
 	ObjectState = EPKObjectState::IsUsed;
 	bUsedObject = true;
 
@@ -234,8 +288,8 @@ void APKObject::OnPKThrown_Implementation(const FVector& ThrowDir, float ThrowFo
 	// (각도 차이 / 시간 = 도/초)
 	const float AngleDiffDeg = FMath::RadiansToDegrees(GetActorQuat().AngularDistance(ThrowTiltTargetQuat));
 	const float DynamicDegreesPerSec = (TiltDuration > KINDA_SMALL_NUMBER)
-		? (AngleDiffDeg / TiltDuration)
-		: AngleDiffDeg;
+		                                   ? (AngleDiffDeg / TiltDuration)
+		                                   : AngleDiffDeg;
 	BoxComp->SetPhysicsAngularVelocityInDegrees(RotationAxis * (-DynamicDegreesPerSec));
 
 	bIsTilting = true;
@@ -249,7 +303,7 @@ void APKObject::OnPKThrown_Implementation(const FVector& ThrowDir, float ThrowFo
 		MaxFlightTime,
 		false
 	);
-	
+
 	// Pool 반환
 	ReturnObjectDelayed(2.f);
 }
@@ -259,31 +313,31 @@ void APKObject::OnPKThrownPS_Implementation(const FVector& ThrowDir, float Throw
 {
 	EnablePKGlow(false);
 	SetActivePKAuraFX(false);
-	
+
 	// 트레일 이펙트 스폰
 	SpawnTrailFX();
-	
+
 	ObjectState = EPKObjectState::IsUsed;
-	
+
 	// 물리 활성화 
 	BoxComp->SetSimulatePhysics(true);
 	// 충돌 재활성화
 	BoxComp->SetCollisionProfileName(TEXT("PKObject"));
 	BoxComp->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	bUsedObject = true;
-	
+
 	// 물리 충격
 	//BoxComp->AddImpulse(ThrowDir * ThrowForce, NAME_None, true);
 	// 물리 충격 커스텀 구현
 	FVector impulse = ThrowDir * ThrowForce;
-	
+
 	// 질량 고려 : △V = Impulse / Mass
 	/*float mass = BoxComp->GetMass();
 	if (mass <= KINDA_SMALL_NUMBER) return;
 	
 	FVector deltaV = impulse / mass;*/
 	BoxComp->SetPhysicsLinearVelocity(BoxComp->GetPhysicsLinearVelocity() + impulse);
-	
+
 	// Pool 반환
 	ReturnObjectDelayed(2.f);
 }
@@ -311,10 +365,10 @@ void APKObject::OnBoxHit(UPrimitiveComponent* HitComponent, AActor* OtherActor,
                          const FHitResult& Hit)
 {
 	UE_LOG(LogTemp, Warning, TEXT("OnBoxHit - State: %s, NormalZ: %f"),
-		*UEnum::GetValueAsString(ObjectState), Hit.ImpactNormal.Z);
+	       *UEnum::GetValueAsString(ObjectState), Hit.ImpactNormal.Z);
 	// CoolDown(릴리즈 후 낙하) 또는 IsUsed(던져진 후) 상태에서
 	// 충돌 노말이 위쪽(바닥 또는 지면)을 향할 때 다시 집을 수 있는 상태로 복귀
-	if (ObjectState == EPKObjectState::CoolDown )
+	if (ObjectState == EPKObjectState::CoolDown)
 	{
 		// Hit.ImpactNormal.Z > 0.5f : 충돌면이 충분히 수평(바닥)에 가까울 때
 		if (Hit.ImpactNormal.Z > 0.5f)
@@ -324,7 +378,7 @@ void APKObject::OnBoxHit(UPrimitiveComponent* HitComponent, AActor* OtherActor,
 			SetActorTickEnabled(true);
 		}
 	}
-		
+
 	// 사용되면 (던져짐) 부딪혔을 때 사라지게 함
 	if (ObjectState == EPKObjectState::IsUsed)
 	{
