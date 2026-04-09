@@ -101,6 +101,10 @@ void APyramidSpawnManager::SpawnOnePyramid()
 	AFloatingPyramid* pyramid = GetWorld()->SpawnActor<AFloatingPyramid>(PyramidClass, loc, rot, params);
 	if (pyramid)
 	{
+		// 스케일 랜덤
+		const float randScale = FMath::FRandRange(MinScale, MaxScale);
+		pyramid->SetActorScale3D(FVector(randScale));
+		
 		SpawnedPyramids.Add(pyramid);
 		PRINTLOG_GT(TEXT("Spawned at %s (Total: %d)"), *loc.ToString(), SpawnedPyramids.Num());
 	}
