@@ -50,6 +50,7 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	void SetupPsychicEffectTarget();
 
 public:	
 	// Called every frame
@@ -91,6 +92,8 @@ public:
 	// Dissolve
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="FX")
 	UDissolveComponent* DissolveComp;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="FX")
+	TObjectPtr<UNiagaraComponent> PsychicEffectComp;
 	
 	// Throw Niagara : 잡혀있을 때 오브젝트 주변 오라
 	UPROPERTY(VisibleAnywhere, Category="FX")
