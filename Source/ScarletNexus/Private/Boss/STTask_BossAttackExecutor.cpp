@@ -127,6 +127,8 @@ void FSTTask_BossAttackExecutor::ExitState(
 	FInstanceDataType& Data = Context.GetInstanceData(*this);
 	if (ACharacter* Boss = Cast<ACharacter>(Data.ContextActor))
 	{
+		if (IDamageable::Execute_IsDead(Boss)) return;
+		
 		Boss->SetActorHiddenInGame(false);
 		Boss->SetActorEnableCollision(true);
  

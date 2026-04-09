@@ -57,6 +57,10 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category = "Boss")
 	void InitializeWithConfig(UBossConfigDataAsset* Config);
+	
+	// 죽는몽타주
+	UPROPERTY(EditDefaultsOnly, Category = "Boss|Death")
+	TObjectPtr<UAnimMontage> DeathMontage;
  
 	
 	// Delegates
@@ -170,9 +174,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Boss|HitReaction")
 	TObjectPtr<UAnimMontage> HitReaction_Right;
 	
-	// 죽는몽타주
-	UPROPERTY(EditDefaultsOnly, Category = "Boss|Death")
-	TObjectPtr<UAnimMontage> DeathMontage;
+	
 	
 	void PlayDirectionalHitReaction(AActor* DamageCauser);
  

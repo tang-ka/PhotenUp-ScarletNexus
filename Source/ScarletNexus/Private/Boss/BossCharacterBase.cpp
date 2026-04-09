@@ -243,20 +243,6 @@ void ABossCharacterBase::HandleDeath()
 {
 	UE_LOG(LogTemp, Log, TEXT("[Boss] 사망 처리 시작"));
 
-	if (DeathMontage)
-	{
-		float MontageLength = PlayAnimMontage(DeathMontage);
-        
-		// 몽타주 끝나고 2초 뒤에 사라짐
-		GetWorldTimerManager().SetTimer(
-			DeathDisappearHandle,
-			this,
-			&ABossCharacterBase::StartDeathDisappear,
-			MontageLength + 2.0f,
-			false
-		);
-	}
-
 	if (ABossAIController* BossAI = Cast<ABossAIController>(GetController()))
 	{
 		BossAI->SendStateTreeEvent(
