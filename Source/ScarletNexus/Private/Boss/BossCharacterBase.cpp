@@ -243,13 +243,43 @@ void ABossCharacterBase::HandleDeath()
 {
 	UE_LOG(LogTemp, Log, TEXT("[Boss] 사망 처리 시작"));
 
-	// 이벤트만 전송 — 나머지는 Death State에서 처리
+	if (DeathMontage)
+	{
+		float MontageLength = PlayAnimMontage(DeathMontage);
+        
+		// 몽타주 끝나고 2초 뒤에 사라짐
+		GetWorldTimerManager().SetTimer(
+			DeathDisappearHandle,
+			this,
+			&ABossCharacterBase::StartDeathDisappear,
+			MontageLength + 2.0f,
+			false
+		);
+	}
+
 	if (ABossAIController* BossAI = Cast<ABossAIController>(GetController()))
 	{
 		BossAI->SendStateTreeEvent(
 			FGameplayTag::RequestGameplayTag(FName("Boss.Event.Death")));
 	}
-	
+}
+
+void ABossCharacterBase::StartDeathDisappear()
+{
+	StartDissolve(1.5f, true);  // 1.5초에 걸쳐 사라짐
+    
+	// Dissolve 끝나면 액터 숨기기
+	FTimerHandle HideHandle;
+	GetWorldTimerManager().SetTimer(
+		HideHandle,
+		[this]()
+		{
+			SetActorHiddenInGame(true);
+			SetActorEnableCollision(false);
+		},
+		1.5f,
+		false
+	);
 }
 
 void ABossCharacterBase::PlayDirectionalHitReaction(AActor* DamageCauser)

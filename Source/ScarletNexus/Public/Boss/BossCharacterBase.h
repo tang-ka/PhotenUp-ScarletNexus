@@ -127,6 +127,8 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Boss|VFX")
 	TObjectPtr<UNiagaraSystem> IceSpikeWarningVFX;
 	
+	FTimerHandle DeathDisappearHandle;
+	void StartDeathDisappear();
 	
 private:
 	UPROPERTY()
@@ -168,9 +170,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Boss|HitReaction")
 	TObjectPtr<UAnimMontage> HitReaction_Right;
 	
-
-	
-	
+	// 죽는몽타주
+	UPROPERTY(EditDefaultsOnly, Category = "Boss|Death")
+	TObjectPtr<UAnimMontage> DeathMontage;
 	
 	void PlayDirectionalHitReaction(AActor* DamageCauser);
  
