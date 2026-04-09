@@ -21,5 +21,5 @@ void AEM0200::BeginPlay()
 	{
 		ohWidget->SetTextName(FText::FromString(this->GetName()));
 	}
-	else PRINTLOG_GT(TEXT("OverheadWidget이 Null이다. HealthBarComp.GetClass() : %s"), *HPBarWidgetClass->GetName())
+	else PRINTLOG_GT(TEXT("OverheadWidget이 Null이다. HealthBarComp.GetClass() : %s"), *HPBarWidgetClass->GetName());
 }

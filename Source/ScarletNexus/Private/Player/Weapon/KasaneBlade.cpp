@@ -144,6 +144,31 @@ void AKasaneBlade::LaunchAttack(EBladeAttackPattern InPattern, FVector InOrigin,
 	ChangeBladeState(EBladeState::Attack);
 }
 
+void AKasaneBlade::SetBladeState(EBladeMaterialState NewState)
+{
+	switch (NewState)
+	{
+	case EBladeMaterialState::Glow:
+		ApplyMaterial(Mat_Glow, 0);
+		ApplyMaterial(Mat_Glow, 2);
+		break;
+	case EBladeMaterialState::Default:
+	default:
+		ApplyMaterial(Mat_Default_Slot0, 0);
+		ApplyMaterial(Mat_Default_Slot2, 2);
+		break;
+	}
+}
+
+void AKasaneBlade::ApplyMaterial(UMaterialInterface* Material, int32 SlotIndex)
+{
+	if (!BladeMesh || !Material)
+	{
+		return;
+	}
+	BladeMesh->SetMaterial(SlotIndex, Material);
+}
+
 void AKasaneBlade::BeginInactive()
 {
 	SetActive(false);
