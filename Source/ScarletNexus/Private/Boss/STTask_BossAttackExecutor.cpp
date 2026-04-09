@@ -125,23 +125,35 @@ void FSTTask_BossAttackExecutor::ExitState(
 	const FStateTreeTransitionResult& Transition) const
 {
 	FInstanceDataType& Data = Context.GetInstanceData(*this);
+
+	// VFX는 항상 정리
+	for (UNiagaraComponent* VFX : Data.OOOrbVFXComponents)
+	{
+		if (VFX && !VFX->IsBeingDestroyed())
+		{
+			VFX->DestroyComponent();
+		}
+	}
+	Data.OOOrbVFXComponents.Empty();
+
+	// 클론도 항상 정리
+	if (Data.LeftClone && !Data.LeftClone->IsActorBeingDestroyed()) Data.LeftClone->Destroy();
+	if (Data.RightClone && !Data.RightClone->IsActorBeingDestroyed()) Data.RightClone->Destroy();
+	Data.LeftClone = nullptr;
+	Data.RightClone = nullptr;
+
 	if (ACharacter* Boss = Cast<ACharacter>(Data.ContextActor))
 	{
 		if (IDamageable::Execute_IsDead(Boss)) return;
-		
+
 		Boss->SetActorHiddenInGame(false);
 		Boss->SetActorEnableCollision(true);
- 
-		// 몽타주 정지 — Slot 해제되면 Walk로 돌아감
+
 		if (UAnimInstance* AnimInst = Boss->GetMesh()->GetAnimInstance())
 		{
 			AnimInst->StopAllMontages(0.25f);
 		}
 	}
-	if (Data.LeftClone && !Data.LeftClone->IsActorBeingDestroyed()) Data.LeftClone->Destroy();
-	if (Data.RightClone && !Data.RightClone->IsActorBeingDestroyed()) Data.RightClone->Destroy();
-	Data.LeftClone = nullptr;
-	Data.RightClone = nullptr;
 }
  
  
@@ -634,6 +646,7 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickAerialElectric(
 		if (Data.PhaseTimer >= AE_ChargeDuration)
 		{
 			Data.AEPhase = EAEPhase::Discharge;
+			Data.OOOrbSpawnTime.Add(Data.PhaseTimer);
 			Data.PhaseTimer = 0.f;
 			Data.bDamageApplied = false;
 		}
@@ -897,6 +910,7 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickElectricOrbs(
     			Data.OOOrbDirections.Add(FVector::ZeroVector);
     			Data.OOOrbHit.Add(false);
 
+    			Data.OOOrbSpawnTime.Add(Data.PhaseTimer);
     			Data.OOLaunchedCount++;
     			UE_LOG(LogTemp, Log, TEXT("[ElectricOrbs] 전류구 %d/%d 생성!"), Data.OOLaunchedCount, OO_OrbCount);
     		}
@@ -947,18 +961,19 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickElectricOrbs(
         		Data.OOOrbVFXComponents[i]->SetWorldLocation(Data.OOOrbPositions[i]);
         	}
 
-            // 수명 초과
-            if (Data.PhaseTimer >= OO_MaxLifetime)
-            {
-            	if (Data.OOOrbVFXComponents.IsValidIndex(i) && Data.OOOrbVFXComponents[i])
-            	{
-            		Data.OOOrbVFXComponents[i]->DestroyComponent();
-            		Data.OOOrbVFXComponents[i] = nullptr;
-            	}
-            	
-                Data.OOOrbHit[i] = true;
-                continue;
-            }
+            
+        	// 개별 수명 초과
+        	if (Data.PhaseTimer >= OO_MaxLifetime + (i * 0.3f))
+        	{
+        		if (Data.OOOrbVFXComponents.IsValidIndex(i) && Data.OOOrbVFXComponents[i])
+        		{
+        			Data.OOOrbVFXComponents[i]->DestroyComponent();
+        			Data.OOOrbVFXComponents[i] = nullptr;
+        		}
+    
+        		Data.OOOrbHit[i] = true;
+        		continue;
+        	}
 
             // 히트 판정 (0.5초 이후만)
             if (bCanHit)

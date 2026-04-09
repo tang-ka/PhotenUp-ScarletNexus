@@ -142,6 +142,7 @@ struct FSTTask_BossAttackExecutorInstanceData
 	FVector OOSpawnForward = FVector::ZeroVector;
 	
 	
+	
 	// 염동력 투척
 	UPROPERTY()
 	ETTPhase TTPhase = ETTPhase::Gathering;

@@ -7,6 +7,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Boss/BossCharacterBase.h"
 #include "Components/CapsuleComponent.h"
+#include "NiagaraComponent.h"
  
 EStateTreeRunStatus FSTTask_BossDeath::EnterState(
 	FStateTreeExecutionContext& Context,
@@ -29,9 +30,25 @@ EStateTreeRunStatus FSTTask_BossDeath::EnterState(
 	// 여기서 사망 몽타주 재생
 	if (ABossCharacterBase* BossBase = Cast<ABossCharacterBase>(Boss))
 	{
+		TArray<UNiagaraComponent*> NiagaraComps;
+		Boss->GetComponents<UNiagaraComponent>(NiagaraComps);
+		for (UNiagaraComponent* NC : NiagaraComps)
+		{
+			if (NC)
+			{
+				NC->Deactivate();
+				NC->DestroyComponent();
+			}
+		}
+		
 		if (BossBase->DeathMontage)
 		{
-			Boss->PlayAnimMontage(BossBase->DeathMontage);
+			Data.DeathMontageLength = Boss->PlayAnimMontage(BossBase->DeathMontage);
+			UE_LOG(LogTemp, Warning, TEXT("[BossDeath] 몽타주 길이: %.2f"), Data.DeathMontageLength);
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("[BossDeath] DeathMontage가 nullptr!"));
 		}
 	}
 
