@@ -146,6 +146,14 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	TObjectPtr<UInputAction> IA_LockOn;
 #pragma endregion
+	
+#pragma region 피격 딜레이 처리
+	bool bInvincible = false;
+	FTimerHandle InvincibilityTimerHandle;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Combat")
+	float InvincibilityDuration = 2.f; // 피격 직후 무적 딜레이
+#pragma endregion 
 
 #pragma region Component
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
