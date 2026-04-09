@@ -3,6 +3,7 @@
 
 #include "Enemy/EnemyAttackCollision.h"
 
+#include "ScarletNexus.h"
 #include "Components/BoxComponent.h"
 #include "Components/SphereComponent.h"
 #include "GameFramework/Character.h"
@@ -120,6 +121,7 @@ void UEnemyAttackCollision::CreateCollisionComponent()
 void UEnemyAttackCollision::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
+	PRINTLOG_JJ(TEXT("피격"));
 	if (!bIsActive) return;
 	TryApplyDamage(OtherActor);
 }

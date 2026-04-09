@@ -4,6 +4,7 @@
 #include "Boss/STTask_BossPhaseTransition.h"
 #include "StateTreeExecutionContext.h"
 #include "GameFramework/Character.h"
+#include "Interface/Damageable.h"
 #include "GameFramework/CharacterMovementComponent.h"
  
 EStateTreeRunStatus FSTTask_BossPhaseTransition::EnterState(
@@ -56,12 +57,14 @@ void FSTTask_BossPhaseTransition::ExitState(
 	FInstanceDataType& Data = Context.GetInstanceData(*this);
 	ACharacter* Boss = Cast<ACharacter>(Data.ContextActor);
 	if (!Boss) return;
- 
-	// 이동 재활성화
+
+	// 사망 상태면 이동 재활성화 하지 않음
+	if (IDamageable::Execute_IsDead(Boss)) return;
+
 	if (UCharacterMovementComponent* MoveComp = Boss->GetCharacterMovement())
 	{
 		MoveComp->SetMovementMode(MOVE_Walking);
 	}
- 
+
 	UE_LOG(LogTemp, Log, TEXT("[BossPhaseTransition] ExitState — 이동 재활성화"));
 }

@@ -125,21 +125,35 @@ void FSTTask_BossAttackExecutor::ExitState(
 	const FStateTreeTransitionResult& Transition) const
 {
 	FInstanceDataType& Data = Context.GetInstanceData(*this);
+
+	// VFX는 항상 정리
+	for (UNiagaraComponent* VFX : Data.OOOrbVFXComponents)
+	{
+		if (VFX && !VFX->IsBeingDestroyed())
+		{
+			VFX->DestroyComponent();
+		}
+	}
+	Data.OOOrbVFXComponents.Empty();
+
+	// 클론도 항상 정리
+	if (Data.LeftClone && !Data.LeftClone->IsActorBeingDestroyed()) Data.LeftClone->Destroy();
+	if (Data.RightClone && !Data.RightClone->IsActorBeingDestroyed()) Data.RightClone->Destroy();
+	Data.LeftClone = nullptr;
+	Data.RightClone = nullptr;
+
 	if (ACharacter* Boss = Cast<ACharacter>(Data.ContextActor))
 	{
+		if (IDamageable::Execute_IsDead(Boss)) return;
+
 		Boss->SetActorHiddenInGame(false);
 		Boss->SetActorEnableCollision(true);
- 
-		// 몽타주 정지 — Slot 해제되면 Walk로 돌아감
+
 		if (UAnimInstance* AnimInst = Boss->GetMesh()->GetAnimInstance())
 		{
 			AnimInst->StopAllMontages(0.25f);
 		}
 	}
-	if (Data.LeftClone && !Data.LeftClone->IsActorBeingDestroyed()) Data.LeftClone->Destroy();
-	if (Data.RightClone && !Data.RightClone->IsActorBeingDestroyed()) Data.RightClone->Destroy();
-	Data.LeftClone = nullptr;
-	Data.RightClone = nullptr;
 }
  
  
@@ -249,6 +263,7 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::EnterTeleportKick(
 		if (NavSys->ProjectPointToNavigation(Target, NavLoc, FVector(300.f))) Target = NavLoc.Location;
 	}
 	Data.TKTarget = Target;
+	
 	UE_LOG(LogTemp, Log, TEXT("[TeleportKick] 시작"));
 	return EStateTreeRunStatus::Running;
 }
@@ -260,9 +275,17 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickTeleportKick(
 	switch (Data.TKPhase)
 	{
 	case ETKPhase::Vanishing:
+		if (Data.PhaseTimer < DeltaTime)  // 첫 틱에서만
+		{
+			if (ABossCharacterBase* BossBase = Cast<ABossCharacterBase>(Boss))
+			{
+				BossBase->StartGlitchEffect();
+			}
+		}
 		// 준비 동작 시간 후 사라짐
 		if (Data.PhaseTimer >= TK_VanishDuration)
 		{
+			UE_LOG(LogTemp, Warning, TEXT("[TeleportKick] Vanishing → Teleporting"));
 			Boss->SetActorHiddenInGame(true);
 			Boss->SetActorEnableCollision(false);
 			Boss->SetActorLocation(Data.TKTarget);
@@ -275,16 +298,27 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickTeleportKick(
 			Data.PhaseTimer = 0.f;
 		}
 		break;
+		
 	case ETKPhase::Teleporting:
 		if (Data.PhaseTimer >= TK_AppearDelay)
 		{
 			Boss->SetActorHiddenInGame(false);
 			Boss->SetActorEnableCollision(true);
+			if (ABossCharacterBase* BossBase = Cast<ABossCharacterBase>(Boss))
+			{
+				BossBase->StopGlitchEffect();
+			}
 			Data.TKPhase = ETKPhase::Kicking;
 			Data.PhaseTimer = 0.f;
 		}
 		break;
+		
 	case ETKPhase::Kicking:
+		{
+			const UAnimInstance* AnimInst = Boss->GetMesh()->GetAnimInstance();
+			UE_LOG(LogTemp, Warning, TEXT("[TeleportKick] Kicking phase, Montage playing: %s"),
+				AnimInst && AnimInst->IsAnyMontagePlaying() ? TEXT("YES") : TEXT("NO"));
+		}
 		if (Data.PhaseTimer >= TK_KickDuration)
 		{
 			if (ABossCharacterBase* BossBase = Cast<ABossCharacterBase>(Boss))
@@ -612,6 +646,7 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickAerialElectric(
 		if (Data.PhaseTimer >= AE_ChargeDuration)
 		{
 			Data.AEPhase = EAEPhase::Discharge;
+			Data.OOOrbSpawnTime.Add(Data.PhaseTimer);
 			Data.PhaseTimer = 0.f;
 			Data.bDamageApplied = false;
 		}
@@ -875,6 +910,7 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickElectricOrbs(
     			Data.OOOrbDirections.Add(FVector::ZeroVector);
     			Data.OOOrbHit.Add(false);
 
+    			Data.OOOrbSpawnTime.Add(Data.PhaseTimer);
     			Data.OOLaunchedCount++;
     			UE_LOG(LogTemp, Log, TEXT("[ElectricOrbs] 전류구 %d/%d 생성!"), Data.OOLaunchedCount, OO_OrbCount);
     		}
@@ -925,18 +961,19 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickElectricOrbs(
         		Data.OOOrbVFXComponents[i]->SetWorldLocation(Data.OOOrbPositions[i]);
         	}
 
-            // 수명 초과
-            if (Data.PhaseTimer >= OO_MaxLifetime)
-            {
-            	if (Data.OOOrbVFXComponents.IsValidIndex(i) && Data.OOOrbVFXComponents[i])
-            	{
-            		Data.OOOrbVFXComponents[i]->DestroyComponent();
-            		Data.OOOrbVFXComponents[i] = nullptr;
-            	}
-            	
-                Data.OOOrbHit[i] = true;
-                continue;
-            }
+            
+        	// 개별 수명 초과
+        	if (Data.PhaseTimer >= OO_MaxLifetime + (i * 0.3f))
+        	{
+        		if (Data.OOOrbVFXComponents.IsValidIndex(i) && Data.OOOrbVFXComponents[i])
+        		{
+        			Data.OOOrbVFXComponents[i]->DestroyComponent();
+        			Data.OOOrbVFXComponents[i] = nullptr;
+        		}
+    
+        		Data.OOOrbHit[i] = true;
+        		continue;
+        	}
 
             // 히트 판정 (0.5초 이후만)
             if (bCanHit)
