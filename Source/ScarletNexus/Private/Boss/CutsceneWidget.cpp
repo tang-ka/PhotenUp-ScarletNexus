@@ -1,6 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "Boss/CutsceneWidget.h"
 #include "Components/Image.h"
 #include "Components/TextBlock.h"
@@ -13,15 +10,16 @@ void UCutsceneWidget::NativeConstruct()
 {
     Super::NativeConstruct();
 
-    if (FadeImage)
+    if (BackgroundImage)
     {
-        FadeImage->SetColorAndOpacity(FLinearColor(0, 0, 0, 1.f));
+        BackgroundImage->SetVisibility(ESlateVisibility::Hidden);
+        BackgroundImage->SetColorAndOpacity(FLinearColor(1, 1, 1, 0));
     }
     if (CutsceneText)
     {
         CutsceneText->SetText(FText::GetEmpty());
+        CutsceneText->SetColorAndOpacity(FSlateColor(FLinearColor(1, 1, 1, 0)));
     }
-    // Media Player 초기화 추가
     if (CutsceneMediaPlayer)
     {
         CutsceneMediaPlayer->Close();
@@ -46,48 +44,30 @@ void UCutsceneWidget::ShowStep(int32 Index)
 
     const FCutsceneStep& Step = Steps[Index];
     StepTimer = 0.f;
-    FadeAlpha = 1.f;
     bFadingIn = true;
     bFadingOut = false;
+    FadeAlpha = 0.f;
 
-    // 먼저 완전히 검게
-    if (FadeImage)
-        FadeImage->SetColorAndOpacity(FLinearColor(0, 0, 0, 1.f));
-
-    // 배경 먼저 숨기기
+    // 배경 숨기고 이전 영상 닫기
     if (BackgroundImage)
+    {
         BackgroundImage->SetVisibility(ESlateVisibility::Hidden);
-
-    // 이전 영상 닫기
+        BackgroundImage->SetColorAndOpacity(FLinearColor(1, 1, 1, 0));
+    }
     if (CutsceneMediaPlayer)
         CutsceneMediaPlayer->Close();
 
+    // 텍스트 설정 (투명하게)
     if (CutsceneText)
     {
         CutsceneText->SetText(Step.DisplayText);
         CutsceneText->SetColorAndOpacity(FSlateColor(FLinearColor(1, 1, 1, 0)));
     }
 
-    // 영상은 타이머로 0.1초 뒤에 시작 (페이드 검은 상태에서)
+    // 영상이 있으면 미리 로드 (아직 안 보임)
     if (Step.MediaIndex >= 0 && MediaSources.IsValidIndex(Step.MediaIndex) && CutsceneMediaPlayer)
     {
-        FTimerHandle MediaDelayHandle;
-        GetWorld()->GetTimerManager().SetTimer(
-            MediaDelayHandle,
-            [this, Index]()
-            {
-                if (!Steps.IsValidIndex(Index)) return;
-                const FCutsceneStep& DelayedStep = Steps[Index];
-                
-                if (BackgroundImage)
-                    BackgroundImage->SetVisibility(ESlateVisibility::Visible);
-                
-                CutsceneMediaPlayer->OpenSource(MediaSources[DelayedStep.MediaIndex]);
-                CutsceneMediaPlayer->Play();
-            },
-            0.1f,
-            false
-        );
+        CutsceneMediaPlayer->OpenSource(MediaSources[Step.MediaIndex]);
     }
 }
 
@@ -98,44 +78,57 @@ void UCutsceneWidget::CutsceneTick()
     const FCutsceneStep& Step = Steps[CurrentStep];
     StepTimer += 0.016f;
 
-    // 페이드 인 (0.5초)
-    if (bFadingIn)
+    float FadeInDuration = 1.0f;
+    float FadeOutDuration = 1.0f;
+    float FadeOutStart = Step.Duration - FadeOutDuration;
+
+    // 알파 계산
+    float Alpha = 1.f;
+    if (StepTimer < FadeInDuration)
     {
-        FadeAlpha -= 0.016f / 0.5f;
-        if (FadeAlpha <= 0.f)
+        // 페이드 인
+        Alpha = StepTimer / FadeInDuration;
+    }
+    else if (StepTimer > FadeOutStart)
+    {
+        // 페이드 아웃
+        Alpha = 1.f - (StepTimer - FadeOutStart) / FadeOutDuration;
+    }
+    Alpha = FMath::Clamp(Alpha, 0.f, 1.f);
+
+    // 텍스트 알파 적용
+    if (CutsceneText)
+        CutsceneText->SetColorAndOpacity(FSlateColor(FLinearColor(1, 1, 1, Alpha)));
+
+    // 영상 배경 알파 적용
+    if (Step.MediaIndex >= 0)
+    {
+        // 페이드 인 0.5초 지나면 영상 재생 시작
+        if (StepTimer >= 0.5f && bFadingIn)
         {
-            FadeAlpha = 0.f;
             bFadingIn = false;
+            if (CutsceneMediaPlayer)
+                CutsceneMediaPlayer->Play();
+            if (BackgroundImage)
+                BackgroundImage->SetVisibility(ESlateVisibility::Visible);
         }
 
-        if (FadeImage)
-            FadeImage->SetColorAndOpacity(FLinearColor(0, 0, 0, FMath::Clamp(FadeAlpha, 0.f, 1.f)));
-
-        // 텍스트도 같이 페이드 인
-        float TextAlpha = 1.f - FadeAlpha;
-        if (CutsceneText)
-            CutsceneText->SetColorAndOpacity(FSlateColor(FLinearColor(1, 1, 1, TextAlpha)));
-
-        return;
+        if (BackgroundImage && !bFadingIn)
+        {
+            float BgAlpha = FMath::Clamp((StepTimer - 0.5f) / 0.5f, 0.f, 1.f);
+            if (StepTimer > FadeOutStart)
+                BgAlpha = FMath::Clamp(1.f - (StepTimer - FadeOutStart) / FadeOutDuration, 0.f, 1.f);
+            BackgroundImage->SetColorAndOpacity(FLinearColor(1, 1, 1, BgAlpha));
+        }
     }
-
-    // 페이드 아웃 (마지막 0.5초)
-    float TimeLeft = Step.Duration - StepTimer;
-    if (TimeLeft <= 0.5f && !bFadingOut)
+    else
     {
-        bFadingOut = true;
-        FadeAlpha = 0.f;
-    }
-
-    if (bFadingOut)
-    {
-        FadeAlpha += 0.016f / 0.5f;
-        if (FadeImage)
-            FadeImage->SetColorAndOpacity(FLinearColor(0, 0, 0, FMath::Clamp(FadeAlpha, 0.f, 1.f)));
-
-        float TextAlpha = 1.f - FadeAlpha;
-        if (CutsceneText)
-            CutsceneText->SetColorAndOpacity(FSlateColor(FLinearColor(1, 1, 1, FMath::Clamp(TextAlpha, 0.f, 1.f))));
+        // 검은 화면 스텝 — 배경 숨김 유지
+        if (BackgroundImage)
+        {
+            BackgroundImage->SetVisibility(ESlateVisibility::Hidden);
+            BackgroundImage->SetColorAndOpacity(FLinearColor(1, 1, 1, 0));
+        }
     }
 
     // 다음 스텝
@@ -144,7 +137,6 @@ void UCutsceneWidget::CutsceneTick()
         CurrentStep++;
         if (CurrentStep >= Steps.Num())
         {
-            // 컷신 끝 → 레벨 전환
             GetWorld()->GetTimerManager().ClearTimer(CutsceneTickHandle);
             bCutsceneActive = false;
             TransitionToNextLevel();
@@ -158,8 +150,13 @@ void UCutsceneWidget::CutsceneTick()
 
 void UCutsceneWidget::FadeToBlack()
 {
-    if (FadeImage)
-        FadeImage->SetColorAndOpacity(FLinearColor(0, 0, 0, 1.f));
+    if (BackgroundImage)
+    {
+        BackgroundImage->SetVisibility(ESlateVisibility::Hidden);
+        BackgroundImage->SetColorAndOpacity(FLinearColor(1, 1, 1, 0));
+    }
+    if (CutsceneText)
+        CutsceneText->SetColorAndOpacity(FSlateColor(FLinearColor(1, 1, 1, 0)));
 }
 
 void UCutsceneWidget::TransitionToNextLevel()
