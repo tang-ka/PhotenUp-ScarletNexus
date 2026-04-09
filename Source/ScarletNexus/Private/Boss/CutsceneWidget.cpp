@@ -40,32 +40,29 @@ void UCutsceneWidget::ShowStep(int32 Index)
     bFadingIn = true;
     bFadingOut = false;
 
-    // 페이드 완전 검정
     if (FadeImage)
         FadeImage->SetColorAndOpacity(FLinearColor(0, 0, 0, 1.f));
 
-    // 배경 숨기기
+    // 배경 항상 숨기기 — 페이드 인 끝나면 보이게
     if (BackgroundImage)
         BackgroundImage->SetVisibility(ESlateVisibility::Hidden);
 
     if (CutsceneMediaPlayer)
         CutsceneMediaPlayer->Close();
 
-    // 텍스트 설정
     if (CutsceneText)
     {
         CutsceneText->SetText(Step.DisplayText);
         CutsceneText->SetColorAndOpacity(FSlateColor(FLinearColor(1, 1, 1, 0)));
     }
 
-    // 영상 있으면 로드 + 배경 보이기
+    // 영상 미리 로드만
     if (Step.MediaIndex >= 0 && MediaSources.IsValidIndex(Step.MediaIndex) && CutsceneMediaPlayer)
     {
         CutsceneMediaPlayer->OpenSource(MediaSources[Step.MediaIndex]);
-        if (BackgroundImage)
-            BackgroundImage->SetVisibility(ESlateVisibility::Visible);
     }
 }
+
 
 void UCutsceneWidget::CutsceneTick()
 {
@@ -82,6 +79,11 @@ void UCutsceneWidget::CutsceneTick()
         {
             FadeAlpha = 0.f;
             bFadingIn = false;
+
+            // 페이드 인 끝 → 영상 배경 보이기
+            const FCutsceneStep& CurrentStepData = Steps[CurrentStep];
+            if (CurrentStepData.MediaIndex >= 0 && BackgroundImage)
+                BackgroundImage->SetVisibility(ESlateVisibility::Visible);
         }
 
         if (FadeImage)
@@ -153,4 +155,4 @@ void UCutsceneWidget::TransitionToNextLevel()
         1.0f,
         false
     );
-}
+} 

@@ -28,7 +28,6 @@ EStateTreeRunStatus FSTTask_BossIdle::EnterState(
  
 	if (IDamageable::Execute_IsDead(BossChar))
 	{
-		UE_LOG(LogTemp, Log, TEXT("[BossIdle] 보스 사망 상태 — 대기 중지"));
 		return EStateTreeRunStatus::Running;
 	}
  
@@ -49,7 +48,6 @@ EStateTreeRunStatus FSTTask_BossIdle::EnterState(
 		MoveComp->MaxWalkSpeed = WalkSpeed;
 	}
  
-	UE_LOG(LogTemp, Log, TEXT("[BossIdle] 대기 시작 (%.1f초 동안)"), InstanceData.WaitDuration);
  
 	return EStateTreeRunStatus::Running;
 }
@@ -163,8 +161,6 @@ EStateTreeRunStatus FSTTask_BossIdle::Tick(
 			InstanceData.PatrolCooldownTimer = FMath::FRandRange(
 				PatrolIntervalRange.X, PatrolIntervalRange.Y);
  
-			UE_LOG(LogTemp, Log, TEXT("[BossIdle] 순찰 텔레포트 완료 → %s"),
-				*InstanceData.PatrolTeleportTarget.ToString());
 		}
 		return EStateTreeRunStatus::Running;
 	}
@@ -175,7 +171,6 @@ EStateTreeRunStatus FSTTask_BossIdle::Tick(
 	InstanceData.ElapsedTime += DeltaTime;
 	if (InstanceData.ElapsedTime >= InstanceData.WaitDuration)
 	{
-		UE_LOG(LogTemp, Log, TEXT("[BossIdle] 대기 종료 (경과: %.1f초)"), InstanceData.ElapsedTime);
 		return EStateTreeRunStatus::Succeeded;
 	}
  
@@ -227,9 +222,6 @@ EStateTreeRunStatus FSTTask_BossIdle::Tick(
 			}
 		}
  
-		
- 
-		UE_LOG(LogTemp, Log, TEXT("[BossIdle] 회피 텔레포트! → %s"), *TeleportTarget.ToString());
 		return EStateTreeRunStatus::Running;
 	}
  
@@ -331,16 +323,21 @@ void FSTTask_BossIdle::ExitState(
 	ACharacter* BossChar = Cast<ACharacter>(InstanceData.ContextActor);
 	if (!BossChar) return;
 
-	// 사망 상태면 건드리지 않음
-	if (IDamageable::Execute_IsDead(BossChar)) return;
-
+	// 글리치 항상 정리 (사망 체크 위에)
 	if (InstanceData.bIsEvadeTeleporting || InstanceData.bIsPatrolTeleporting)
 	{
+		if (ABossCharacterBase* BossBase = Cast<ABossCharacterBase>(BossChar))
+		{
+			BossBase->StopGlitchEffect();
+		}
 		BossChar->SetActorHiddenInGame(false);
 		BossChar->SetActorEnableCollision(true);
 		InstanceData.bIsEvadeTeleporting = false;
 		InstanceData.bIsPatrolTeleporting = false;
 	}
+
+	// 사망 상태면 이동 복원 안 함
+	if (IDamageable::Execute_IsDead(BossChar)) return;
 
 	if (UCharacterMovementComponent* MoveComp = BossChar->GetCharacterMovement())
 	{

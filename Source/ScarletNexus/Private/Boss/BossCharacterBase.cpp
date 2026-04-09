@@ -84,9 +84,7 @@ void ABossCharacterBase::StartGlitchEffect()
 		OriginalMaterials.Add(BossMesh->GetMaterial(i));
 		BossMesh->SetMaterial(i, GlitchMID);
 	}
-
-	UE_LOG(LogTemp, Warning, TEXT("[Boss] Glitch MID applied to %d slots"), 
-		BossMesh->GetNumMaterials());
+	
 }
 
 void ABossCharacterBase::StopGlitchEffect()
@@ -100,8 +98,7 @@ void ABossCharacterBase::StopGlitchEffect()
 	}
 	OriginalMaterials.Empty();
 	GlitchMID = nullptr;
-
-	UE_LOG(LogTemp, Warning, TEXT("[Boss] Glitch effect removed"));
+	
 }
  
 void ABossCharacterBase::StartDissolve(float Duration, bool bOut)
@@ -118,30 +115,36 @@ void ABossCharacterBase::StartDissolve(float Duration, bool bOut)
 bool ABossCharacterBase::ReceiveDamage_Implementation(FDamageInfo DamageInfo)
 {
 	if (IDamageable::Execute_IsDead(this)) return false;
- 
+
 	if (CurrentHPValue <= 0.f)
 	{
 		return false;
 	}
- 
+
 	const float OldHP = CurrentHPValue;
 	const float DamageAmount = static_cast<float>(DamageInfo.DamageAmount);
 	CurrentHPValue = FMath::Clamp(CurrentHPValue - DamageAmount, 0.f, MaxHPValue);
- 
-	UE_LOG(LogTemp, Log, TEXT("[Boss] 대미지: %d (HP: %.0f -> %.0f / %.0f)"),
-		DamageInfo.DamageAmount, OldHP, CurrentHPValue, MaxHPValue);
- 
+
+	
+
 	OnHPChanged.Broadcast(CurrentHPValue, MaxHPValue, DamageAmount);
-	
-	PlayDirectionalHitReaction(DamageInfo.DamageCauser);
-	
+
+	// 몽타주 재생 중이면 히트 리액션 스킵 (스킬 안 끊김)
+	if (UAnimInstance* AnimInst = GetMesh()->GetAnimInstance())
+	{
+		if (!AnimInst->IsAnyMontagePlaying())
+		{
+			PlayDirectionalHitReaction(DamageInfo.DamageCauser);
+		}
+	}
+
 	CheckPhaseTransition();
- 
+
 	if (CurrentHPValue <= 0.f)
 	{
 		HandleDeath();
 	}
- 
+
 	return true;
 }
  
@@ -187,7 +190,6 @@ void ABossCharacterBase::InitializeWithConfig(UBossConfigDataAsset* Config)
 {
 	if (!Config)
 	{
-		UE_LOG(LogTemp, Error, TEXT("[Boss] InitializeWithConfig: Config가 nullptr입니다."));
 		return;
 	}
  
@@ -195,8 +197,7 @@ void ABossCharacterBase::InitializeWithConfig(UBossConfigDataAsset* Config)
 	MaxHPValue = Config->MaxHP;
 	CurrentHPValue = MaxHPValue;
 	CurrentPhase = EBossPhase::Phase1;
- 
-	UE_LOG(LogTemp, Log, TEXT("[Boss] 초기화 완료 - HP: %.0f"), MaxHPValue);
+	
 }
  
  
@@ -241,7 +242,20 @@ void ABossCharacterBase::CheckPhaseTransition()
  
 void ABossCharacterBase::HandleDeath()
 {
-	UE_LOG(LogTemp, Log, TEXT("[Boss] 사망 처리 시작"));
+	// 모든 BossAttackCollisionComponent 숨기기
+	TArray<UBossAttackCollisionComponent*> CollisionComps;
+	GetComponents<UBossAttackCollisionComponent>(CollisionComps);
+	for (UBossAttackCollisionComponent* Comp : CollisionComps)
+	{
+		if (Comp)
+		{
+			Comp->DisableAttackCollision();
+			Comp->SetHiddenInGame(true);
+		}
+	}
+
+	// 글리치도 정리
+	StopGlitchEffect();
 
 	if (ABossAIController* BossAI = Cast<ABossAIController>(GetController()))
 	{
