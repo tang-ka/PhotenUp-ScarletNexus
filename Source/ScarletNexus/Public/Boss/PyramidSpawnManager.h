@@ -47,6 +47,12 @@ public:
 	// 최대 높이 오프셋
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
 	float MaxHeight = 7000.f;
+	
+	// 랜덤 스케일 범위
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
+	float MinScale = 0.5f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
+	float MaxScale = 2.5f;
  
 	// 파괴 후 리스폰 대기 시간 (초)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
