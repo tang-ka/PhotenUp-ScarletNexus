@@ -59,7 +59,7 @@ void UStartMenuWidget::FadeTick()
     if (FadeAlpha >= 1.f)
     {
         GetWorld()->GetTimerManager().ClearTimer(FadeTimerHandle);
-        UGameplayStatics::OpenLevel(this, FName("FieldLevel"));
+        UGameplayStatics::OpenLevel(this, FName("CutsceneLevel1"));
     }
 }
 

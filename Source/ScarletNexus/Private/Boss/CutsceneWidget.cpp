@@ -45,22 +45,26 @@ void UCutsceneWidget::ShowStep(int32 Index)
     bFadingIn = true;
     bFadingOut = false;
 
-    // 텍스트 설정
+    UE_LOG(LogTemp, Warning, TEXT("[Cutscene] Step %d, MediaIndex: %d, Text: %s"), 
+        Index, Step.MediaIndex, *Step.DisplayText.ToString());
+
     if (CutsceneText)
     {
         CutsceneText->SetText(Step.DisplayText);
         CutsceneText->SetColorAndOpacity(FSlateColor(FLinearColor(1, 1, 1, 0)));
     }
 
-    // 영상 재생
     if (Step.MediaIndex >= 0 && MediaSources.IsValidIndex(Step.MediaIndex) && CutsceneMediaPlayer)
     {
+        UE_LOG(LogTemp, Warning, TEXT("[Cutscene] 영상 재생: %s"), *MediaSources[Step.MediaIndex]->GetName());
         CutsceneMediaPlayer->OpenSource(MediaSources[Step.MediaIndex]);
         CutsceneMediaPlayer->Play();
     }
-    else if (CutsceneMediaPlayer)
+    else
     {
-        CutsceneMediaPlayer->Close();
+        UE_LOG(LogTemp, Warning, TEXT("[Cutscene] 검은 화면"));
+        if (CutsceneMediaPlayer)
+            CutsceneMediaPlayer->Close();
     }
 }
 
