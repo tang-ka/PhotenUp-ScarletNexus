@@ -372,6 +372,14 @@ void UPsychokinesisComponent::HandlePKObjectHit(APKObject* HitObject, AActor* Hi
 	}
 
 	// =============================================
+	// 0. Player 자신(염동력 시전자)은 맞지 않도록 예외처리
+	// =============================================
+	if (HitActor == Me)
+	{
+		return;
+	}
+
+	// =============================================
 	// 1. 데미지 가능 여부 확인
 	// =============================================
 	if (!DamageableHelpers::IsDamageable(HitActor))
