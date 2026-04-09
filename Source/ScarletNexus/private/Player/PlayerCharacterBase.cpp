@@ -204,8 +204,19 @@ bool APlayerCharacterBase::ReceiveDamage_Implementation(FDamageInfo DamageInfo)
 	{
 		return false;
 	}
+	
+	// 무적 상태면 피격 무시
+	if (bInvincible) return false;
 
 	StatsComp->ReceiveDamage(DamageInfo.DamageAmount);
+	
+	// 무적 시작
+	bInvincible = true;
+	GetWorldTimerManager().SetTimer(
+		InvincibilityTimerHandle,
+		[this]() { bInvincible = false; },
+		InvincibilityDuration,
+		false);
 
 	// 피격 카메라 쉐이크 재생
 	if (DamageCameraShakeClass)
@@ -411,7 +422,7 @@ void APlayerCharacterBase::PlayAttackMontage(const UComboAttackDataAsset* Attack
 void APlayerCharacterBase::OnMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
 	UKasaneAnimInstance* AnimInstance = Cast<UKasaneAnimInstance>(GetMesh()->GetAnimInstance());
-
+	
 	if (bInterrupted)
 	{
 		return;

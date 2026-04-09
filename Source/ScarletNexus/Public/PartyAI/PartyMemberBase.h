@@ -6,6 +6,8 @@
 #include "GameFramework/Character.h"
 #include "PartyMemberBase.generated.h"
 
+class APlayerCharacterBase;
+class USphereComponent;
 /** CurrHP, MaxHP */
 DECLARE_MULTICAST_DELEGATE_TwoParams(FOnPartyMemberHPChangedDelegate, int32, int32);
 
@@ -79,7 +81,36 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Attack")
 	void ApplyDamageToHitTarget(AActor* HitTarget, AActor* Causer, int CauserATK);
 	
+	// 파티 AI 활성/비활성
+	UFUNCTION(BlueprintCallable, Category = "Party")
+	void ActivatePartyAI();
+	
+	UFUNCTION(BlueprintCallable, Category = "Party")
+	void DeactivatePartyAI();
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Party")
+	bool bPartyActive = false;
+	
+	// ** 플레이어 상호작용
+	// 상호 작용 범위 스피어
+	UPROPERTY(VisibleAnywhere, Category = "Interaction")
+	TObjectPtr<USphereComponent> InteractionSphere;
+	
+	// 플레이어가 상호작용 범위 안에 있는지 체크
+	UPROPERTY(BlueprintReadOnly, Category = "Interaction")
+	bool bPlayerInRange = false;
+	
+	// 플레이어가 말 걸었을 때 호출
+	UFUNCTION(BlueprintCallable, Category = "Interaction")
+	void OnInteract(APlayerCharacterBase* Requester);
+	
 protected:
 	// 스킬명 -> 쿨타임 종료 시각 (WorldTime)
 	TMap<FName, float> CooldownEndTimes;
+	
+private:
+	UFUNCTION()
+	void OnInteractionBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	UFUNCTION()
+	void OnInteractionEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 };

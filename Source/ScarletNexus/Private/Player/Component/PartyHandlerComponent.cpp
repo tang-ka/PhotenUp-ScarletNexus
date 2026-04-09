@@ -26,6 +26,7 @@ bool UPartyHandlerComponent::AddPartyMember(APartyMemberBase* Member)
 	}
 
 	PartyPool.Add(Member);
+	Member->ActivatePartyAI();
 	OnPartyMemberAdded.Broadcast(Member);
 
 	UE_LOG(LogTemp, Log, TEXT("PartyHandlerComponent: 파티원 추가 [%s], 현재 파티 인원: %d"),
@@ -47,6 +48,7 @@ bool UPartyHandlerComponent::RemovePartyMember(APartyMemberBase* Member)
 	}
 
 	PartyPool.RemoveAt(Index);
+	Member->DeactivatePartyAI();
 	OnPartyMemberRemoved.Broadcast(Member);
 
 	UE_LOG(LogTemp, Log, TEXT("PartyHandlerComponent: 파티원 제거 [%s], 현재 파티 인원: %d"),
