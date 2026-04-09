@@ -34,19 +34,19 @@ public:
  
 	// 한 번에 유지할 최대 개수
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
-	int32 MaxCount = 8;
+	int32 MaxCount = 200;
  
 	// 스폰 반경 (매니저 위치 기준, cm)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
-	float SpawnRadius = 800.f;
+	float SpawnRadius = 10000.f;
  
 	// 최소 높이 오프셋
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
-	float MinHeight = 150.f;
+	float MinHeight = 1000.f;
  
 	// 최대 높이 오프셋
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
-	float MaxHeight = 400.f;
+	float MaxHeight = 7000.f;
  
 	// 파괴 후 리스폰 대기 시간 (초)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn")
