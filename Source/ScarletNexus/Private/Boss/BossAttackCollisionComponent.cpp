@@ -36,7 +36,7 @@ void UBossAttackCollisionComponent::EnableAttackCollision(float InDamage, float 
 	SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	SetCollisionResponseToAllChannels(ECR_Overlap);
 	UpdateOverlaps();
-	SetHiddenInGame(false);
+	//SetHiddenInGame(false);
 
 	UE_LOG(LogTemp, Warning, TEXT("[AttackCollision] %s 활성화 후 CollisionEnabled: %d"), 
 	   *GetName(), (int32)GetCollisionEnabled());
