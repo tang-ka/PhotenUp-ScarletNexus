@@ -327,14 +327,13 @@ void FSTTask_BossIdle::ExitState(
 	const FStateTreeTransitionResult& Transition) const
 {
 	FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
- 
+
 	ACharacter* BossChar = Cast<ACharacter>(InstanceData.ContextActor);
-	if (!BossChar)
-	{
-		return;
-	}
- 
-	// 텔레포트 중 상태 전환 시 안전장치
+	if (!BossChar) return;
+
+	// 사망 상태면 건드리지 않음
+	if (IDamageable::Execute_IsDead(BossChar)) return;
+
 	if (InstanceData.bIsEvadeTeleporting || InstanceData.bIsPatrolTeleporting)
 	{
 		BossChar->SetActorHiddenInGame(false);
@@ -342,7 +341,7 @@ void FSTTask_BossIdle::ExitState(
 		InstanceData.bIsEvadeTeleporting = false;
 		InstanceData.bIsPatrolTeleporting = false;
 	}
- 
+
 	if (UCharacterMovementComponent* MoveComp = BossChar->GetCharacterMovement())
 	{
 		MoveComp->MaxWalkSpeed = 500.f;

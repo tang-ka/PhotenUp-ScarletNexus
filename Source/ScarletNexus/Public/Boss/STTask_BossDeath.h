@@ -19,6 +19,8 @@ struct FSTTask_BossDeathInstanceData
  
 	// 사망 시 시작 위치 (자동 저장)
 	FVector StartLocation = FVector::ZeroVector;
+	
+	float DeathMontageLength = 0.f;
 };
  
 USTRUCT(meta = (DisplayName = "Boss Death"))
@@ -51,5 +53,5 @@ struct SCARLETNEXUS_API FSTTask_BossDeath : public FStateTreeTaskCommonBase
 	
 	// 사망 후 멈춰있는 시간
 	UPROPERTY(EditAnywhere, Category = "Death")
-	float PauseBeforeSink = 1.5f;
+	float PauseBeforeSink = 3.f;
 };

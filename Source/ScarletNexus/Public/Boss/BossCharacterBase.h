@@ -60,6 +60,10 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category = "Boss")
 	void InitializeWithConfig(UBossConfigDataAsset* Config);
+	
+	// 죽는몽타주
+	UPROPERTY(EditDefaultsOnly, Category = "Boss|Death")
+	TObjectPtr<UAnimMontage> DeathMontage;
  
 	
 	// Delegates
@@ -130,6 +134,8 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Boss|VFX")
 	TObjectPtr<UNiagaraSystem> IceSpikeWarningVFX;
 	
+	FTimerHandle DeathDisappearHandle;
+	void StartDeathDisappear();
 	
 private:
 	UPROPERTY()
@@ -158,17 +164,8 @@ protected:
 	EBossCombatState CurrentCombatState = EBossCombatState::Idle;
 	
 	// 공격 콜리전 컴포넌트 (본에 부착)
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Boss|Combat")
-	TObjectPtr<UBossAttackCollisionComponent> RightFootCollision;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Boss|Combat")
-	TObjectPtr<UBossAttackCollisionComponent> LeftFootCollision;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Boss|Combat")
-	TObjectPtr<UBossAttackCollisionComponent> RightHandCollision;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Boss|Combat")
-	TObjectPtr<UBossAttackCollisionComponent> LeftHandCollision;
+	UPROPERTY(VisibleAnywhere, Category = "Combat")
+	TObjectPtr<UBossAttackCollisionComponent> AttackCollision;
 	
 	// 히트 리액션 몽타주
 	UPROPERTY(EditDefaultsOnly, Category = "Boss|HitReaction")
@@ -179,8 +176,6 @@ protected:
 	TObjectPtr<UAnimMontage> HitReaction_Left;
 	UPROPERTY(EditDefaultsOnly, Category = "Boss|HitReaction")
 	TObjectPtr<UAnimMontage> HitReaction_Right;
-	
-
 	
 	
 	

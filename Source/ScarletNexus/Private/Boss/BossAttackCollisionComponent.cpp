@@ -4,28 +4,25 @@
 #include "Interface/DamageableHelper.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Components/SphereComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 
 UBossAttackCollisionComponent::UBossAttackCollisionComponent()
 {
-	// 기본 Sphere 크기
 	InitSphereRadius(30.f);
-
-	// 콜리전 설정
-	SetCollisionProfileName(TEXT("OverlapAllDynamic"));
+	SetCollisionProfileName(TEXT("EnemyAttack"));
+	SetCollisionResponseToAllChannels(ECR_Overlap);
 	SetGenerateOverlapEvents(true);
-
-	// 시작 시 비활성화
 	SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	SetHiddenInGame(true);
-
 	PrimaryComponentTick.bCanEverTick = false;
 }
 
 void UBossAttackCollisionComponent::BeginPlay()
 {
 	Super::BeginPlay();
-
+	
 	// 오버랩 이벤트 바인딩
 	OnComponentBeginOverlap.AddDynamic(this, &UBossAttackCollisionComponent::OnAttackOverlapBegin);
 }
@@ -37,11 +34,12 @@ void UBossAttackCollisionComponent::EnableAttackCollision(float InDamage, float 
 	HitActors.Empty();
 
 	SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-
-#if ENABLE_DRAW_DEBUG
+	SetCollisionResponseToAllChannels(ECR_Overlap);
+	UpdateOverlaps();
 	SetHiddenInGame(false);
-#endif
 
+	UE_LOG(LogTemp, Warning, TEXT("[AttackCollision] %s 활성화 후 CollisionEnabled: %d"), 
+	   *GetName(), (int32)GetCollisionEnabled());
 	UE_LOG(LogTemp, Log, TEXT("[AttackCollision] %s 활성화 - 데미지: %.0f"), *GetName(), CurrentDamage);
 }
 
@@ -64,25 +62,21 @@ void UBossAttackCollisionComponent::OnAttackOverlapBegin(
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
 	bool bFromSweep, const FHitResult& SweepResult)
 {
+	if (GetCollisionEnabled() == ECollisionEnabled::NoCollision) return;
 	if (!OtherActor) return;
 
-	// 자신 무시
 	AActor* Owner = GetOwner();
 	if (OtherActor == Owner) return;
-
-	// 이미 히트한 액터 무시
 	if (HitActors.Contains(OtherActor)) return;
 
-	// IDamageable로 데미지 적용
 	if (DamageableHelpers::IsDamageable(OtherActor))
 	{
 		if (DamageableHelpers::ApplyDamage(OtherActor, Owner, static_cast<int>(CurrentDamage)))
 		{
 			HitActors.Add(OtherActor);
-			UE_LOG(LogTemp, Log, TEXT("[AttackCollision] %s → %s에게 %.0f 데미지!"),
-				*GetName(), *OtherActor->GetName(), CurrentDamage);
+			UE_LOG(LogTemp, Warning, TEXT("[AttackCollision] %s → %s에게 %.0f 데미지!"),
+			   *GetName(), *OtherActor->GetName(), CurrentDamage);
 
-			// 넉백
 			if (CurrentKnockback > 0.f)
 			{
 				if (ACharacter* HitChar = Cast<ACharacter>(OtherActor))

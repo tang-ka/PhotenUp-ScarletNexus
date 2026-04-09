@@ -24,25 +24,11 @@ ABossCharacterBase::ABossCharacterBase()
  
 	bUseControllerRotationYaw = false;
 	
-	// 오른발 콜리전
-	RightFootCollision = CreateDefaultSubobject<UBossAttackCollisionComponent>(TEXT("RightFootCollision"));
-	RightFootCollision->SetupAttachment(GetMesh(), FName("RightFoot"));
-	RightFootCollision->SetSphereRadius(25.f);
+	//콜리전(어택 발차기)
 
-	// 왼발 콜리전
-	LeftFootCollision = CreateDefaultSubobject<UBossAttackCollisionComponent>(TEXT("LeftFootCollision"));
-	LeftFootCollision->SetupAttachment(GetMesh(), FName("LeftFoot"));
-	LeftFootCollision->SetSphereRadius(25.f);
-
-	// 오른손 콜리전
-	RightHandCollision = CreateDefaultSubobject<UBossAttackCollisionComponent>(TEXT("RightHandCollision"));
-	RightHandCollision->SetupAttachment(GetMesh(), FName("RightHand"));
-	RightHandCollision->SetSphereRadius(20.f);
-
-	// 왼손 콜리전
-	LeftHandCollision = CreateDefaultSubobject<UBossAttackCollisionComponent>(TEXT("LeftHandCollision"));
-	LeftHandCollision->SetupAttachment(GetMesh(), FName("LeftHand"));
-	LeftHandCollision->SetSphereRadius(20.f);
+	AttackCollision = CreateDefaultSubobject<UBossAttackCollisionComponent>(TEXT("AttackCollision"));
+	AttackCollision->SetupAttachment(GetMesh(), FName("Attack"));
+	AttackCollision->SetSphereRadius(30.f);
 	
 	GlitchMeshComp = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("GlitchMesh"));
 	GlitchMeshComp->SetupAttachment(GetMesh());
@@ -257,13 +243,29 @@ void ABossCharacterBase::HandleDeath()
 {
 	UE_LOG(LogTemp, Log, TEXT("[Boss] 사망 처리 시작"));
 
-	// 이벤트만 전송 — 나머지는 Death State에서 처리
 	if (ABossAIController* BossAI = Cast<ABossAIController>(GetController()))
 	{
 		BossAI->SendStateTreeEvent(
 			FGameplayTag::RequestGameplayTag(FName("Boss.Event.Death")));
 	}
-	
+}
+
+void ABossCharacterBase::StartDeathDisappear()
+{
+	StartDissolve(1.5f, true);  // 1.5초에 걸쳐 사라짐
+    
+	// Dissolve 끝나면 액터 숨기기
+	FTimerHandle HideHandle;
+	GetWorldTimerManager().SetTimer(
+		HideHandle,
+		[this]()
+		{
+			SetActorHiddenInGame(true);
+			SetActorEnableCollision(false);
+		},
+		1.5f,
+		false
+	);
 }
 
 void ABossCharacterBase::PlayDirectionalHitReaction(AActor* DamageCauser)

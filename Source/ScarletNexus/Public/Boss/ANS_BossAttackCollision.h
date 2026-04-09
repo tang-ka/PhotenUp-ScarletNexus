@@ -15,7 +15,7 @@ class SCARLETNEXUS_API UANS_BossAttackCollision : public UAnimNotifyState
 public:
 	// 콜리전 컴포넌트
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attack")
-	FName CollisionComponentName = FName("RightFootCollision");
+	FName CollisionComponentName = FName("AttackCollision");
 
 	// 이 구간의 데미지
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attack")
@@ -24,6 +24,7 @@ public:
 	// 넉백 힘
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attack")
 	float Knockback = 50.f;
+	
 
 	virtual void NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,
 		float TotalDuration, const FAnimNotifyEventReference& EventReference) override;

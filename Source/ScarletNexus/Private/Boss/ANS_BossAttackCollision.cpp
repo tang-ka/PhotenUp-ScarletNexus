@@ -17,12 +17,17 @@ void UANS_BossAttackCollision::NotifyBegin(USkeletalMeshComponent* MeshComp, UAn
 	// 이름으로 콜리전 컴포넌트 찾음
 	TArray<UBossAttackCollisionComponent*> CollisionComps;
 	Owner->GetComponents<UBossAttackCollisionComponent>(CollisionComps);
+	
+	UE_LOG(LogTemp, Warning, TEXT("[ANS_AttackCollision] 찾는 이름: %s, 컴포넌트 수: %d"), 
+	*CollisionComponentName.ToString(), CollisionComps.Num());
 
 	for (UBossAttackCollisionComponent* Comp : CollisionComps)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("[ANS_AttackCollision] 컴포넌트: %s"), *Comp->GetName());
 		if (Comp && Comp->GetName() == CollisionComponentName.ToString())
 		{
 			Comp->EnableAttackCollision(Damage, Knockback);
+
 			UE_LOG(LogTemp, Log, TEXT("[ANS_AttackCollision] Begin: %s 활성화"), *CollisionComponentName.ToString());
 			return;
 		}

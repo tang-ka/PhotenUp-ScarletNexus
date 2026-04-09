@@ -5,7 +5,9 @@
 #include "StateTreeExecutionContext.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Boss/BossCharacterBase.h"
 #include "Components/CapsuleComponent.h"
+#include "NiagaraComponent.h"
  
 EStateTreeRunStatus FSTTask_BossDeath::EnterState(
 	FStateTreeExecutionContext& Context,
@@ -14,29 +16,44 @@ EStateTreeRunStatus FSTTask_BossDeath::EnterState(
 	FInstanceDataType& Data = Context.GetInstanceData(*this);
 	ACharacter* Boss = Cast<ACharacter>(Data.ContextActor);
 	if (!Boss) return EStateTreeRunStatus::Failed;
- 
+
 	Data.Timer = 0.f;
 	Data.bDeathStarted = true;
- 
-	// 시작 위치 저장
 	Data.StartLocation = Boss->GetActorLocation();
- 
-	// 이동 정지
+
 	if (UCharacterMovementComponent* MoveComp = Boss->GetCharacterMovement())
 	{
 		MoveComp->StopMovementImmediately();
 		MoveComp->DisableMovement();
 	}
- 
-	// 콜리전 비활성화 (바닥 뚫고 내려가야 하므로)
-	if (UCapsuleComponent* Capsule = Boss->GetCapsuleComponent())
+
+	// 여기서 사망 몽타주 재생
+	if (ABossCharacterBase* BossBase = Cast<ABossCharacterBase>(Boss))
 	{
-		Capsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		TArray<UNiagaraComponent*> NiagaraComps;
+		Boss->GetComponents<UNiagaraComponent>(NiagaraComps);
+		for (UNiagaraComponent* NC : NiagaraComps)
+		{
+			if (NC)
+			{
+				NC->Deactivate();
+				NC->DestroyComponent();
+			}
+		}
+		
+		if (BossBase->DeathMontage)
+		{
+			Data.DeathMontageLength = Boss->PlayAnimMontage(BossBase->DeathMontage);
+			UE_LOG(LogTemp, Warning, TEXT("[BossDeath] 몽타주 길이: %.2f"), Data.DeathMontageLength);
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("[BossDeath] DeathMontage가 nullptr!"));
+		}
 	}
- 
-	UE_LOG(LogTemp, Warning, TEXT("[BossDeath] 사망 State 진입 — 가라앉기 시작"));
+
+	UE_LOG(LogTemp, Warning, TEXT("[BossDeath] 사망 State 진입 — 몽타주 재생"));
 	return EStateTreeRunStatus::Running;
-	
 }
  
 EStateTreeRunStatus FSTTask_BossDeath::Tick(
@@ -48,15 +65,31 @@ EStateTreeRunStatus FSTTask_BossDeath::Tick(
 
 	Data.Timer += DeltaTime;
 
-	// 1. 잠깐 멈춤 구간 
-	if (Data.Timer < PauseBeforeSink)
+	// 1. 몽타주 시간 대기
+	if (Data.Timer < Data.DeathMontageLength)
 	{
 		return EStateTreeRunStatus::Running;
 	}
 
-	// 2. 가라앉기 연출
-	const float SinkTimer = Data.Timer - PauseBeforeSink;
-    
+	// 2. 포즈 고정
+	Boss->GetMesh()->bPauseAnims = true;
+
+	// 3. 1.5초 대기 후 가라앉기
+	float PostMontageTimer = Data.Timer - Data.DeathMontageLength;
+
+	if (PostMontageTimer < 1.5f)
+	{
+		return EStateTreeRunStatus::Running;
+	}
+
+	// 4. 가라앉기
+	if (UCapsuleComponent* Capsule = Boss->GetCapsuleComponent())
+	{
+		Capsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
+
+	const float SinkTimer = PostMontageTimer - 1.5f;
+
 	if (SinkTimer < DeathDuration)
 	{
 		const float Alpha = FMath::Clamp(SinkTimer / DeathDuration, 0.f, 1.f);
@@ -68,7 +101,6 @@ EStateTreeRunStatus FSTTask_BossDeath::Tick(
 		Boss->SetActorLocation(NewLocation);
 	}
 
-	// 3. 완전히 가라앉은 후 숨김 처리
 	if (SinkTimer >= DeathDuration + HideDelay)
 	{
 		Boss->SetActorHiddenInGame(true);
