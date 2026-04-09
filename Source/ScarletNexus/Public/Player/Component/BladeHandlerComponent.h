@@ -34,6 +34,11 @@ public:
 	void SetAttackStateAllBlades();
 	void SetDefaultStateAllBlades();
 
+	/** 애님 노티파이 — 블레이드 Glow 머티리얼 활성화 */
+	void OnBladeGlowBegin();
+	/** 애님 노티파이 — 블레이드 Default 머티리얼 복원 */
+	void OnBladeGlowEnd();
+
 	// 데미지 적용 시 브로드캐스트 (SNPlayerController 등에서 바인딩)
 	FOnBladeDamageDealt OnBladeDamageDealt;
 

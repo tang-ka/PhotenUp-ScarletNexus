@@ -20,6 +20,14 @@ enum class EBladeState : uint8
 	Return UMETA(DisplayName = "Return"), // 블레이드가 공격 후 플레이어에게 돌아오는 상태
 };
 
+/** 블레이드 머티리얼(외형) 상태 */
+UENUM(BlueprintType)
+enum class EBladeMaterialState : uint8
+{
+	Default UMETA(DisplayName = "Default"),
+	Glow    UMETA(DisplayName = "Glow"),
+};
+
 UENUM(BlueprintType)
 enum class EBladeAttackPattern : uint8
 {
@@ -71,6 +79,10 @@ public:
 	                  FVector InOrigin, FVector InDirection,
 	                  float InMaxDistance, float InSpeed);
 
+	// === Material State ===
+	/** 머티리얼 상태를 변경합니다 (Default / Glow) */
+	void SetBladeState(EBladeMaterialState NewState);
+
 	// === Critical ===
 	void SetCanCritical(bool bValue) { bCanCritical = bValue; }
 	bool GetCanCritical() const { return bCanCritical; }
@@ -86,6 +98,9 @@ private:
 	void BeginIdle();
 	void BeginAttack();
 	void BeginReturn();
+
+	/** 지정 슬롯에 머티리얼 적용 */
+	void ApplyMaterial(UMaterialInterface* Material, int32 SlotIndex);
 
 	void TickIdle(float DeltaTime);
 	
@@ -183,6 +198,21 @@ private:
 	TWeakObjectPtr<AActor> OwnerActor;
 
 	int32 BladeIndex = 0; // 풀에서의 인덱스 (0부터 시작)
+
+#pragma region Material
+	/** Default 상태 — 슬롯 0 */
+	UPROPERTY(EditDefaultsOnly, Category = "Material")
+	TObjectPtr<UMaterialInterface> Mat_Default_Slot0;
+
+	/** Default 상태 — 슬롯 2 */
+	UPROPERTY(EditDefaultsOnly, Category = "Material")
+	TObjectPtr<UMaterialInterface> Mat_Default_Slot2;
+
+	/** Glow 상태 — 슬롯 0, 2 공통 적용 */
+	UPROPERTY(EditDefaultsOnly, Category = "Material")
+	TObjectPtr<UMaterialInterface> Mat_Glow;
+#pragma endregion
+	
 	int32 IdleBladeCount = 1; // 총 블레이드 수
 	float PhaseOffset = 0.f; // 위상 오프셋
 
