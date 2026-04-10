@@ -70,7 +70,7 @@ void UCutsceneWidget::ShowStep(int32 Index)
 
 FReply UCutsceneWidget::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)
 {
-    if (InKeyEvent.GetKey() == EKeys::Escape || InKeyEvent.GetKey() == EKeys::SpaceBar)
+    if (InKeyEvent.GetKey() == EKeys::SpaceBar)
     {
         if (bCutsceneActive)
         {
