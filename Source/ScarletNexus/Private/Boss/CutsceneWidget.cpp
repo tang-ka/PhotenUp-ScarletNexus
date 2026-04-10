@@ -1,3 +1,5 @@
+
+
 #include "Boss/CutsceneWidget.h"
 #include "Components/Image.h"
 #include "Components/TextBlock.h"
@@ -9,6 +11,9 @@
 void UCutsceneWidget::NativeConstruct()
 {
     Super::NativeConstruct();
+    
+    SetIsFocusable(true);
+    SetFocus();
 
     if (FadeImage)
         FadeImage->SetColorAndOpacity(FLinearColor(0, 0, 0, 1.f));
@@ -63,6 +68,22 @@ void UCutsceneWidget::ShowStep(int32 Index)
     }
 }
 
+FReply UCutsceneWidget::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)
+{
+    if (InKeyEvent.GetKey() == EKeys::Escape || InKeyEvent.GetKey() == EKeys::SpaceBar)
+    {
+        if (bCutsceneActive)
+        {
+            GetWorld()->GetTimerManager().ClearTimer(CutsceneTickHandle);
+            bCutsceneActive = false;
+            if (CutsceneMediaPlayer)
+                CutsceneMediaPlayer->Close();
+            TransitionToNextLevel();
+            return FReply::Handled();
+        }
+    }
+    return Super::NativeOnKeyDown(InGeometry, InKeyEvent);
+}
 
 void UCutsceneWidget::CutsceneTick()
 {
