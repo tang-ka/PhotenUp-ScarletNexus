@@ -104,6 +104,11 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Interaction")
 	void OnInteract(APlayerCharacterBase* Requester);
 	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
+	TObjectPtr<USoundBase> JoinPartySound;
+	
+	UFUNCTION(BlueprintCallable, Category = "Sound")
+	void PlayJoinPartySound();
 protected:
 	// 스킬명 -> 쿨타임 종료 시각 (WorldTime)
 	TMap<FName, float> CooldownEndTimes;
