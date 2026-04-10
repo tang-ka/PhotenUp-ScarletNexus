@@ -25,6 +25,9 @@ APartyMemberBase::APartyMemberBase()
 	PartyAIComp = CreateDefaultSubobject<UPartyAIComponent>(TEXT("PartyAIComp"));
 	StateTreeComp = CreateDefaultSubobject<UStateTreeComponent>(TEXT("StateTreeComp"));
 	
+	// 자동 시작 끄기 - StartAI()에서 명시적으로 시작함
+	StateTreeComp->SetStartLogicAutomatically(false);
+	
 	InteractionSphere = CreateDefaultSubobject<USphereComponent>(TEXT("InteractionSphere"));
 	InteractionSphere->SetupAttachment(RootComponent);
 	InteractionSphere->SetSphereRadius(300.f);
