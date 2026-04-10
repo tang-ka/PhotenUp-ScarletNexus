@@ -38,9 +38,6 @@ void UBossAttackCollisionComponent::EnableAttackCollision(float InDamage, float 
 	UpdateOverlaps();
 	//SetHiddenInGame(false);
 
-	UE_LOG(LogTemp, Warning, TEXT("[AttackCollision] %s 활성화 후 CollisionEnabled: %d"), 
-	   *GetName(), (int32)GetCollisionEnabled());
-	UE_LOG(LogTemp, Log, TEXT("[AttackCollision] %s 활성화 - 데미지: %.0f"), *GetName(), CurrentDamage);
 }
 
 void UBossAttackCollisionComponent::DisableAttackCollision()
@@ -48,8 +45,7 @@ void UBossAttackCollisionComponent::DisableAttackCollision()
 	SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	SetHiddenInGame(true);
 	HitActors.Empty();
-
-	UE_LOG(LogTemp, Log, TEXT("[AttackCollision] %s 비활성화"), *GetName());
+	
 }
 
 void UBossAttackCollisionComponent::ResetHitActors()
@@ -74,8 +70,6 @@ void UBossAttackCollisionComponent::OnAttackOverlapBegin(
 		if (DamageableHelpers::ApplyDamage(OtherActor, Owner, static_cast<int>(CurrentDamage)))
 		{
 			HitActors.Add(OtherActor);
-			UE_LOG(LogTemp, Warning, TEXT("[AttackCollision] %s → %s에게 %.0f 데미지!"),
-			   *GetName(), *OtherActor->GetName(), CurrentDamage);
 
 			if (CurrentKnockback > 0.f)
 			{

@@ -48,10 +48,7 @@ EStateTreeRunStatus FSTTask_BossTeleport::EnterState(
 	// TODO: 보스 메시 비가시화 + 콜리전 비활성화
 	// BossActor->SetActorHiddenInGame(true);
 	// BossActor->SetActorEnableCollision(false);
- 
-	UE_LOG(LogTemp, Log, TEXT("[BossTeleport] 텔레포트 시작 -> 목표: %s (Strategy: %d)"),
-		*InstanceData.TargetLocation.ToString(),
-		static_cast<int32>(EffectiveStrategy));
+	
  
 	return EStateTreeRunStatus::Running;
 }

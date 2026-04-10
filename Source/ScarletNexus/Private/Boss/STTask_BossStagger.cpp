@@ -40,13 +40,9 @@ EStateTreeRunStatus FSTTask_BossStagger::EnterState(
 		AnimInstance->Montage_Stop(0.15f);
 	}
  
-	// -------------------------------------------------------
 	// 그로기 진입 몽타주 재생
-	// -------------------------------------------------------
 	TransitionToSubPhase(InstanceData, BossChar, EStaggerSubPhase::EnterStagger);
- 
-	UE_LOG(LogTemp, Log, TEXT("[BossStagger] 그로기 상태 진입 (Phase: %d)"),
-		static_cast<int32>(InstanceData.CurrentPhase));
+	
  
 	return EStateTreeRunStatus::Running;
 }
@@ -98,22 +94,18 @@ EStateTreeRunStatus FSTTask_BossStagger::Tick(
 		// 시간 초과 시 자동 해제
 		if (InstanceData.ElapsedTime >= MaxStaggerDuration)
 		{
-			UE_LOG(LogTemp, Log, TEXT("[BossStagger] 그로기 시간 초과 -> 자동 해제"));
 			TransitionToSubPhase(InstanceData, BossChar, EStaggerSubPhase::RecoverFromStagger);
 		}
  
 		// 브레인 크래시 입력 윈도우 초과 시에도 해제
 		if (InstanceData.ElapsedTime >= BrainCrushWindowDuration && !InstanceData.bBrainCrushTriggered)
 		{
-			UE_LOG(LogTemp, Log, TEXT("[BossStagger] 브레인 크래시 윈도우 만료"));
 			TransitionToSubPhase(InstanceData, BossChar, EStaggerSubPhase::RecoverFromStagger);
 		}
 		break;
 	}
  
-	// -------------------------------------------------------
 	// 브레인 크래시 연출 중
-	// -------------------------------------------------------
 	case EStaggerSubPhase::BrainCrush:
 	{
 		// 브레인 크래시 몽타주가 끝나면 완료
@@ -125,8 +117,6 @@ EStateTreeRunStatus FSTTask_BossStagger::Tick(
 				const float BonusDamage = 10000.f * BrainCrushDamageRatio;
 				DamageableHelpers::ApplyDamage(BossChar, nullptr, static_cast<int>(BonusDamage));
  
-				UE_LOG(LogTemp, Log,
-					TEXT("[BossStagger] 브레인 크래시 대미지: %.0f"), BonusDamage);
 			}
  
 			return EStateTreeRunStatus::Succeeded;
@@ -134,9 +124,9 @@ EStateTreeRunStatus FSTTask_BossStagger::Tick(
 		break;
 	}
  
-	// -------------------------------------------------------
+	
 	// 그로기 해제 모션 재생 중
-	// -------------------------------------------------------
+	
 	case EStaggerSubPhase::RecoverFromStagger:
 	{
 		if (!AnimInstance || !AnimInstance->IsAnyMontagePlaying())
@@ -169,10 +159,7 @@ void FSTTask_BossStagger::ExitState(
 	{
 		MoveComp->SetMovementMode(MOVE_Walking);
 	}
- 
-	UE_LOG(LogTemp, Log, TEXT("[BossStagger] 그로기 상태 종료 (BrainCrush: %s, 경과: %.1fs)"),
-		InstanceData.bBrainCrushTriggered ? TEXT("Yes") : TEXT("No"),
-		InstanceData.ElapsedTime);
+	
 }
  
 void FSTTask_BossStagger::TransitionToSubPhase(
@@ -205,7 +192,6 @@ void FSTTask_BossStagger::TransitionToSubPhase(
 		// TODO: 카메라 연출 시작
 		// TODO: 시간 슬로우 효과
 		// TODO: 플레이어 브레인 크래시 공격 몽타주 트리거
-		UE_LOG(LogTemp, Log, TEXT("[BossStagger] 브레인 크래시 발동!"));
 		break;
  
 	case EStaggerSubPhase::RecoverFromStagger:

@@ -22,14 +22,12 @@ EStateTreeRunStatus FSTTask_TeleportKick::EnterState(
 	ACharacter* Boss = Cast<ACharacter>(Data.ContextActor);
 	if (!Boss)
 	{
-		UE_LOG(LogTemp, Error, TEXT("[TeleportKick] ContextActor가 없습니다."));
 		return EStateTreeRunStatus::Failed;
 	}
  
 	const ACharacter* Player = UGameplayStatics::GetPlayerCharacter(Boss->GetWorld(), 0);
 	if (!Player)
 	{
-		UE_LOG(LogTemp, Error, TEXT("[TeleportKick] 플레이어를 찾을 수 없습니다."));
 		return EStateTreeRunStatus::Failed;
 	}
  
@@ -39,8 +37,6 @@ EStateTreeRunStatus FSTTask_TeleportKick::EnterState(
 	// 텔레포트 목표 위치 계산 (플레이어 뒤쪽)
 	Data.TeleportTarget = CalculateTeleportTarget(Boss, Player);
  
-	UE_LOG(LogTemp, Log, TEXT("[TeleportKick] 공격 시작 - 목표: %s"),
-		*Data.TeleportTarget.ToString());
  
 	// Vanishing 단계: 보스를 투명하게 (나중에 머티리얼 파라미터로 페이드)
 	// 지금은 바로 숨김
@@ -87,7 +83,6 @@ EStateTreeRunStatus FSTTask_TeleportKick::Tick(
 				Data.AttackPhase = ETeleportKickPhase::Teleporting;
 				Data.PhaseTimer = 0.f;
  
-				UE_LOG(LogTemp, Log, TEXT("[TeleportKick] 텔레포트 완료 → 등장 대기"));
 			}
 		}
 		break;
@@ -104,7 +99,6 @@ EStateTreeRunStatus FSTTask_TeleportKick::Tick(
 				Data.AttackPhase = ETeleportKickPhase::Kicking;
 				Data.PhaseTimer = 0.f;
  
-				UE_LOG(LogTemp, Log, TEXT("[TeleportKick] 등장! 킥 공격 시작"));
 			}
 		}
 		break;
@@ -122,7 +116,6 @@ EStateTreeRunStatus FSTTask_TeleportKick::Tick(
 			if (Data.PhaseTimer >= KickDuration)
 			{
 				Data.AttackPhase = ETeleportKickPhase::Done;
-				UE_LOG(LogTemp, Log, TEXT("[TeleportKick] 킥 완료"));
 				return EStateTreeRunStatus::Succeeded;
 			}
 		}
@@ -215,8 +208,6 @@ void FSTTask_TeleportKick::ApplyKickDamage(
 		FDamageEvent DamageEvent;
 		HitCharacter->TakeDamage(KickDamage, DamageEvent, nullptr, BossActor);
  
-		UE_LOG(LogTemp, Log, TEXT("[TeleportKick] %s에게 %.0f 데미지!"),
-			*HitCharacter->GetName(), KickDamage);
  
 		// 넉백 적용
 		if (UCharacterMovementComponent* Movement = HitCharacter->GetCharacterMovement())

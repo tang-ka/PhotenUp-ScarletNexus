@@ -36,7 +36,6 @@ void FSTEval_BossPhase::Tick(FStateTreeExecutionContext& Context, const float De
 		{
 			InstanceData.bDeathEventSent = true;
 			Context.SendEvent(BossTags::Event_Death);
-			UE_LOG(LogTemp, Warning, TEXT("[BossEval] ★ Evaluator에서 Death 이벤트 전송!"));
 		}
 		return;
 	}

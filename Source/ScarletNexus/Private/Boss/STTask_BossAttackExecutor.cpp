@@ -33,7 +33,6 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::EnterState(
  
 	if (IDamageable::Execute_IsDead(Boss))
 	{
-		UE_LOG(LogTemp, Log, TEXT("[AttackExecutor] 보스 사망 상태 — 공격 중지"));
 		return EStateTreeRunStatus::Running;
 	}
  
@@ -263,7 +262,6 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::EnterTeleportKick(
 	}
 	Data.TKTarget = Target;
 	
-	UE_LOG(LogTemp, Log, TEXT("[TeleportKick] 시작"));
 	return EStateTreeRunStatus::Running;
 }
 
@@ -284,7 +282,6 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickTeleportKick(
 		// 준비 동작 시간 후 사라짐
 		if (Data.PhaseTimer >= TK_VanishDuration)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("[TeleportKick] Vanishing → Teleporting"));
 			Boss->SetActorHiddenInGame(true);
 			Boss->SetActorEnableCollision(false);
 			Boss->SetActorLocation(Data.TKTarget);
@@ -315,8 +312,6 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickTeleportKick(
 	case ETKPhase::Kicking:
 		{
 			const UAnimInstance* AnimInst = Boss->GetMesh()->GetAnimInstance();
-			UE_LOG(LogTemp, Warning, TEXT("[TeleportKick] Kicking phase, Montage playing: %s"),
-				AnimInst && AnimInst->IsAnyMontagePlaying() ? TEXT("YES") : TEXT("NO"));
 		}
 		if (Data.PhaseTimer >= TK_KickDuration)
 		{
@@ -434,27 +429,23 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::EnterCloneRush(
 	}
  
 	//  WindUp 몽타주
-	UE_LOG(LogTemp, Warning, TEXT("[CloneRush] BossConfig: %s"), BossConfig ? TEXT("있음") : TEXT("없음"));
 
 	if (BossConfig)
 	{
 		const ABossCharacterBase* BossChar = Cast<ABossCharacterBase>(Boss);
 		const EBossPhase Phase = BossChar ? BossChar->GetCurrentPhase() : EBossPhase::Phase1;
 		TArray<FBossAttackPattern> Patterns = BossConfig->GetAvailablePatterns(Phase);
-		UE_LOG(LogTemp, Warning, TEXT("[CloneRush] 패턴 수: %d"), Patterns.Num());
 		for (const FBossAttackPattern& P : Patterns)
 		{
 			if (P.AttackType == EBossAttackType::CloneRush && P.AttackMontage)
 				
 			{
 				Boss->PlayAnimMontage(P.AttackMontage, 1.0f, FName("WindUp"));
-				UE_LOG(LogTemp, Warning, TEXT("[CloneRush] WindUp 몽타주 재생!"));
 				break;
 			}
 		}
 	}
  
-	UE_LOG(LogTemp, Log, TEXT("[CloneRush] 3체 준비 완료"));
 	return EStateTreeRunStatus::Running;
 }
  
@@ -614,7 +605,6 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::EnterAerialElectric(
 	Data.AEHoverLocation = FVector(Data.AEGroundTarget.X, Data.AEGroundTarget.Y, Data.AEGroundTarget.Z + AE_HoverHeight);
 	Boss->SetActorHiddenInGame(true);
 	Boss->SetActorEnableCollision(false);
-	UE_LOG(LogTemp, Log, TEXT("[AerialElectric] 시작"));
 	return EStateTreeRunStatus::Running;
 }
  
@@ -714,7 +704,6 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::EnterIceSpikes(
 	const FVector ToP = Player->GetActorLocation() - Data.ISOrigin;
 	Data.ISDirection = FVector(ToP.X, ToP.Y, 0.f).GetSafeNormal();
 	Boss->SetActorRotation(Data.ISDirection.Rotation());
-	UE_LOG(LogTemp, Log, TEXT("[IceSpikes] 시작"));
 	return EStateTreeRunStatus::Running;
 }
  
@@ -796,7 +785,6 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickIceSpikes(
 						+ Data.ISDirection * (IS_AreaStartOffset + IS_AreaLength * 0.5f)
 						+ FVector(0, 0, -HalfHeight);
 					const FRotator SpawnRot = Data.ISDirection.Rotation();
-					UE_LOG(LogTemp, Log, TEXT("[IceSpikes] 나이아가라 VFX 스폰!"));
 					UNiagaraFunctionLibrary::SpawnSystemAtLocation(
 						Boss->GetWorld(),
 						BossChar->IceSpikeVFX,
@@ -811,13 +799,12 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickIceSpikes(
 				}
 				else
 				{
-					UE_LOG(LogTemp, Warning, TEXT("[IceSpikes] IceSpikeVFX가 NULL! BP에서 할당 확인 필요"));
+					
 				}
 			}
 
 			Data.ISPhase = EISPhase::Holding;
 			Data.PhaseTimer = 0.f;
-			UE_LOG(LogTemp, Log, TEXT("[IceSpikes] 가시 %d개 생성!"), IS_SpikeCount);
 		}
 		break;
 		
@@ -859,7 +846,6 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::EnterElectricOrbs(
 	
 	Boss->SetActorRotation((Player->GetActorLocation() - Boss->GetActorLocation()).GetSafeNormal2D().Rotation());
 	
-	UE_LOG(LogTemp, Log, TEXT("[ElectricOrbs] 전류구 순차 생성 시작"));
 	return EStateTreeRunStatus::Running;
 }
  
@@ -931,7 +917,6 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickElectricOrbs(
 
     			Data.OOOrbSpawnTime.Add(Data.PhaseTimer);
     			Data.OOLaunchedCount++;
-    			UE_LOG(LogTemp, Log, TEXT("[ElectricOrbs] 전류구 %d/%d 생성!"), Data.OOLaunchedCount, OO_OrbCount);
     		}
     		
 
@@ -947,7 +932,6 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickElectricOrbs(
     			}
     			Data.OOPhase = EOOPhase::Flying;
     			Data.PhaseTimer = 0.f;
-    			UE_LOG(LogTemp, Log, TEXT("[ElectricOrbs] 전류구 %d개 일제 발사!"), OO_OrbCount);
     		}
     	}
     	break;
@@ -1011,7 +995,6 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickElectricOrbs(
                         if (ACharacter* HitChar = Cast<ACharacter>(HitActor))
                             if (auto* M = HitChar->GetCharacterMovement())
                                 M->AddImpulse(Data.OOOrbDirections[i] * OO_KnockbackForce, true);
-                        UE_LOG(LogTemp, Log, TEXT("[ElectricOrbs] %s 히트! %.0f 데미지"), *HitActor->GetName(), OO_Damage);
                     	
                     	// 히트 VFX
                     	if (Data.OOOrbVFXComponents.IsValidIndex(i) && Data.OOOrbVFXComponents[i])
@@ -1040,7 +1023,6 @@ EStateTreeRunStatus FSTTask_BossAttackExecutor::TickElectricOrbs(
 
         if (bAllDone)
         {
-            UE_LOG(LogTemp, Log, TEXT("[ElectricOrbs] 완료"));
             return EStateTreeRunStatus::Succeeded;
         }
     }

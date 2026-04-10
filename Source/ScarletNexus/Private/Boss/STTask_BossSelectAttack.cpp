@@ -15,7 +15,6 @@ EStateTreeRunStatus FSTTask_BossSelectAttack::EnterState(
  
 	if (!BossConfig)
 	{
-		UE_LOG(LogTemp, Error, TEXT("[BossSelectAttack] BossConfig이 설정되지 않았습니다."));
 		return EStateTreeRunStatus::Failed;
 	}
  
@@ -23,8 +22,6 @@ EStateTreeRunStatus FSTTask_BossSelectAttack::EnterState(
 	TArray<FBossAttackPattern> AvailablePatterns = BossConfig->GetAvailablePatterns(InstanceData.CurrentPhase);
 	if (AvailablePatterns.IsEmpty())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[BossSelectAttack] Phase %d에 사용 가능한 패턴이 없습니다."),
-			static_cast<int32>(InstanceData.CurrentPhase));
 		return EStateTreeRunStatus::Failed;
 	}
  
@@ -48,16 +45,11 @@ EStateTreeRunStatus FSTTask_BossSelectAttack::EnterState(
 	{
 		return EStateTreeRunStatus::Failed;
 	}
- 
-	UE_LOG(LogTemp, Log, TEXT("[BossSelectAttack] 패턴 선택: %s (Phase: %d, Distance: %.0f)"),
-		*SelectedPattern.AttackTag.ToString(),
-		static_cast<int32>(InstanceData.CurrentPhase),
-		InstanceData.DistanceToPlayer);
+	
  
 	// 몽타주가 없으면 바로 완료 (테스트용)
 	if (!SelectedPattern.AttackMontage)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[BossSelectAttack] 몽타주 없음 - 바로 완료"));
 		return EStateTreeRunStatus::Succeeded;
 	}
  

@@ -46,15 +46,12 @@ EStateTreeRunStatus FSTTask_BossDeath::EnterState(
 		if (BossBase->DeathMontage)
 		{
 			Data.DeathMontageLength = Boss->PlayAnimMontage(BossBase->DeathMontage);
-			UE_LOG(LogTemp, Warning, TEXT("[BossDeath] 몽타주 길이: %.2f"), Data.DeathMontageLength);
 		}
 		else
 		{
-			UE_LOG(LogTemp, Warning, TEXT("[BossDeath] DeathMontage가 nullptr!"));
 		}
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("[BossDeath] 사망 State 진입 — 몽타주 재생"));
 	return EStateTreeRunStatus::Running;
 }
  
@@ -107,7 +104,6 @@ EStateTreeRunStatus FSTTask_BossDeath::Tick(
 	{
 		Boss->SetActorHiddenInGame(true);
 		UGameplayStatics::OpenLevel(Boss->GetWorld(), FName("CutsceneLevel3"));
-		UE_LOG(LogTemp, Warning, TEXT("[BossDeath] 사망 완료 — 액터 숨김"));
 		return EStateTreeRunStatus::Succeeded;
 	}
 

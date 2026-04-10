@@ -49,9 +49,7 @@ void ABossCloneActor::InitRush(const FVector& InDirection, float InSpeed, float 
 		MeshComp->GetAnimInstance()->Montage_JumpToSection(FName("WindUp"), RushMontage);
 	}
 	
-
-	UE_LOG(LogTemp, Log, TEXT("[BossClone] 분신 스폰 완료 - 위치: %s"),
-		*GetActorLocation().ToString());
+	
 }
  
 void ABossCloneActor::StartRush()
@@ -66,7 +64,7 @@ void ABossCloneActor::StartRush()
 		MeshComp->GetAnimInstance()->Montage_JumpToSection(FName("Rush"), RushMontage);
 	}
 
-	UE_LOG(LogTemp, Log, TEXT("[BossClone] 분신 돌진 시작!"));
+	
 }
  
 void ABossCloneActor::Tick(float DeltaTime)
@@ -84,7 +82,6 @@ void ABossCloneActor::Tick(float DeltaTime)
 			{
 				return;
 			}
-			UE_LOG(LogTemp, Log, TEXT("[BossClone] 소멸"));
 			Destroy();
 		}
 		return;
@@ -120,7 +117,7 @@ void ABossCloneActor::Tick(float DeltaTime)
 		bRushing = false;
 		bRushComplete = true;
 		DestroyTimer = 0.f;
-		UE_LOG(LogTemp, Log, TEXT("[BossClone] 분신 돌진 완료"));
+		
 	}
 	else
 	{

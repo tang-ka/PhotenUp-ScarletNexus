@@ -40,10 +40,6 @@ EStateTreeRunStatus FSTTask_BossHitReaction::EnterState(
 	UAnimMontage* Montage = GetMontageForDirection(InstanceData.HitDirection);
 	if (!Montage)
 	{
-		UE_LOG(LogTemp, Warning,
-			TEXT("[BossHitReaction] 몽타주가 없습니다. ReactionType: %d, Direction: %d"),
-			static_cast<int32>(ReactionType),
-			static_cast<int32>(InstanceData.HitDirection));
 		// 몽타주 없어도 짧은 경직은 적용
 		if (ReactionType == EHitReactionType::Flinch)
 		{
@@ -73,9 +69,7 @@ EStateTreeRunStatus FSTTask_BossHitReaction::EnterState(
 			true,  // XY Override
 			false  // Z Override
 		);
- 
-		UE_LOG(LogTemp, Log, TEXT("[BossHitReaction] 넉백 적용: Force=%.0f, Dir=%s"),
-			KnockbackForce, *KnockbackDir.ToString());
+		
 	}
 	else if (ReactionType == EHitReactionType::Airborne)
 	{
@@ -85,12 +79,7 @@ EStateTreeRunStatus FSTTask_BossHitReaction::EnterState(
 			true   // Z Override
 		);
  
-		UE_LOG(LogTemp, Log, TEXT("[BossHitReaction] 에어본 적용: Height=%.0f"), LaunchHeight);
 	}
- 
-	UE_LOG(LogTemp, Log, TEXT("[BossHitReaction] 피격 리액션 시작: Type=%d, Dir=%d"),
-		static_cast<int32>(ReactionType),
-		static_cast<int32>(InstanceData.HitDirection));
  
 	return EStateTreeRunStatus::Running;
 }

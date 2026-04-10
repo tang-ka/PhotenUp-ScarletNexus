@@ -37,8 +37,7 @@ ABossAIController::ABossAIController(const FObjectInitializer& ObjectInitializer
 void ABossAIController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
- 
-	UE_LOG(LogTemp, Log, TEXT("[BossAI] Possessed: %s"), *GetNameSafe(InPawn));
+	
  
 	// StateTree AI Component가 Possess 시점에 자동으로 StateTree를 시작
  
@@ -54,7 +53,7 @@ void ABossAIController::OnPossess(APawn* InPawn)
  
 void ABossAIController::OnUnPossess()
 {
-	UE_LOG(LogTemp, Log, TEXT("[BossAI] UnPossessed"));
+	
  
 	// StateTree AI Component가 자동으로 StateTree를 정지.
 	Super::OnUnPossess();
@@ -62,9 +61,7 @@ void ABossAIController::OnUnPossess()
  
 void ABossAIController::ForcePhaseTransition(EBossPhase NewPhase)
 {
-	UE_LOG(LogTemp, Warning, TEXT("[BossAI] 디버그: 페이즈 강제 전환 -> %d"),
-		static_cast<int32>(NewPhase));
- 
+	
 	CurrentPhase = NewPhase;
 	
 }
@@ -76,7 +73,6 @@ void ABossAIController::SendStateTreeEvent(FGameplayTag EventTag)
 		return;
 	}
 	
-	UE_LOG(LogTemp, Log, TEXT("[BossAI] StateTree 이벤트 전송: %s"), *EventTag.ToString());
 	
 	StateTreeAIComp->SendStateTreeEvent(FStateTreeEvent(EventTag));
 }

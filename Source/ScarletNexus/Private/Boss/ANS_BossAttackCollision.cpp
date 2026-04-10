@@ -18,22 +18,17 @@ void UANS_BossAttackCollision::NotifyBegin(USkeletalMeshComponent* MeshComp, UAn
 	TArray<UBossAttackCollisionComponent*> CollisionComps;
 	Owner->GetComponents<UBossAttackCollisionComponent>(CollisionComps);
 	
-	UE_LOG(LogTemp, Warning, TEXT("[ANS_AttackCollision] 찾는 이름: %s, 컴포넌트 수: %d"), 
-	*CollisionComponentName.ToString(), CollisionComps.Num());
 
 	for (UBossAttackCollisionComponent* Comp : CollisionComps)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[ANS_AttackCollision] 컴포넌트: %s"), *Comp->GetName());
+		
 		if (Comp && Comp->GetName() == CollisionComponentName.ToString())
 		{
 			Comp->EnableAttackCollision(Damage, Knockback);
-
-			UE_LOG(LogTemp, Log, TEXT("[ANS_AttackCollision] Begin: %s 활성화"), *CollisionComponentName.ToString());
+			
 			return;
 		}
 	}
-
-	UE_LOG(LogTemp, Warning, TEXT("[ANS_AttackCollision] Begin: %s 컴포넌트를 찾을 수 없음"), *CollisionComponentName.ToString());
 }
 
 void UANS_BossAttackCollision::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,
@@ -54,7 +49,6 @@ void UANS_BossAttackCollision::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnim
 		if (Comp && Comp->GetName() == CollisionComponentName.ToString())
 		{
 			Comp->DisableAttackCollision();
-			UE_LOG(LogTemp, Log, TEXT("[ANS_AttackCollision] End: %s 비활성화"), *CollisionComponentName.ToString());
 			return;
 		}
 	}

@@ -33,9 +33,7 @@ void UBossSuperArmorComponent::ActivateSuperArmor(float Duration)
 	}
  
 	OnSuperArmorChanged.Broadcast(true);
- 
-	UE_LOG(LogTemp, Log, TEXT("[SuperArmor] 활성화 (Duration: %.1f)"),
-		Duration);
+	
 }
  
 void UBossSuperArmorComponent::DeactivateSuperArmor()
@@ -51,8 +49,7 @@ void UBossSuperArmorComponent::DeactivateSuperArmor()
 	SetComponentTickEnabled(false);
  
 	OnSuperArmorChanged.Broadcast(false);
- 
-	UE_LOG(LogTemp, Log, TEXT("[SuperArmor] 비활성화"));
+	
 }
  
 bool UBossSuperArmorComponent::ShouldAbsorbHit(
@@ -72,10 +69,9 @@ bool UBossSuperArmorComponent::ShouldAbsorbHit(
 	// 누적 대미지가 임계값을 넘으면 슈퍼아머 파괴
 	if (AccumulatedDamage + IncomingDamage >= SuperArmorBreakThreshold)
 	{
-		UE_LOG(LogTemp, Log,
-			TEXT("[SuperArmor] 파괴! (누적: %.0f + 신규: %.0f >= 임계: %.0f)"),
-			AccumulatedDamage, IncomingDamage, SuperArmorBreakThreshold);
+		
 		return false;
+		
 	}
  
 	// 슈퍼아머가 대미지를 흡수
