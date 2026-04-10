@@ -6,6 +6,7 @@
 #include "ScarletNexus.h"
 #include "Components/SphereComponent.h"
 #include "Interface/DamageableHelper.h"
+#include "Kismet/GameplayStatics.h"
 #include "PartyAI/PartyAIComponent.h"
 #include "PartyAI/PartyAIController.h"
 #include "Player/PlayerCharacterBase.h"
@@ -191,5 +192,13 @@ void APartyMemberBase::OnInteractionEndOverlap(UPrimitiveComponent* OverlappedCo
 	{
 		bPlayerInRange = false;
 		// TODO UI Hide
+	}
+}
+
+void APartyMemberBase::PlayJoinPartySound()
+{
+	if (JoinPartySound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, JoinPartySound, GetActorLocation());
 	}
 }

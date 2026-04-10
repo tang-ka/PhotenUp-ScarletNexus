@@ -48,6 +48,9 @@ void APartyAIController::OnPossess(APawn* InPawn)
 	// State Tree 시작은 PartyAIComponent에서 처리
 	if (APartyMemberBase* PMB = Cast<APartyMemberBase>(InPawn))
 	{
+		// 합류 사운드 재생
+		PMB->PlayJoinPartySound();
+		
 		if (PMB->PartyAIComp)
 		{
 			PMB->PartyAIComp->StartAI();
