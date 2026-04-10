@@ -31,8 +31,10 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType,
 	                           FActorComponentTickFunction* ThisTickFunction) override;
+#if WITH_EDITOR
 	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
-
+#endif
+	
 #pragma region Getters & Setters
 	bool HasSoftTarget() const { return SoftTarget.IsValid(); }
 	AActor* GetSoftTarget() const { return SoftTarget.IsValid() ? SoftTarget.Get() : nullptr; }
