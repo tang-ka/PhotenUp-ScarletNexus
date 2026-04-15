@@ -102,10 +102,13 @@ void UPlayerPerceptionComponent::TickComponent(float DeltaTime, ELevelTick TickT
 	}
 }
 
+#if WITH_EDITOR
 void UPlayerPerceptionComponent::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
 }
+#endif
+
 
 AActor* UPlayerPerceptionComponent::GetCurrentTarget() const
 {

@@ -86,13 +86,16 @@ void AEnemyManager::OnEnemyDied(AEnemyBase* Enemy)
 	ReleaseAttackToken(Enemy);
 	AliveEnemies.Remove(Enemy);
 	
+	TWeakObjectPtr<AEnemyBase> weakEnemy = Enemy;  // ← weak로 캡처
+	
 	// 풀로 반환 (딜레이 후 DestroyDelay와 맞춤
 	FTimerHandle returnHandle;
 	GetWorldTimerManager().SetTimer(
 		returnHandle,
-		[this, Enemy]()
+		[this, weakEnemy]()
 		{
-			ReturnToPool(Enemy);
+			if (AEnemyBase* enemy = weakEnemy.Get())
+			ReturnToPool(enemy);
 		},
 		Enemy->DestroyDelay,
 		false);
@@ -258,10 +261,11 @@ void AEnemyManager::ActivateEnemy(AEnemyBase* Enemy, const FVector& Location, co
 
 void AEnemyManager::DeactivateEnemy(AEnemyBase* Enemy)
 {
-	if (!Enemy) return;
+	if (!Enemy || !IsValid(Enemy)) return;
 	
 	// AI 정지
-	if (AController* controller = Enemy->GetController())
+	AController* controller = Enemy->GetController();
+	if (IsValid(controller))
 	{
 		controller->UnPossess();
 	}
@@ -269,10 +273,18 @@ void AEnemyManager::DeactivateEnemy(AEnemyBase* Enemy)
 	// Ragdoll 리셋
 	if (USkeletalMeshComponent* meshComp = Enemy->GetMesh())
 	{
-		meshComp->SetSimulatePhysics(false);
-		meshComp->SetAllBodiesSimulatePhysics(false);
-		meshComp->SetCollisionProfileName(TEXT("CharacterMesh"));
-		meshComp->AttachToComponent(Enemy->GetRootComponent(), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+		// Mesh 체크도 추가
+		if (IsValid(meshComp))
+		{
+			meshComp->SetSimulatePhysics(false);
+			meshComp->SetAllBodiesSimulatePhysics(false);
+			meshComp->SetCollisionProfileName(TEXT("CharacterMesh"));
+            
+			if (USceneComponent* root = Enemy->GetRootComponent())
+			{
+				meshComp->AttachToComponent(root, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+			}
+		}
 	}
 	
 	// 체력바 숨기기
